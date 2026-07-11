@@ -7,6 +7,7 @@ import { testDatabaseConnection } from "./db/index.js";
 import tasksRouter from "./routes/tasks.js";
 import notificationsRouter from "./routes/notifications.js"; 
 import stressLevelsRouter from "./routes/stress-levels.js";
+import exercisesRouter from "./routes/exercises.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use("/api/tasks", tasksRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/stress-levels", stressLevelsRouter);
+app.use("/api/exercises", exercisesRouter);
 
 app.get("/", (_req, res) => {
   res.json({
