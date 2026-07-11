@@ -5,6 +5,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
 import { testDatabaseConnection } from "./db/index.js";
 import tasksRouter from "./routes/tasks.js";
+import notificationsRouter from "./routes/notifications.js"; 
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -23,6 +24,7 @@ app.use(express.json());
 
 // FitStudy routes
 app.use("/api/tasks", tasksRouter);
+app.use("/api/notifications", notificationsRouter);
 
 app.get("/", (_req, res) => {
   res.json({
