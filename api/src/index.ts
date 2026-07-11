@@ -4,6 +4,7 @@ import { toNodeHandler } from "better-auth/node";
 
 import { auth } from "./auth.js";
 import { testDatabaseConnection } from "./db/index.js";
+import tasksRouter from "./routes/tasks.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,9 +16,13 @@ app.use(
   })
 );
 
+
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
+
+// FitStudy routes
+app.use("/api/tasks", tasksRouter);
 
 app.get("/", (_req, res) => {
   res.json({
