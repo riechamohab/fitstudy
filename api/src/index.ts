@@ -12,6 +12,7 @@ import progressRouter from "./routes/progress.js";
 import calendarRouter from "./routes/calendar.js";
 import teacherRouter from "./routes/teacher.js";
 import { startDeadlineChecker } from "./services/deadline-checker.js";
+import usersRouter from "./routes/users.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,6 +37,7 @@ app.use("/api/exercises", exercisesRouter);
 app.use("/api/progress", progressRouter);
 app.use("/api/calendar", calendarRouter);
 app.use("/api/teacher", teacherRouter);
+app.use("/api/users", usersRouter);
 
 app.get("/", (_req, res) => {
   res.json({
