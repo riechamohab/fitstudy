@@ -3,16 +3,19 @@ import { eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { user as authUser } from "../db/auth-schema.js";
+import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
 router.get("/profile", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
+    const currentUser = await requireUser(req, res);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+    if (!currentUser) {
+      return;
     }
+
+    const userId = currentUser.id;
 
     const users = await db
       .select({
@@ -43,11 +46,13 @@ router.get("/profile", async (req, res) => {
 
 router.put("/profile", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
+    const currentUser = await requireUser(req, res);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+    if (!currentUser) {
+      return;
     }
+
+    const userId = currentUser.id;
 
     const { name } = req.body;
 

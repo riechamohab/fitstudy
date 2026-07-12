@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
 import { exercises, notifications } from "../db/schema.js";
+import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
@@ -37,11 +38,13 @@ const exerciseTypes = [
 
 router.get("/", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const result = await db
       .select()
@@ -59,11 +62,13 @@ router.get("/", async (req, res) => {
 
 router.post("/start", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const { type, duration } = req.body;
 
@@ -97,11 +102,13 @@ router.post("/start", async (req, res) => {
 
 router.put("/:id/complete", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const { id } = req.params;
 
@@ -148,11 +155,13 @@ router.get("/types", (_req, res) => {
 
 router.get("/stats", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const result = await db
       .select()

@@ -3,16 +3,19 @@ import { desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { tasks } from "../db/schema.js";
+import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
 router.get("/", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const startDate = req.query.start
       ? new Date(req.query.start as string)
@@ -60,11 +63,13 @@ router.get("/", async (req, res) => {
 
 router.get("/week", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const weekOffset = Number(req.query.weekOffset ?? 0);
 
@@ -128,11 +133,13 @@ router.get("/week", async (req, res) => {
 
 router.get("/overview", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -205,11 +212,13 @@ router.get("/overview", async (req, res) => {
 
 router.get("/deadlines", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const days = Number(req.query.days ?? 30);
 

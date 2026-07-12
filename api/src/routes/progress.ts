@@ -11,6 +11,7 @@ import {
   stressLevels,
   tasks,
 } from "../db/schema.js";
+import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
@@ -29,11 +30,13 @@ const defaultMotivationMessages = [
 
 router.get("/", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const userTasks = await db
       .select()
@@ -84,11 +87,13 @@ router.get("/", async (req, res) => {
 
 router.get("/motivation", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     let messages = await db
       .select()
@@ -130,11 +135,13 @@ router.get("/motivation", async (req, res) => {
 
 router.get("/achievements", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const userTasks = await db
       .select()
@@ -234,11 +241,13 @@ router.get("/achievements", async (req, res) => {
 
 router.get("/stats", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const days = Number(req.query.days ?? 30);
     const startDate = new Date();

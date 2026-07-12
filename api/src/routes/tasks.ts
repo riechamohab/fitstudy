@@ -4,16 +4,19 @@ import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
 import { notifications, progress, tasks } from "../db/schema.js";
+import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
 router.get("/", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
+    const currentUser = await requireUser(req, res);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!currentUser) {
+  return;
+  }
+
+    const userId = currentUser.id;
 
     const status = req.query.status as string | undefined;
     const priority = req.query.priority as string | undefined;
@@ -43,11 +46,13 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
+    const currentUser = await requireUser(req, res);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!currentUser) {
+  return;
+  }
+
+    const userId = currentUser.id;
 
     const { id } = req.params;
 
@@ -72,11 +77,13 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
+    const currentUser = await requireUser(req, res);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!currentUser) {
+  return;
+  }
+
+    const userId = currentUser.id;
 
     const {
       title,
@@ -120,11 +127,13 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
+    const currentUser = await requireUser(req, res);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!currentUser) {
+  return;
+  }
+
+    const userId = currentUser.id;
 
     const { id } = req.params;
     const { title, description, deadline, status, priority } = req.body;
@@ -184,11 +193,13 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
+    const currentUser = await requireUser(req, res);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!currentUser) {
+  return;
+  }
+
+    const userId = currentUser.id;
 
     const { id } = req.params;
 

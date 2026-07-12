@@ -4,10 +4,17 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { exercises, stressLevels, tasks, progress } from "../db/schema.js";
 import { user } from "../db/auth-schema.js";
+import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
-function checkTeacherRole(req: any, res: any, next: any) {
+async function checkTeacherRole(req: any, res: any, next: any) {
+  const currentUser = await requireUser(req, res);
+
+  if (!currentUser) {
+    return;
+  }
+
   const role = req.headers["x-user-role"];
 
   if (role !== "TEACHER" && role !== "COUNSELOR") {
@@ -15,6 +22,8 @@ function checkTeacherRole(req: any, res: any, next: any) {
       error: "Access denied. Teacher or Counselor role required.",
     });
   }
+
+  req.currentUser = currentUser;
 
   next();
 }

@@ -4,16 +4,19 @@ import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
 import { notifications, stressLevels } from "../db/schema.js";
+import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
 router.post("/", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const { level, focus, notes } = req.body;
 
@@ -70,11 +73,13 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const days = Number(req.query.days ?? 7);
 
@@ -94,11 +99,13 @@ router.get("/", async (req, res) => {
 
 router.get("/stats", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const days = Number(req.query.days ?? 30);
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -168,11 +175,13 @@ router.get("/stats", async (req, res) => {
 
 router.get("/recommendations", async (req, res) => {
   try {
-    const userId = req.headers["x-user-id"];
-
-    if (!userId || typeof userId !== "string") {
-      return res.status(401).json({ error: "Unauthorized" });
+      const currentUser = await requireUser(req, res);
+  
+    if (!currentUser) {
+    return;
     }
+  
+      const userId = currentUser.id;
 
     const result = await db
       .select()
