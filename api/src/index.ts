@@ -11,6 +11,7 @@ import exercisesRouter from "./routes/exercises.js";
 import progressRouter from "./routes/progress.js";
 import calendarRouter from "./routes/calendar.js";
 import teacherRouter from "./routes/teacher.js";
+import { startDeadlineChecker } from "./services/deadline-checker.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -65,6 +66,8 @@ app.listen(port, async () => {
   try {
     const result = await testDatabaseConnection();
     console.log("Database connection successful:", result);
+
+    startDeadlineChecker();
   } catch (error) {
     console.error("Database connection failed:", error);
   }
