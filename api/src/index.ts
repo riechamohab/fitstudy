@@ -10,6 +10,7 @@ import stressLevelsRouter from "./routes/stress-levels.js";
 import exercisesRouter from "./routes/exercises.js";
 import progressRouter from "./routes/progress.js";
 import calendarRouter from "./routes/calendar.js";
+import teacherRouter from "./routes/teacher.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.use("/api/stress-levels", stressLevelsRouter);
 app.use("/api/exercises", exercisesRouter);
 app.use("/api/progress", progressRouter);
 app.use("/api/calendar", calendarRouter);
+app.use("/api/teacher", teacherRouter);
 
 app.get("/", (_req, res) => {
   res.json({
