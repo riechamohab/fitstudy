@@ -68,13 +68,19 @@ export async function signIn(email: string, password: string) {
   });
 }
 
-export async function signUp(name: string, email: string, password: string) {
+export async function signUp(
+  name: string,
+  email: string,
+  password: string,
+  studentId: string
+) {
   return apiRequest("/api/auth/sign-up/email", {
     method: "POST",
     body: JSON.stringify({
       name,
       email,
       password,
+      studentId,
     }),
   });
 }

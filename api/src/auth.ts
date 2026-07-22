@@ -26,5 +26,24 @@ export const auth = betterAuth({
     enabled: true,
   },
 
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: true,
+        defaultValue: "student",
+        input: false, // can't be set by the client — only via admin/db
+      },
+      studentId: {
+        type: "string",
+        required: false,
+      },
+      teacherId: {
+        type: "string",
+        required: false,
+      },
+    },
+  },
+
   trustedOrigins: ["http://localhost:5173", "http://localhost:3001"],
 });

@@ -40,6 +40,51 @@ function EyeOffIcon() {
   );
 }
 
+function CalendarIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect x="3" y="4.5" width="18" height="16.5" rx="2" />
+      <path d="M16 2.5v4M8 2.5v4M3 9.5h18" />
+    </svg>
+  );
+}
+
+function FocusIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="0.75" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ProgressIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 20V10M12 20V4M20 20v-7" />
+    </svg>
+  );
+}
+
 function LoginPage() {
   const navigate = useNavigate();
 
@@ -149,14 +194,16 @@ function LoginPage() {
 
       <section className="hidden bg-blue-700 px-10 py-8 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl">
-            📖
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
+            <img src="/favicon.ico" alt="FitStudy logo" className="h-6 w-6" />
           </div>
           <span className="text-2xl font-bold">FitStudy</span>
         </div>
 
         <div className="mx-auto max-w-xl text-center">
-          <div className="mb-5 text-7xl">👩‍💻</div>
+          <div className="mb-5 flex justify-center">
+            <img src="/favicon.ico" alt="FitStudy" className="h-16 w-16" />
+          </div>
 
           <h2 className="text-4xl font-bold leading-tight">
             Plan smarter,
@@ -170,14 +217,17 @@ function LoginPage() {
           </p>
 
           <div className="mt-8 space-y-4">
-            <div className="rounded-xl bg-white/15 px-6 py-4 font-semibold">
-              📅 Smart weekly planning
+            <div className="flex items-center gap-3 rounded-xl bg-white/15 px-6 py-4 font-semibold">
+              <CalendarIcon />
+              Smart weekly planning
             </div>
-            <div className="rounded-xl bg-white/15 px-6 py-4 font-semibold">
-              🧘 Focus & stress tracking
+            <div className="flex items-center gap-3 rounded-xl bg-white/15 px-6 py-4 font-semibold">
+              <FocusIcon />
+              Focus & stress tracking
             </div>
-            <div className="rounded-xl bg-white/15 px-6 py-4 font-semibold">
-              📊 Progress insights
+            <div className="flex items-center gap-3 rounded-xl bg-white/15 px-6 py-4 font-semibold">
+              <ProgressIcon />
+              Progress insights
             </div>
           </div>
         </div>
