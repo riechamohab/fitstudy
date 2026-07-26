@@ -5,6 +5,8 @@ import { nanoid } from "nanoid";
 import { db } from "../db/index.js";
 import {
   exercises,
+  focusSessions,
+  grades,
   motivationMessages,
   notifications,
   progress,
@@ -57,7 +59,7 @@ router.get("/", async (req, res) => {
       (task) => task.status === "COMPLETED"
     ).length;
     const inProgressTasks = userTasks.filter(
-      (task) => task.status === "IN_PROGRESS"
+      (task) => task.status === "ONGOING"
     ).length;
     const overdueTasks = userTasks.filter(
       (task) =>
@@ -307,6 +309,213 @@ router.get("/stats", async (req, res) => {
     });
   } catch (error) {
     console.error("Get stats error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+function monthRange(monthsAgo: number) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+  const end = new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 1);
+  return { start, end };
+}
+
+async function buildMonthlyOverview(userId: string) {
+  const { start: thisMonthStart, end: thisMonthEnd } = monthRange(0);
+  const { start: lastMonthStart, end: lastMonthEnd } = monthRange(1);
+
+  const thisMonthSessions = await db
+    .select()
+    .from(focusSessions)
+    .where(
+      and(
+        eq(focusSessions.userId, userId),
+        gte(focusSessions.startedAt, thisMonthStart),
+        lt(focusSessions.startedAt, thisMonthEnd)
+      )
+    );
+
+  const shortBreaks = thisMonthSessions.filter((s) => s.breakType === "SHORT").length;
+  const longBreaks = thisMonthSessions.filter((s) => s.breakType === "LONG").length;
+
+  const thisMonthTasks = await db
+    .select()
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        gte(tasks.createdAt, thisMonthStart),
+        lt(tasks.createdAt, thisMonthEnd)
+      )
+    );
+
+  const completedThisMonth = thisMonthTasks.filter((t) => t.status === "COMPLETED").length;
+  const taskCompletionRate =
+    thisMonthTasks.length > 0
+      ? Number(((completedThisMonth / thisMonthTasks.length) * 100).toFixed(1))
+      : 0;
+
+  const thisMonthGrades = await db
+    .select()
+    .from(grades)
+    .where(
+      and(
+        eq(grades.studentId, userId),
+        gte(grades.gradedAt, thisMonthStart),
+        lt(grades.gradedAt, thisMonthEnd)
+      )
+    );
+
+  const lastMonthGrades = await db
+    .select()
+    .from(grades)
+    .where(
+      and(
+        eq(grades.studentId, userId),
+        gte(grades.gradedAt, lastMonthStart),
+        lt(grades.gradedAt, lastMonthEnd)
+      )
+    );
+
+  const allGrades = await db
+    .select()
+    .from(grades)
+    .where(eq(grades.studentId, userId));
+
+  const avg = (rows: { score: number }[]) =>
+    rows.length > 0
+      ? Number((rows.reduce((sum, r) => sum + r.score, 0) / rows.length).toFixed(1))
+      : null;
+
+  const thisMonthAvg = avg(thisMonthGrades);
+  const lastMonthAvg = avg(lastMonthGrades);
+  const overallAvg = avg(allGrades);
+
+  let gradeChangePercent: number | null = null;
+  if (thisMonthAvg !== null && lastMonthAvg !== null && lastMonthAvg !== 0) {
+    gradeChangePercent = Number(
+      (((thisMonthAvg - lastMonthAvg) / lastMonthAvg) * 100).toFixed(1)
+    );
+  }
+
+  return {
+    month: thisMonthStart.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    focusSessions: {
+      total: thisMonthSessions.length,
+      shortBreaks,
+      longBreaks,
+    },
+    tasks: {
+      completed: completedThisMonth,
+      total: thisMonthTasks.length,
+      completionRate: taskCompletionRate,
+    },
+    grades: {
+      thisMonthAvg,
+      lastMonthAvg,
+      overallAvg,
+      changePercent: gradeChangePercent,
+    },
+  };
+}
+
+router.get("/monthly", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    const overview = await buildMonthlyOverview(currentUser.id);
+    res.json(overview);
+  } catch (error) {
+    console.error("Get monthly progress error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/grades", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    const studentGrades = await db
+      .select()
+      .from(grades)
+      .where(eq(grades.studentId, currentUser.id))
+      .orderBy(desc(grades.gradedAt));
+
+    res.json(studentGrades);
+  } catch (error) {
+    console.error("Get grades error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/export", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    const userId = currentUser.id;
+
+    const overview = await buildMonthlyOverview(userId);
+
+    const userTasks = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.userId, userId))
+      .orderBy(desc(tasks.createdAt));
+
+    const userGrades = await db
+      .select()
+      .from(grades)
+      .where(eq(grades.studentId, userId))
+      .orderBy(desc(grades.gradedAt));
+
+    const lines: string[] = [];
+
+    lines.push("FitStudy Progress Report");
+    lines.push(`Month,${overview.month}`);
+    lines.push("");
+    lines.push("Summary");
+    lines.push("Metric,Value");
+    lines.push(`Focus sessions this month,${overview.focusSessions.total}`);
+    lines.push(`Short breaks,${overview.focusSessions.shortBreaks}`);
+    lines.push(`Long breaks,${overview.focusSessions.longBreaks}`);
+    lines.push(`Tasks completed this month,${overview.tasks.completed}/${overview.tasks.total}`);
+    lines.push(`Task completion rate,${overview.tasks.completionRate}%`);
+    lines.push(`Grade average this month,${overview.grades.thisMonthAvg ?? "N/A"}`);
+    lines.push(`Grade average last month,${overview.grades.lastMonthAvg ?? "N/A"}`);
+    lines.push(`Overall grade average,${overview.grades.overallAvg ?? "N/A"}`);
+    lines.push(`Grade change,${overview.grades.changePercent ?? "N/A"}%`);
+    lines.push("");
+
+    lines.push("Tasks");
+    lines.push("Title,Status,Priority,Deadline");
+    for (const task of userTasks) {
+      const safeTitle = task.title.replace(/"/g, '""');
+      lines.push(
+        `"${safeTitle}",${task.status},${task.priority},${task.deadline ? new Date(task.deadline).toLocaleDateString() : ""}`
+      );
+    }
+    lines.push("");
+
+    lines.push("Grades");
+    lines.push("Subject,Score,Date");
+    for (const grade of userGrades) {
+      const safeSubject = grade.subject.replace(/"/g, '""');
+      lines.push(`"${safeSubject}",${grade.score},${new Date(grade.gradedAt).toLocaleDateString()}`);
+    }
+
+    const csv = lines.join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="fitstudy-progress-${new Date().toISOString().split("T")[0]}.csv"`
+    );
+    res.send(csv);
+  } catch (error) {
+    console.error("Export progress error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

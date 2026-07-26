@@ -103,7 +103,7 @@ function LoginPage() {
 
     try {
       await signIn(email, password);
-      await navigate({ to: "/dashboard" });
+      await navigate({ to: "/student-dashboard" });
     } catch (error) {
       setError(error instanceof Error ? error.message : "Login failed");
     } finally {

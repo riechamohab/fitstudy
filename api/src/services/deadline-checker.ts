@@ -28,7 +28,7 @@ async function checkDeadlines() {
       return (
         deadline >= tomorrow &&
         deadline <= nextWeek &&
-        task.status !== "COMPLETED"
+        task.status === "ONGOING"
       );
     });
 
@@ -65,18 +65,25 @@ async function checkDeadlines() {
       }
     }
 
+    // Only tasks still ONGOING past their deadline become INCOMPLETE.
+    // Tasks the student already completed or canceled are left alone.
     const overdueTasks = allTasks.filter((task) => {
       if (!task.deadline) return false;
 
       const deadline = new Date(task.deadline);
 
-      return deadline < now && task.status !== "COMPLETED";
+      return deadline < now && task.status === "ONGOING";
     });
 
     for (const task of overdueTasks) {
+      await db
+        .update(tasks)
+        .set({ status: "INCOMPLETE", updatedAt: new Date() })
+        .where(eq(tasks.id, task.id));
+
       const message = `Task "${task.title}" was due on ${new Date(
         task.deadline as Date
-      ).toLocaleDateString()}`;
+      ).toLocaleDateString()} and is now marked incomplete.`;
 
       const existingNotifications = await db
         .select()
@@ -102,7 +109,7 @@ async function checkDeadlines() {
           type: "DEADLINE",
         });
 
-        console.log(`Overdue task notification created for: ${task.title}`);
+        console.log(`Task marked incomplete and notified: ${task.title}`);
       }
     }
 

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
-import { tasks } from "../db/schema.js";
+import { tasks, classSchedule } from "../db/schema.js";
 import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
@@ -264,6 +264,115 @@ router.get("/deadlines", async (req, res) => {
     res.json(tasksWithDaysUntil);
   } catch (error) {
     console.error("Get deadlines error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+router.get("/planner", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+
+    if (!currentUser) {
+      return;
+    }
+
+    const view = (req.query.view as string) || "week";
+    const referenceDate = req.query.date
+      ? new Date(req.query.date as string)
+      : new Date();
+
+    if (Number.isNaN(referenceDate.getTime())) {
+      return res.status(400).json({ error: "Invalid date" });
+    }
+
+    let rangeStart: Date;
+    let rangeEnd: Date;
+
+    if (view === "day") {
+      rangeStart = new Date(referenceDate);
+      rangeStart.setHours(0, 0, 0, 0);
+      rangeEnd = new Date(rangeStart);
+      rangeEnd.setHours(23, 59, 59, 999);
+    } else if (view === "month") {
+      const firstOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
+      const lastOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
+
+      rangeStart = new Date(firstOfMonth);
+      rangeStart.setDate(firstOfMonth.getDate() - firstOfMonth.getDay());
+      rangeStart.setHours(0, 0, 0, 0);
+
+      rangeEnd = new Date(lastOfMonth);
+      rangeEnd.setDate(lastOfMonth.getDate() + (6 - lastOfMonth.getDay()));
+      rangeEnd.setHours(23, 59, 59, 999);
+    } else {
+      // week
+      const dayOfWeek = referenceDate.getDay();
+      rangeStart = new Date(referenceDate);
+      rangeStart.setDate(referenceDate.getDate() - dayOfWeek);
+      rangeStart.setHours(0, 0, 0, 0);
+      rangeEnd = new Date(rangeStart);
+      rangeEnd.setDate(rangeStart.getDate() + 6);
+      rangeEnd.setHours(23, 59, 59, 999);
+    }
+
+    const userTasks = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.userId, currentUser.id));
+
+    const studentClass = (currentUser as { studentClass?: string | null }).studentClass;
+
+    const classEntries = studentClass
+      ? await db
+          .select()
+          .from(classSchedule)
+          .where(eq(classSchedule.className, studentClass))
+      : [];
+
+    const days = [];
+    const cursor = new Date(rangeStart);
+
+    while (cursor <= rangeEnd) {
+      const dayDate = new Date(cursor);
+      const dayOfWeek = dayDate.getDay();
+      const dateKey = toDateKey(dayDate);
+
+      const dayTasks = userTasks.filter((task) => {
+        if (!task.deadline) return false;
+        return toDateKey(new Date(task.deadline)) === dateKey;
+      });
+
+      const dayClasses = classEntries
+        .filter((entry) => entry.dayOfWeek === dayOfWeek)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      days.push({
+        date: dateKey,
+        dayName: dayDate.toLocaleDateString("en-US", { weekday: "long" }),
+        isCurrentMonth:
+          view !== "month" || dayDate.getMonth() === referenceDate.getMonth(),
+        classSchedule: dayClasses,
+        tasks: dayTasks,
+      });
+
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    res.json({
+      view,
+      rangeStart: toDateKey(rangeStart),
+      rangeEnd: toDateKey(rangeEnd),
+      days,
+    });
+  } catch (error) {
+    console.error("Get planner error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

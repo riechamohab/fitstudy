@@ -1,5 +1,14 @@
-import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
+
+export const TASK_STATUSES = [
+  "ONGOING",
+  "COMPLETED",
+  "CANCELED",
+  "INCOMPLETE",
+] as const;
+
+export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export const tasks = pgTable("tasks", {
   id: text("id").primaryKey(),
@@ -12,7 +21,7 @@ export const tasks = pgTable("tasks", {
   description: text("description"),
   deadline: timestamp("deadline"),
 
-  status: text("status").notNull().default("PENDING"),
+  status: text("status").notNull().default("ONGOING"),
   priority: text("priority").notNull().default("MEDIUM"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -82,4 +91,142 @@ export const motivationMessages = pgTable("motivation_messages", {
   id: text("id").primaryKey(),
   message: text("message").notNull(),
   active: boolean("active").notNull().default(true),
+});
+
+export const classSchedule = pgTable("class_schedule", {
+  id: text("id").primaryKey(),
+
+  teacherId: text("teacher_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  className: text("class_name").notNull(),
+  subject: text("subject").notNull(),
+  room: text("room"),
+
+  dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday ... 6 = Saturday
+  startTime: text("start_time").notNull(), // "09:00"
+  endTime: text("end_time").notNull(), // "10:00"
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const COURSE_SCOPES = ["class", "personal"] as const;
+export type CourseScope = (typeof COURSE_SCOPES)[number];
+
+export const courses = pgTable("courses", {
+  id: text("id").primaryKey(),
+
+  creatorId: text("creator_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  scope: text("scope").notNull(), // "class" | "personal"
+  className: text("class_name"), // required when scope = "class"
+
+  title: text("title").notNull(),
+  description: text("description"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const lessons = pgTable("lessons", {
+  id: text("id").primaryKey(),
+
+  courseId: text("course_id")
+    .notNull()
+    .references(() => courses.id, { onDelete: "cascade" }),
+
+  title: text("title").notNull(),
+  order: integer("order").notNull().default(0),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const LESSON_STATUSES = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] as const;
+export type LessonStatus = (typeof LESSON_STATUSES)[number];
+
+export const lessonProgress = pgTable(
+  "lesson_progress",
+  {
+    id: text("id").primaryKey(),
+
+    studentId: text("student_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+
+    lessonId: text("lesson_id")
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+
+    status: text("status").notNull().default("NOT_STARTED"),
+    progressPercent: integer("progress_percent").notNull().default(0),
+
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("lesson_progress_student_lesson_idx").on(
+      table.studentId,
+      table.lessonId
+    ),
+  ]
+);
+
+export const taskChecklistItems = pgTable("task_checklist_items", {
+  id: text("id").primaryKey(),
+
+  taskId: text("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+
+  title: text("title").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  order: integer("order").notNull().default(0),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const BREAK_TYPES = ["SHORT", "LONG"] as const;
+export type BreakType = (typeof BREAK_TYPES)[number];
+
+export const focusSessions = pgTable("focus_sessions", {
+  id: text("id").primaryKey(),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  taskId: text("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+
+  durationMinutes: integer("duration_minutes").notNull().default(25),
+  breakType: text("break_type"), // "SHORT" | "LONG", set once the break is chosen
+
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const grades = pgTable("grades", {
+  id: text("id").primaryKey(),
+
+  studentId: text("student_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  teacherId: text("teacher_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  subject: text("subject").notNull(),
+  score: integer("score").notNull(), // 0-100
+
+  gradedAt: timestamp("graded_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

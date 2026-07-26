@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { desc, eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
-import { exercises, stressLevels, tasks, progress } from "../db/schema.js";
+import { classSchedule, exercises, stressLevels, tasks, progress } from "../db/schema.js";
 import { user } from "../db/auth-schema.js";
 import { requireUser } from "../lib/auth-session.js";
 
@@ -15,11 +16,9 @@ async function checkTeacherRole(req: any, res: any, next: any) {
     return;
   }
 
-  const role = req.headers["x-user-role"];
-
-  if (role !== "TEACHER" && role !== "COUNSELOR") {
+  if (currentUser.role !== "teacher" && currentUser.role !== "admin") {
     return res.status(403).json({
-      error: "Access denied. Teacher or Counselor role required.",
+      error: "Access denied. Teacher role required.",
     });
   }
 
@@ -27,6 +26,8 @@ async function checkTeacherRole(req: any, res: any, next: any) {
 
   next();
 }
+
+const DAYS_OF_WEEK = [0, 1, 2, 3, 4, 5, 6];
 
 router.get("/overview", checkTeacherRole, async (_req, res) => {
   try {
@@ -170,7 +171,7 @@ router.get("/students/:id/details", checkTeacherRole, async (req, res) => {
       total: studentTasks.length,
       completed: studentTasks.filter((task) => task.status === "COMPLETED")
         .length,
-      inProgress: studentTasks.filter((task) => task.status === "IN_PROGRESS")
+      inProgress: studentTasks.filter((task) => task.status === "ONGOING")
         .length,
       overdue: studentTasks.filter(
         (task) =>
@@ -357,7 +358,6 @@ router.get("/deadlines", checkTeacherRole, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 router.get("/behavior-reports", checkTeacherRole, async (req, res) => {
   try {
@@ -556,6 +556,127 @@ router.get("/wellness-reports", checkTeacherRole, async (req, res) => {
     });
   } catch (error) {
     console.error("Wellness reports error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- Class schedule management ---
+
+router.get("/class-schedule", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+
+    const entries = await db
+      .select()
+      .from(classSchedule)
+      .where(eq(classSchedule.teacherId, teacherId))
+      .orderBy(classSchedule.dayOfWeek, classSchedule.startTime);
+
+    res.json(entries);
+  } catch (error) {
+    console.error("Get class schedule error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/class-schedule", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+
+    const { className, subject, room, dayOfWeek, startTime, endTime } = req.body;
+
+    if (!className || !subject || !startTime || !endTime) {
+      return res.status(400).json({
+        error: "className, subject, startTime, and endTime are required",
+      });
+    }
+
+    if (!DAYS_OF_WEEK.includes(Number(dayOfWeek))) {
+      return res.status(400).json({ error: "dayOfWeek must be 0-6" });
+    }
+
+    const newEntry = {
+      id: nanoid(),
+      teacherId,
+      className,
+      subject,
+      room: room ?? null,
+      dayOfWeek: Number(dayOfWeek),
+      startTime,
+      endTime,
+    };
+
+    const inserted = await db.insert(classSchedule).values(newEntry).returning();
+
+    res.status(201).json(inserted[0]);
+  } catch (error) {
+    console.error("Create class schedule error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/class-schedule/:id", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const { id } = req.params;
+
+    const { className, subject, room, dayOfWeek, startTime, endTime } = req.body;
+
+    if (dayOfWeek !== undefined && !DAYS_OF_WEEK.includes(Number(dayOfWeek))) {
+      return res.status(400).json({ error: "dayOfWeek must be 0-6" });
+    }
+
+    const existing = await db
+      .select()
+      .from(classSchedule)
+      .where(eq(classSchedule.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].teacherId !== teacherId) {
+      return res.status(404).json({ error: "Class schedule entry not found" });
+    }
+
+    const updated = await db
+      .update(classSchedule)
+      .set({
+        ...(className !== undefined && { className }),
+        ...(subject !== undefined && { subject }),
+        ...(room !== undefined && { room }),
+        ...(dayOfWeek !== undefined && { dayOfWeek: Number(dayOfWeek) }),
+        ...(startTime !== undefined && { startTime }),
+        ...(endTime !== undefined && { endTime }),
+        updatedAt: new Date(),
+      })
+      .where(eq(classSchedule.id, id))
+      .returning();
+
+    res.json(updated[0]);
+  } catch (error) {
+    console.error("Update class schedule error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/class-schedule/:id", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const { id } = req.params;
+
+    const existing = await db
+      .select()
+      .from(classSchedule)
+      .where(eq(classSchedule.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].teacherId !== teacherId) {
+      return res.status(404).json({ error: "Class schedule entry not found" });
+    }
+
+    await db.delete(classSchedule).where(eq(classSchedule.id, id));
+
+    res.json({ message: "Class schedule entry deleted" });
+  } catch (error) {
+    console.error("Delete class schedule error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

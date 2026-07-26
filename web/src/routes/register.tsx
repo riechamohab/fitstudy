@@ -123,8 +123,8 @@ function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await signUp(name, studentId, email, password);
-      await navigate({ to: "/dashboard" });
+      await signUp(name, email, password, studentId);
+      await navigate({ to: "/student-dashboard" });
     } catch (error) {
       setError(error instanceof Error ? error.message : "Registration failed");
     } finally {
