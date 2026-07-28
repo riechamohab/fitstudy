@@ -16,7 +16,8 @@ import coursesRouter from "./routes/courses.js";
 import focusSessionsRouter from "./routes/focus-sessions.js";
 import { startDeadlineChecker } from "./services/deadline-checker.js";
 import usersRouter from "./routes/users.js";
- 
+import adminRouter from "./routes/admin.js";
+
 const app = express();
 const port = process.env.PORT || 3000;
  
@@ -44,6 +45,7 @@ app.use("/api/courses", coursesRouter);
 app.use("/api/focus-sessions", focusSessionsRouter);
 app.use("/api/teacher", teacherRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/admin", adminRouter);
  
 app.get("/", (_req, res) => {
   res.json({
