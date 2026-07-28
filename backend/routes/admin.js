@@ -1,7 +1,8 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const adminAuth = require('../middleware/adminAuth');
+const adminAuth = require('../middleware/adminAuth.js');
 
+console.log("adminAuth geladen:", typeof adminAuth);
 const router = express.Router();
 const prisma = new PrismaClient();
 
