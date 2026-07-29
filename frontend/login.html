@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>FitStudy Login</h2>
+
+<input id="email" placeholder="email">
+<input id="password" type="password" placeholder="password">
+
+<button onclick="login()">Login</button>
+
+<script>
+async function login(){
+
+const response = await fetch(
+"http://localhost:3000/api/auth/sign-in/email",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+credentials:"include",
+body:JSON.stringify({
+email:document.getElementById("email").value,
+password:document.getElementById("password").value
+})
+});
+
+const data = await response.json();
+
+console.log("Login response:", data);
+alert(document.cookie);
+}
+</script>
+
+</body>
+</html>

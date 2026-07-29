@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { db } from "../db/index.js";
+import { auth } from "../auth.js";
 import { user } from "../db/auth-schema.js";
+import { db } from "../db/index.js";
 import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
@@ -43,6 +44,36 @@ router.get("/users", checkAdminRole, async (_req, res) => {
     });
   }
 });
+router.post("/users", checkAdminRole, async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      role,
+    } = req.body;
 
+    const newUser = await auth.api.createUser({
+      body: {
+        name,
+        email,
+        password,
+        role,
+      },
+    });
+
+    res.status(201).json({
+      message: "User created successfully",
+      user: newUser,
+    });
+
+  } catch (error) {
+    console.error("Create user error:", error);
+
+    res.status(500).json({
+      error: "Could not create user",
+    });
+  }
+});
 
 export default router;

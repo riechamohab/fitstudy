@@ -1,32 +1,35 @@
-import path from "node:path";
-import express from "express";
-import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
+import cors from "cors";
+import express from "express";
+import path from "node:path";
  
 import { auth } from "./auth.js";
 import { testDatabaseConnection } from "./db/index.js";
-import tasksRouter from "./routes/tasks.js";
-import notificationsRouter from "./routes/notifications.js"; 
-import stressLevelsRouter from "./routes/stress-levels.js";
-import exercisesRouter from "./routes/exercises.js";
-import progressRouter from "./routes/progress.js";
-import calendarRouter from "./routes/calendar.js";
-import teacherRouter from "./routes/teacher.js";
-import coursesRouter from "./routes/courses.js";
-import focusSessionsRouter from "./routes/focus-sessions.js";
-import { startDeadlineChecker } from "./services/deadline-checker.js";
-import usersRouter from "./routes/users.js";
 import adminRouter from "./routes/admin.js";
+import calendarRouter from "./routes/calendar.js";
+import coursesRouter from "./routes/courses.js";
+import exercisesRouter from "./routes/exercises.js";
+import focusSessionsRouter from "./routes/focus-sessions.js";
+import notificationsRouter from "./routes/notifications.js";
+import progressRouter from "./routes/progress.js";
+import stressLevelsRouter from "./routes/stress-levels.js";
+import tasksRouter from "./routes/tasks.js";
+import teacherRouter from "./routes/teacher.js";
+import usersRouter from "./routes/users.js";
+import { startDeadlineChecker } from "./services/deadline-checker.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
  
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "http://localhost:3001"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: [
+    "http://localhost:52913",
+    "http://localhost:5173",
+    "http://localhost:3001",
+    "http://localhost:3002",
+  ],
+  credentials: true,
+}));
  
 app.all("/api/auth/*splat", toNodeHandler(auth));
  
