@@ -39,7 +39,9 @@ logger: {
   },
  
   plugins: [
-  admin(),
+  admin({
+    defaultRole: "student",
+  }),
 ],
 
   user: {

@@ -15,6 +15,20 @@
       "when": 1783793399530,
       "tag": "0001_awesome_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785356351962,
+      "tag": "0002_mighty_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785357142526,
+      "tag": "0003_moaning_fallen_one",
+      "breakpoints": true
     }
   ]
 }
