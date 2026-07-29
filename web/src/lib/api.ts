@@ -378,3 +378,15 @@ export async function getProgress() {
 export async function getCalendar() {
   return apiRequest("/api/calendar");
 }
+
+export type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "student" | "teacher";
+  createdAt: string;
+};
+
+export async function getAdminUsers() {
+  return apiRequest<AdminUser[]>("/api/admin/users");
+}

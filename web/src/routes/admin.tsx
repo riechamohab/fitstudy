@@ -1,51 +1,52 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { getAdminUsers, type AdminUser } from "../lib/api";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-};
-
 function AdminPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const response = await fetch(
-          "http://localhost:3000/api/admin/users",
-          {
-            credentials: "include",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Geen toegang");
-        }
-
-        const data = await response.json();
+        const data = await getAdminUsers();
 
         setUsers(data);
 
       } catch (err) {
+        console.error(err);
         setError("Je hebt geen toegang tot het admin dashboard");
+      } finally {
+        setLoading(false);
       }
     }
 
     fetchUsers();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="p-6">
+        <h1 className="text-3xl font-bold">
+          Admin Dashboard
+        </h1>
+
+        <p className="mt-4">
+          Gebruikers laden...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold">
+
+      <h1 className="text-3xl font-bold mb-2">
         Admin Dashboard
       </h1>
 
@@ -53,32 +54,83 @@ function AdminPage() {
         Welkom admin!
       </p>
 
+
       {error && (
-        <p className="text-red-500">
+        <p className="text-red-500 mb-4">
           {error}
         </p>
       )}
 
-      <div className="space-y-3">
-        {users.map((user) => (
-          <div
-            key={user.id}
-            className="border rounded p-4"
-          >
-            <p>
-              <strong>Naam:</strong> {user.name}
-            </p>
 
-            <p>
-              <strong>Email:</strong> {user.email}
-            </p>
+      <div className="border rounded-lg overflow-hidden">
 
-            <p>
-              <strong>Rol:</strong> {user.role}
-            </p>
-          </div>
-        ))}
+        <table className="w-full">
+
+          <thead>
+            <tr className="border-b bg-gray-100">
+
+              <th className="p-3 text-left">
+                Naam
+              </th>
+
+              <th className="p-3 text-left">
+                Email
+              </th>
+
+              <th className="p-3 text-left">
+                Rol
+              </th>
+
+              <th className="p-3 text-left">
+                Aangemaakt
+              </th>
+
+            </tr>
+          </thead>
+
+
+          <tbody>
+
+            {users.map((user) => (
+
+              <tr 
+                key={user.id}
+                className="border-b"
+              >
+
+                <td className="p-3">
+                  {user.name}
+                </td>
+
+                <td className="p-3">
+                  {user.email}
+                </td>
+
+                <td className="p-3">
+                  {user.role}
+                </td>
+
+                <td className="p-3">
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
       </div>
+
+
+      {users.length === 0 && (
+        <p className="mt-4">
+          Geen gebruikers gevonden.
+        </p>
+      )}
+
     </div>
   );
 }
