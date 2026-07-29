@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { signIn } from "../lib/api";
+import { getProfile, signIn } from "../lib/api";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -100,15 +100,30 @@ function LoginPage() {
 
     setError("");
     setIsLoading(true);
+try {
+  await signIn(email, password);
 
-    try {
-      await signIn(email, password);
-      await navigate({ to: "/student-dashboard" });
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
+  const user = await getProfile();
+
+  if (user.role === "admin") {
+    await navigate({
+      to: "/admin",
+    });
+  } else if (user.role === "teacher") {
+    await navigate({
+      to: "/teacher",
+    });
+  } else {
+    await navigate({
+      to: "/student-dashboard",
+    });
+  }
+
+} catch (error) {
+  setError(error instanceof Error ? error.message : "Login failed");
+} finally {
+  setIsLoading(false);
+}
   }
 
   return (
