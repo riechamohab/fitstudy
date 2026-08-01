@@ -390,3 +390,22 @@ export type AdminUser = {
 export async function getAdminUsers() {
   return apiRequest<AdminUser[]>("/api/admin/users");
 }
+export type CreateAdminUserInput = {
+  name: string;
+  email: string;
+  password: string;
+  role: "student" | "teacher" | "admin";
+};
+
+export async function createAdminUser(data: CreateAdminUserInput) {
+  return apiRequest("/api/admin/users", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAdminUser(id: string) {
+  return apiRequest(`/api/admin/users/${id}`, {
+    method: "DELETE",
+  });
+}
