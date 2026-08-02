@@ -13,9 +13,6 @@ export const user = pgTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   role: text("role").default("student").notNull(),
-  banned: boolean("banned").default(false),
-  banReason: text("ban_reason"),
-  banExpires: timestamp("ban_expires"),
   studentId: text("student_id"),
   teacherId: text("teacher_id"),
   school: text("school"),

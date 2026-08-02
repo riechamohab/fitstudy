@@ -28,11 +28,6 @@ const TeacherRoute = TeacherRouteImport.update({
   path: '/teacher',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -98,9 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
   '/teacher': typeof TeacherRoute
-  '/courses': typeof AppCoursesRoute
   '/focus-timer': typeof AppFocusTimerRoute
   '/student-courses': typeof AppStudentCoursesRoute
   '/student-dashboard': typeof AppStudentDashboardRoute
@@ -114,9 +107,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
   '/teacher': typeof TeacherRoute
-  '/courses': typeof AppCoursesRoute
   '/focus-timer': typeof AppFocusTimerRoute
   '/student-courses': typeof AppStudentCoursesRoute
   '/student-dashboard': typeof AppStudentDashboardRoute
@@ -132,9 +123,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
   '/teacher': typeof TeacherRoute
-  '/_app/courses': typeof AppCoursesRoute
   '/_app/focus-timer': typeof AppFocusTimerRoute
   '/_app/student-courses': typeof AppStudentCoursesRoute
   '/_app/student-dashboard': typeof AppStudentDashboardRoute
@@ -150,9 +139,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
-    | '/register'
     | '/teacher'
-    | '/courses'
     | '/focus-timer'
     | '/student-courses'
     | '/student-dashboard'
@@ -166,9 +153,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
-    | '/register'
     | '/teacher'
-    | '/courses'
     | '/focus-timer'
     | '/student-courses'
     | '/student-dashboard'
@@ -183,9 +168,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/admin'
     | '/login'
-    | '/register'
     | '/teacher'
-    | '/_app/courses'
     | '/_app/focus-timer'
     | '/_app/student-courses'
     | '/_app/student-dashboard'
@@ -201,7 +184,6 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AdminRoute: typeof AdminRoute
   LoginRoute: typeof LoginRoute
-  RegisterRoute: typeof RegisterRoute
   TeacherRoute: typeof TeacherRoute
 }
 
@@ -212,13 +194,6 @@ declare module '@tanstack/react-router' {
       path: '/teacher'
       fullPath: '/teacher'
       preLoaderRoute: typeof TeacherRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -337,7 +312,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AdminRoute: AdminRoute,
   LoginRoute: LoginRoute,
-  RegisterRoute: RegisterRoute,
   TeacherRoute: TeacherRoute,
 }
 export const routeTree = rootRouteImport
