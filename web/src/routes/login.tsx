@@ -132,27 +132,20 @@ try {
         <div className="w-full max-w-md rounded-2xl bg-white p-7 shadow-xl">
           <div className="mb-6 flex gap-8 border-b border-slate-200">
             <button className="border-b-2 border-blue-600 pb-3 text-sm font-semibold text-blue-600">
-              Log in
+              Inloggen
             </button>
-
-            <Link
-              to="/register"
-              className="pb-3 text-sm font-semibold text-slate-500 hover:text-blue-600"
-            >
-              Sign up
-            </Link>
           </div>
 
-          <h1 className="text-3xl font-bold text-slate-900">Welcome back</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Welkom terug</h1>
 
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Enter your credentials to continue your personal study journey.
+            Voer je gegevens in om verder te gaan met je studie planning
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-800">
-                Email address
+                E-mail adres
               </label>
               <input
                 className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
@@ -166,7 +159,7 @@ try {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-800">
-                Password
+                Wachtwoord
               </label>
 
               <div className="relative">
@@ -221,34 +214,33 @@ try {
           </div>
 
           <h2 className="text-4xl font-bold leading-tight">
-            Plan smarter,
+            Plan slimmer,
             <br />
-            study calmer.
+            studeer gefocussed.
           </h2>
 
           <p className="mt-5 text-base leading-7 text-blue-100">
-            Your personal space to organize tasks, manage deadlines, monitor
-            wellbeing, and track your learning journey.
+            Plan je lessen, beheer je opdrachten en studeer op een gezonde manier met FitStudy.
           </p>
 
           <div className="mt-8 space-y-4">
             <div className="flex items-center gap-3 rounded-xl bg-white/15 px-6 py-4 font-semibold">
               <CalendarIcon />
-              Smart weekly planning
+              Slimme wekelijkse planning
             </div>
             <div className="flex items-center gap-3 rounded-xl bg-white/15 px-6 py-4 font-semibold">
               <FocusIcon />
-              Focus & stress tracking
+              Studiefocus & stressbeheer
             </div>
             <div className="flex items-center gap-3 rounded-xl bg-white/15 px-6 py-4 font-semibold">
               <ProgressIcon />
-              Progress insights
+              Voortgangsanalyse
             </div>
           </div>
         </div>
 
         <p className="text-center text-sm text-blue-200">
-          Built to help students stay organized, focused, and balanced.
+          Ontworpen voor studenten die georganiseerd, gefocust en in balans willen studeren
         </p>
       </section>
     </main>

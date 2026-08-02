@@ -8,14 +8,22 @@ export const Route = createFileRoute("/_app")({
 });
 
 const proTips = [
-  "Short 25-minute focus sessions help build consistent study habits.",
-  "Reviewing notes within 24 hours boosts retention significantly.",
-  "A 5-minute break every 25 minutes keeps your focus sharp.",
-  "Studying the same material in a different room can improve recall.",
-  "Explaining a topic out loud helps you spot gaps in understanding.",
-  "A consistent sleep schedule improves memory consolidation.",
-  "Breaking big tasks into small ones makes starting easier.",
-  "Testing yourself beats rereading for long-term retention.",
+"Korte focussessies van 25 minuten verhogen je concentratie.",
+"Herhaal je aantekeningen binnen 24 uur.",
+"Overhoor jezelf in plaats van alleen te herlezen.",
+"Leg de leerstof hardop uit om je begrip te testen.",
+"Verdeel grote opdrachten in kleine, haalbare stappen.",
+"Stel elke studiesessie één duidelijk doel.",
+"Werk op een rustige, opgeruimde plek.",
+"Schakel meldingen uit tijdens het studeren.",
+"Neem elke 25 minuten een korte pauze.",
+"Drink regelmatig water tijdens het studeren.",
+"Zorg voor 7 tot 9 uur slaap per nacht.",
+"Rek je even uit tijdens je pauzes.",
+"Eet voedzame snacks voor langdurige energie.",
+"Beweeg dagelijks minstens 30 minuten.",
+"Geef je ogen rust met de 20-20-20-regel.",
+"Gun jezelf rust zonder schuldgevoel."
 ];
 
 function DashboardIcon() {
@@ -109,16 +117,40 @@ function LogoutIcon() {
 }
 
 const navItems = [
-  { label: "Dashboard", icon: DashboardIcon, path: "/student-dashboard" },
-  { label: "Planner", icon: PlannerIcon, path: "/planner" },
-  { label: "Courses", icon: CoursesIcon, path: "/courses" },
-  { label: "Focus Timer", icon: FocusTimerIcon, path: "/focus-timer" as const },
-  { label: "Notes", icon: NotesIcon, path: undefined },
+  { 
+    label: "Dashboard", 
+    icon: DashboardIcon, 
+    path: "/student-dashboard" 
+  },
+
+  { 
+    label: "Planner", 
+    icon: PlannerIcon, 
+    path: "/student-planner" 
+  },
+
+  { 
+    label: "Rooster & Programma", 
+    icon: CoursesIcon, 
+    path: "/student-courses" 
+  },
+
+  { 
+    label: "Focus Timer", 
+    icon: FocusTimerIcon, 
+    path: "/focus-timer" as const 
+  },
+
+  { 
+    label: "Notities", 
+    icon: NotesIcon, 
+    path: "/student-notes" 
+  },
 ];
 
 const insightItems = [
-  { label: "Progress", icon: ProgressIcon, path: "/progress" as const },
-  { label: "Wellbeing", icon: WellbeingIcon, path: undefined },
+  { label: "Progress", icon: ProgressIcon, path: "/student-progress" as const },
+  { label: "Wellbeing", icon: WellbeingIcon, path: "/student-welzijn" },
   { label: "Achievements", icon: AchievementsIcon, path: undefined },
 ];
 
@@ -230,7 +262,7 @@ function AppLayout() {
 
           <button
             type="button"
-            onClick={() => navigate({ to: "/profile-settings" })}
+            onClick={() => navigate({ to: "/student-profile-settings" })}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
           >
             <SettingsIcon />

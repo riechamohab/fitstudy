@@ -9,7 +9,7 @@ import {
   type MonthlyProgress,
 } from "../lib/api";
 
-export const Route = createFileRoute("/_app/progress")({
+export const Route = createFileRoute("/_app/student-progress")({
   component: ProgressPage,
 });
 

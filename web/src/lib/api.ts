@@ -32,15 +32,7 @@ async function apiRequest<T>(
       throw new Error("Invalid email or password.");
     }
 
-    if (response.status === 403) {
-      throw new Error("You do not have permission to access this page.");
-    }
-
-    if (response.status === 409) {
-      throw new Error("This email is already registered.");
-    }
-
-    throw new Error(
+   throw new Error(
       backendMessage || "Something went wrong. Please try again."
     );
   }
@@ -77,23 +69,6 @@ export async function signIn(email: string, password: string) {
     body: JSON.stringify({
       email,
       password,
-    }),
-  });
-}
-
-export async function signUp(
-  name: string,
-  email: string,
-  password: string,
-  studentId: string
-) {
-  return apiRequest("/api/auth/sign-up/email", {
-    method: "POST",
-    body: JSON.stringify({
-      name,
-      email,
-      password,
-      studentId,
     }),
   });
 }
@@ -144,6 +119,7 @@ export async function uploadProfilePicture(file: File) {
 export type Task = {
   id: string;
   userId: string;
+  courseId: string | null;
   title: string;
   description: string | null;
   deadline: string | null;
@@ -186,8 +162,8 @@ export async function getPlanner(view: "day" | "week" | "month", date: string) {
 }
 
 export type CreateTaskInput = {
-  title: string;
-  description?: string;
+  courseId: string;
+  lessonIds?: string[];
   deadline?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH";
 };
@@ -216,13 +192,31 @@ export async function updateTask(id: string, data: UpdateTaskInput) {
 
 export type LessonStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 
+export type LessonItem = {
+  id: string;
+  lessonId: string;
+  title: string;
+  order: number;
+  completed: boolean;
+};
+
 export type Lesson = {
   id: string;
   courseId: string;
+  chapterId: string | null;
   title: string;
   order: number;
   status: LessonStatus;
   progressPercent: number;
+  items: LessonItem[];
+};
+
+export type Chapter = {
+  id: string;
+  courseId: string;
+  title: string;
+  order: number;
+  lessons: Lesson[];
 };
 
 export type Course = {
@@ -233,7 +227,8 @@ export type Course = {
   title: string;
   description: string | null;
   isOwner: boolean;
-  lessons: Lesson[];
+  chapters: Chapter[];
+  lessons: Lesson[]; // lessons not assigned to any chapter
 };
 
 export async function getCourses() {
@@ -247,10 +242,38 @@ export async function createCourse(data: { title: string; description?: string }
   });
 }
 
-export async function addLesson(courseId: string, title: string, order?: number) {
+export async function addLesson(
+  courseId: string,
+  title: string,
+  chapterId?: string,
+  order?: number
+) {
   return apiRequest<Lesson>(`/api/courses/${courseId}/lessons`, {
     method: "POST",
+    body: JSON.stringify({ title, chapterId, order }),
+  });
+}
+
+export async function addChapter(courseId: string, title: string, order?: number) {
+  return apiRequest<Chapter>(`/api/courses/${courseId}/chapters`, {
+    method: "POST",
     body: JSON.stringify({ title, order }),
+  });
+}
+
+export type ClassScheduleOverview = {
+  className: string | null;
+  entries: ClassScheduleEntry[];
+};
+
+export async function getClassSchedule() {
+  return apiRequest<ClassScheduleOverview>("/api/calendar/schedule");
+}
+
+export async function toggleLessonItem(itemId: string, completed: boolean) {
+  return apiRequest<LessonItem>(`/api/courses/items/${itemId}/progress`, {
+    method: "PUT",
+    body: JSON.stringify({ completed }),
   });
 }
 
@@ -363,12 +386,165 @@ export function getProgressExportUrl() {
   return `${API_BASE_URL}/api/progress/export`;
 }
 
-export async function getTasks() {
-  return apiRequest<Task[]>("/api/tasks");
+export type StreakStatus = "active" | "frozen" | "broken" | "none";
+
+export type DashboardWeek = {
+  studyHours: {
+    hours: number;
+    minutes: number;
+    percentOfWeek: number;
+  };
+  tasksThisWeek: {
+    completed: number;
+    total: number;
+  };
+  weeklyComparison: {
+    thisWeekMinutes: number;
+    lastWeekMinutes: number;
+    changePercent: number | null;
+  };
+  streak: {
+    count: number;
+    status: StreakStatus;
+    daysSinceLastActive: number | null;
+  };
+};
+
+export async function getDashboardWeek() {
+  return apiRequest<DashboardWeek>("/api/progress/dashboard-week");
 }
 
-export async function getNotifications() {
-  return apiRequest("/api/notifications");
+export type TeacherNote = {
+  id: string;
+  studentId: string;
+  teacherId: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export async function getNotes() {
+  return apiRequest<TeacherNote[]>("/api/notes");
+}
+
+export async function markNoteRead(id: string) {
+  return apiRequest<TeacherNote>(`/api/notes/${id}/read`, {
+    method: "PUT",
+  });
+}
+
+export type AppNotification = {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export async function getNotifications(unreadOnly?: boolean) {
+  const query = unreadOnly ? "?unread=true" : "";
+  return apiRequest<AppNotification[]>(`/api/notifications${query}`);
+}
+
+export async function getNotificationCount() {
+  return apiRequest<{ total: number; unread: number }>("/api/notifications/count");
+}
+
+export async function markNotificationRead(id: string) {
+  return apiRequest<AppNotification>(`/api/notifications/${id}/read`, {
+    method: "PUT",
+  });
+}
+
+export async function markAllNotificationsRead() {
+  return apiRequest<{ message: string }>("/api/notifications/read-all", {
+    method: "PUT",
+  });
+}
+
+export type StressEntry = {
+  id: string;
+  userId: string;
+  level: number;
+  focus: number;
+  sleepHours: number | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+export async function createStressEntry(data: {
+  level: number;
+  focus: number;
+  sleepHours?: number;
+  notes?: string;
+}) {
+  return apiRequest<StressEntry>("/api/stress-levels", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getStressLevels(days = 7) {
+  return apiRequest<StressEntry[]>(`/api/stress-levels?days=${days}`);
+}
+
+export type WellbeingStatus = {
+  status: "healthy" | "at_risk" | "critical" | "unknown";
+  avgStress: number | null;
+  avgSleep: number | null;
+  entries: number;
+};
+
+export async function getWellbeingStatus() {
+  return apiRequest<WellbeingStatus>("/api/stress-levels/wellbeing-status");
+}
+
+export type ExerciseType = {
+  type: string;
+  duration: number;
+  description: string;
+};
+
+export async function getExerciseTypes() {
+  return apiRequest<ExerciseType[]>("/api/exercises/types");
+}
+
+export type Exercise = {
+  id: string;
+  userId: string;
+  type: string;
+  duration: number;
+  completed: boolean;
+  createdAt: string;
+};
+
+export async function startExercise(type: string, duration: number) {
+  return apiRequest<Exercise>("/api/exercises/start", {
+    method: "POST",
+    body: JSON.stringify({ type, duration }),
+  });
+}
+
+export async function completeExercise(id: string) {
+  return apiRequest<Exercise>(`/api/exercises/${id}/complete`, {
+    method: "PUT",
+  });
+}
+
+export type MotivationMessage = {
+  id: string;
+  message: string;
+  active: boolean;
+};
+
+export async function getMotivation() {
+  return apiRequest<MotivationMessage>("/api/progress/motivation");
+}
+
+export async function getTasks() {
+  return apiRequest<Task[]>("/api/tasks");
 }
 
 export async function getProgress() {

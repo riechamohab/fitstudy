@@ -4,12 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   getImageUrl,
   getProfile,
-  updateProfile,
   uploadProfilePicture,
   type UserProfile,
 } from "../lib/api";
 
-export const Route = createFileRoute("/_app/profile-settings")({
+export const Route = createFileRoute("/_app/student-profile-settings")({
   component: ProfileSettingsPage,
 });
 
@@ -27,15 +26,8 @@ function ProfileSettingsPage() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  const [school, setSchool] = useState("");
-  const [study, setStudy] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [studentClass, setStudentClass] = useState("");
-
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageError, setImageError] = useState("");
 
@@ -44,10 +36,6 @@ function ProfileSettingsPage() {
       try {
         const data = await getProfile();
         setProfile(data);
-        setSchool(data.school ?? "");
-        setStudy(data.study ?? "");
-        setPhoneNumber(data.phoneNumber ?? "");
-        setStudentClass(data.studentClass ?? "");
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "Failed to load profile"
@@ -77,29 +65,6 @@ function ProfileSettingsPage() {
     } finally {
       setIsUploadingImage(false);
       event.target.value = "";
-    }
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setError("");
-    setSuccess(false);
-    setIsSaving(true);
-
-    try {
-      const updated = await updateProfile({
-        school,
-        study,
-        phoneNumber,
-        studentClass,
-      });
-      setProfile(updated);
-      setSuccess(true);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to save");
-    } finally {
-      setIsSaving(false);
     }
   }
 
@@ -154,7 +119,7 @@ function ProfileSettingsPage() {
 
                 <div>
                   <p className="text-sm font-semibold text-slate-800">
-                    Profile picture
+                    Profiel foto
                   </p>
                   <p className="text-xs text-slate-500">
                     {isUploadingImage
@@ -167,10 +132,9 @@ function ProfileSettingsPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Full name
+                    Volledig Naam
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500"
@@ -182,7 +146,7 @@ function ProfileSettingsPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Email address
+                    E-mail Adres
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500"
@@ -199,71 +163,47 @@ function ProfileSettingsPage() {
                   <input
                     className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                     type="text"
-                    value={school}
-                    onChange={(event) => setSchool(event.target.value)}
-                    placeholder="Your school"
+                    value={profile?.school ?? ""}
+                    disabled
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Field of study
+                    Studie Richting
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                     type="text"
-                    value={study}
-                    onChange={(event) => setStudy(event.target.value)}
-                    placeholder="e.g. Computer Science"
+                    value={profile?.study ?? ""}
+                    disabled
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Class
+                    Klas
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                     type="text"
-                    value={studentClass}
-                    onChange={(event) => setStudentClass(event.target.value)}
-                    placeholder="e.g. 4B"
+                    value={profile?.studentClass ?? ""}
+                    disabled
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Phone number
+                    Mobiel Nummer
                   </label>
                   <input
                     className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                     type="tel"
-                    value={phoneNumber}
-                    onChange={(event) => setPhoneNumber(event.target.value)}
-                    placeholder="Your phone number"
+                    value={profile?.phoneNumber ?? ""}
+                    disabled
                   />
                 </div>
 
-                {error && (
-                  <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                    {error}
-                  </p>
-                )}
-
-                {success && (
-                  <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
-                    Saved.
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
-                >
-                  {isSaving ? "Saving..." : "Save changes"}
-                </button>
-              </form>
             </>
           )}
         </div>

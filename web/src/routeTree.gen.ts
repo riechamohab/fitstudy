@@ -10,17 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeacherRouteImport } from './routes/teacher'
-import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppStudentWelzijnRouteImport } from './routes/_app.student-welzijn'
+import { Route as AppStudentProgressRouteImport } from './routes/_app.student-progress'
+import { Route as AppStudentProfileSettingsRouteImport } from './routes/_app.student-profile-settings'
+import { Route as AppStudentPlannerRouteImport } from './routes/_app.student-planner'
+import { Route as AppStudentNotesRouteImport } from './routes/_app.student-notes'
 import { Route as AppStudentDashboardRouteImport } from './routes/_app.student-dashboard'
-import { Route as AppProgressRouteImport } from './routes/_app.progress'
-import { Route as AppProfileSettingsRouteImport } from './routes/_app.profile-settings'
-import { Route as AppPlannerRouteImport } from './routes/_app.planner'
+import { Route as AppStudentCoursesRouteImport } from './routes/_app.student-courses'
 import { Route as AppFocusTimerRouteImport } from './routes/_app.focus-timer'
-import { Route as AppCoursesRouteImport } from './routes/_app.courses'
 
 const TeacherRoute = TeacherRouteImport.update({
   id: '/teacher',
@@ -51,34 +52,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppStudentWelzijnRoute = AppStudentWelzijnRouteImport.update({
+  id: '/student-welzijn',
+  path: '/student-welzijn',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentProgressRoute = AppStudentProgressRouteImport.update({
+  id: '/student-progress',
+  path: '/student-progress',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentProfileSettingsRoute =
+  AppStudentProfileSettingsRouteImport.update({
+    id: '/student-profile-settings',
+    path: '/student-profile-settings',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppStudentPlannerRoute = AppStudentPlannerRouteImport.update({
+  id: '/student-planner',
+  path: '/student-planner',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentNotesRoute = AppStudentNotesRouteImport.update({
+  id: '/student-notes',
+  path: '/student-notes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppStudentDashboardRoute = AppStudentDashboardRouteImport.update({
   id: '/student-dashboard',
   path: '/student-dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppProgressRoute = AppProgressRouteImport.update({
-  id: '/progress',
-  path: '/progress',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProfileSettingsRoute = AppProfileSettingsRouteImport.update({
-  id: '/profile-settings',
-  path: '/profile-settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPlannerRoute = AppPlannerRouteImport.update({
-  id: '/planner',
-  path: '/planner',
+const AppStudentCoursesRoute = AppStudentCoursesRouteImport.update({
+  id: '/student-courses',
+  path: '/student-courses',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFocusTimerRoute = AppFocusTimerRouteImport.update({
   id: '/focus-timer',
   path: '/focus-timer',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCoursesRoute = AppCoursesRouteImport.update({
-  id: '/courses',
-  path: '/courses',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -90,10 +102,13 @@ export interface FileRoutesByFullPath {
   '/teacher': typeof TeacherRoute
   '/courses': typeof AppCoursesRoute
   '/focus-timer': typeof AppFocusTimerRoute
-  '/planner': typeof AppPlannerRoute
-  '/profile-settings': typeof AppProfileSettingsRoute
-  '/progress': typeof AppProgressRoute
+  '/student-courses': typeof AppStudentCoursesRoute
   '/student-dashboard': typeof AppStudentDashboardRoute
+  '/student-notes': typeof AppStudentNotesRoute
+  '/student-planner': typeof AppStudentPlannerRoute
+  '/student-profile-settings': typeof AppStudentProfileSettingsRoute
+  '/student-progress': typeof AppStudentProgressRoute
+  '/student-welzijn': typeof AppStudentWelzijnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,10 +118,13 @@ export interface FileRoutesByTo {
   '/teacher': typeof TeacherRoute
   '/courses': typeof AppCoursesRoute
   '/focus-timer': typeof AppFocusTimerRoute
-  '/planner': typeof AppPlannerRoute
-  '/profile-settings': typeof AppProfileSettingsRoute
-  '/progress': typeof AppProgressRoute
+  '/student-courses': typeof AppStudentCoursesRoute
   '/student-dashboard': typeof AppStudentDashboardRoute
+  '/student-notes': typeof AppStudentNotesRoute
+  '/student-planner': typeof AppStudentPlannerRoute
+  '/student-profile-settings': typeof AppStudentProfileSettingsRoute
+  '/student-progress': typeof AppStudentProgressRoute
+  '/student-welzijn': typeof AppStudentWelzijnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,10 +136,13 @@ export interface FileRoutesById {
   '/teacher': typeof TeacherRoute
   '/_app/courses': typeof AppCoursesRoute
   '/_app/focus-timer': typeof AppFocusTimerRoute
-  '/_app/planner': typeof AppPlannerRoute
-  '/_app/profile-settings': typeof AppProfileSettingsRoute
-  '/_app/progress': typeof AppProgressRoute
+  '/_app/student-courses': typeof AppStudentCoursesRoute
   '/_app/student-dashboard': typeof AppStudentDashboardRoute
+  '/_app/student-notes': typeof AppStudentNotesRoute
+  '/_app/student-planner': typeof AppStudentPlannerRoute
+  '/_app/student-profile-settings': typeof AppStudentProfileSettingsRoute
+  '/_app/student-progress': typeof AppStudentProgressRoute
+  '/_app/student-welzijn': typeof AppStudentWelzijnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -133,10 +154,13 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/courses'
     | '/focus-timer'
-    | '/planner'
-    | '/profile-settings'
-    | '/progress'
+    | '/student-courses'
     | '/student-dashboard'
+    | '/student-notes'
+    | '/student-planner'
+    | '/student-profile-settings'
+    | '/student-progress'
+    | '/student-welzijn'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -146,10 +170,13 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/courses'
     | '/focus-timer'
-    | '/planner'
-    | '/profile-settings'
-    | '/progress'
+    | '/student-courses'
     | '/student-dashboard'
+    | '/student-notes'
+    | '/student-planner'
+    | '/student-profile-settings'
+    | '/student-progress'
+    | '/student-welzijn'
   id:
     | '__root__'
     | '/'
@@ -160,10 +187,13 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/_app/courses'
     | '/_app/focus-timer'
-    | '/_app/planner'
-    | '/_app/profile-settings'
-    | '/_app/progress'
+    | '/_app/student-courses'
     | '/_app/student-dashboard'
+    | '/_app/student-notes'
+    | '/_app/student-planner'
+    | '/_app/student-profile-settings'
+    | '/_app/student-progress'
+    | '/_app/student-welzijn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -219,6 +249,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/student-welzijn': {
+      id: '/_app/student-welzijn'
+      path: '/student-welzijn'
+      fullPath: '/student-welzijn'
+      preLoaderRoute: typeof AppStudentWelzijnRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/student-progress': {
+      id: '/_app/student-progress'
+      path: '/student-progress'
+      fullPath: '/student-progress'
+      preLoaderRoute: typeof AppStudentProgressRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/student-profile-settings': {
+      id: '/_app/student-profile-settings'
+      path: '/student-profile-settings'
+      fullPath: '/student-profile-settings'
+      preLoaderRoute: typeof AppStudentProfileSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/student-planner': {
+      id: '/_app/student-planner'
+      path: '/student-planner'
+      fullPath: '/student-planner'
+      preLoaderRoute: typeof AppStudentPlannerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/student-notes': {
+      id: '/_app/student-notes'
+      path: '/student-notes'
+      fullPath: '/student-notes'
+      preLoaderRoute: typeof AppStudentNotesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/student-dashboard': {
       id: '/_app/student-dashboard'
       path: '/student-dashboard'
@@ -226,25 +291,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStudentDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/progress': {
-      id: '/_app/progress'
-      path: '/progress'
-      fullPath: '/progress'
-      preLoaderRoute: typeof AppProgressRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/profile-settings': {
-      id: '/_app/profile-settings'
-      path: '/profile-settings'
-      fullPath: '/profile-settings'
-      preLoaderRoute: typeof AppProfileSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/planner': {
-      id: '/_app/planner'
-      path: '/planner'
-      fullPath: '/planner'
-      preLoaderRoute: typeof AppPlannerRouteImport
+    '/_app/student-courses': {
+      id: '/_app/student-courses'
+      path: '/student-courses'
+      fullPath: '/student-courses'
+      preLoaderRoute: typeof AppStudentCoursesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/focus-timer': {
@@ -254,32 +305,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFocusTimerRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/courses': {
-      id: '/_app/courses'
-      path: '/courses'
-      fullPath: '/courses'
-      preLoaderRoute: typeof AppCoursesRouteImport
-      parentRoute: typeof AppRoute
-    }
   }
 }
 
 interface AppRouteChildren {
-  AppCoursesRoute: typeof AppCoursesRoute
   AppFocusTimerRoute: typeof AppFocusTimerRoute
-  AppPlannerRoute: typeof AppPlannerRoute
-  AppProfileSettingsRoute: typeof AppProfileSettingsRoute
-  AppProgressRoute: typeof AppProgressRoute
+  AppStudentCoursesRoute: typeof AppStudentCoursesRoute
   AppStudentDashboardRoute: typeof AppStudentDashboardRoute
+  AppStudentNotesRoute: typeof AppStudentNotesRoute
+  AppStudentPlannerRoute: typeof AppStudentPlannerRoute
+  AppStudentProfileSettingsRoute: typeof AppStudentProfileSettingsRoute
+  AppStudentProgressRoute: typeof AppStudentProgressRoute
+  AppStudentWelzijnRoute: typeof AppStudentWelzijnRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppCoursesRoute: AppCoursesRoute,
   AppFocusTimerRoute: AppFocusTimerRoute,
-  AppPlannerRoute: AppPlannerRoute,
-  AppProfileSettingsRoute: AppProfileSettingsRoute,
-  AppProgressRoute: AppProgressRoute,
+  AppStudentCoursesRoute: AppStudentCoursesRoute,
   AppStudentDashboardRoute: AppStudentDashboardRoute,
+  AppStudentNotesRoute: AppStudentNotesRoute,
+  AppStudentPlannerRoute: AppStudentPlannerRoute,
+  AppStudentProfileSettingsRoute: AppStudentProfileSettingsRoute,
+  AppStudentProgressRoute: AppStudentProgressRoute,
+  AppStudentWelzijnRoute: AppStudentWelzijnRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
