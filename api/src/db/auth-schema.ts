@@ -1,28 +1,29 @@
 import { relations } from "drizzle-orm";
-import { pgTable, pgEnum, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
- 
-export const roleEnum = pgEnum("role", ["teacher", "student", "admin"]);
- 
+import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  role: roleEnum("role").notNull().default("student"),
-  studentId: text("student_id").unique(),
-  teacherId: text("teacher_id").unique(),
-  school: text("school"),
-  study: text("study"),
-  phoneNumber: text("phone_number"),
-  studentClass: text("class"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => new Date())
+    .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+  role: text("role").default("student").notNull(),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
+  studentId: text("student_id"),
+  teacherId: text("teacher_id"),
+  school: text("school"),
+  study: text("study"),
+  phoneNumber: text("phone_number"),
+  studentClass: text("student_class"),
 });
- 
+
 export const session = pgTable(
   "session",
   {
@@ -31,17 +32,18 @@ export const session = pgTable(
     token: text("token").notNull().unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
-      .$onUpdate(() => new Date())
+      .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    impersonatedBy: text("impersonated_by"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
- 
+
 export const account = pgTable(
   "account",
   {
@@ -60,12 +62,12 @@ export const account = pgTable(
     password: text("password"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
-      .$onUpdate(() => new Date())
+      .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
   (table) => [index("account_userId_idx").on(table.userId)],
 );
- 
+
 export const verification = pgTable(
   "verification",
   {
@@ -76,24 +78,24 @@ export const verification = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
-      .$onUpdate(() => new Date())
+      .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
- 
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
 }));
- 
+
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
     references: [user.id],
   }),
 }));
- 
+
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],

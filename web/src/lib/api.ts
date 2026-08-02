@@ -378,3 +378,34 @@ export async function getProgress() {
 export async function getCalendar() {
   return apiRequest("/api/calendar");
 }
+
+export type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "student" | "teacher";
+  createdAt: string;
+};
+
+export async function getAdminUsers() {
+  return apiRequest<AdminUser[]>("/api/admin/users");
+}
+export type CreateAdminUserInput = {
+  name: string;
+  email: string;
+  password: string;
+  role: "student" | "teacher" | "admin";
+};
+
+export async function createAdminUser(data: CreateAdminUserInput) {
+  return apiRequest("/api/admin/users", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAdminUser(id: string) {
+  return apiRequest(`/api/admin/users/${id}`, {
+    method: "DELETE",
+  });
+}
