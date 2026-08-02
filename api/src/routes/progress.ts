@@ -94,8 +94,6 @@ router.get("/motivation", async (req, res) => {
     if (!currentUser) {
     return;
     }
-  
-      const userId = currentUser.id;
 
     let messages = await db
       .select()
@@ -119,14 +117,6 @@ router.get("/motivation", async (req, res) => {
 
     const randomIndex = Math.floor(Math.random() * messages.length);
     const selectedMessage = messages[randomIndex];
-
-    await db.insert(notifications).values({
-      id: nanoid(),
-      userId,
-      title: "Daily Motivation",
-      message: selectedMessage.message,
-      type: "MOTIVATION",
-    });
 
     res.json(selectedMessage);
   } catch (error) {
@@ -507,8 +497,9 @@ router.get("/dashboard-week", async (req, res) => {
       0
     );
     const thisWeekHours = Number((thisWeekMinutes / 60).toFixed(1));
-    const percentOfWeek = Number(((thisWeekMinutes / 60 / 84) * 100).toFixed(1));
+    const percentOfWeek = Number(((thisWeekMinutes / 60 / 168) * 100).toFixed(1));
 
+    // --- Weekly comparison (vs last week) ---
     const lastWeekSessions = await db
       .select()
       .from(focusSessions)
@@ -551,7 +542,7 @@ router.get("/dashboard-week", async (req, res) => {
 
     const activeDateKeys = Array.from(
       new Set(allSessions.map((s) => toDateKey(new Date(s.startedAt))))
-    ).sort((a, b) => (a < b ? 1 : -1)); 
+    ).sort((a, b) => (a < b ? 1 : -1)); // descending
 
     const streak = computeStreak(activeDateKeys);
 

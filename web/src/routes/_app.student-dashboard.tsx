@@ -215,7 +215,9 @@ function StudentDashboardPage() {
         const data = await getNotifications();
         if (cancelled) return;
 
-        for (const notif of data) {
+        const filtered = data.filter((n) => n.type !== "MOTIVATION");
+
+        for (const notif of filtered) {
           if (!seenNotifIdsRef.current.has(notif.id)) {
             seenNotifIdsRef.current.add(notif.id);
             if (!notif.read && !isFirstNotifPollRef.current) {
@@ -225,7 +227,7 @@ function StudentDashboardPage() {
         }
 
         isFirstNotifPollRef.current = false;
-        setNotifications(data);
+        setNotifications(filtered);
       } catch {
         // non-fatal — the bell just won't update this cycle
       }
