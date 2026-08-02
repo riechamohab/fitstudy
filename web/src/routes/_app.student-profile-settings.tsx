@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import {
+  getEnrollmentHistory,
   getImageUrl,
   getProfile,
   uploadProfilePicture,
+  type EnrollmentEntry,
   type UserProfile,
 } from "../lib/api";
 
@@ -21,10 +23,52 @@ function CameraIcon() {
   );
 }
 
+function LockIcon() {
+  return (
+    <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+function getSchoolYearLabel(date: Date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const startYear = month >= 8 ? year : year - 1;
+  return `${startYear}-${startYear + 1}`;
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  locked,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  locked?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between py-3">
+      <div className="flex items-center gap-2 text-sm text-slate-500">
+        <span>{icon}</span>
+        <span>{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium text-slate-900">{value || "—"}</span>
+        {locked && <LockIcon />}
+      </div>
+    </div>
+  );
+}
+
 function ProfileSettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [history, setHistory] = useState<EnrollmentEntry[]>([]);
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -32,20 +76,24 @@ function ProfileSettingsPage() {
   const [imageError, setImageError] = useState("");
 
   useEffect(() => {
-    async function loadProfile() {
+    async function loadData() {
       try {
-        const data = await getProfile();
-        setProfile(data);
+        const [profileData, historyData] = await Promise.all([
+          getProfile(),
+          getEnrollmentHistory(),
+        ]);
+        setProfile(profileData);
+        setHistory(historyData);
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : "Failed to load profile"
+          error instanceof Error ? error.message : "Kon profiel niet laden"
         );
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadProfile();
+    loadData();
   }, []);
 
   async function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
@@ -60,7 +108,7 @@ function ProfileSettingsPage() {
       setProfile(updated);
     } catch (error) {
       setImageError(
-        error instanceof Error ? error.message : "Failed to upload image"
+        error instanceof Error ? error.message : "Kon foto niet uploaden"
       );
     } finally {
       setIsUploadingImage(false);
@@ -70,27 +118,28 @@ function ProfileSettingsPage() {
 
   const firstName = profile?.name?.split(" ")[0] ?? "";
   const imageUrl = getImageUrl(profile?.image);
+  const currentSchoolYear = getSchoolYearLabel(new Date());
 
   return (
     <main className="p-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="rounded-2xl bg-white p-7 shadow-xl">
-          <h1 className="text-2xl font-bold text-slate-900">Your information</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Keep your school and contact details up to date.
-          </p>
+      <div className="mx-auto max-w-xl">
+        <h1 className="mb-4 flex items-center gap-2 text-2xl font-bold text-slate-900">
+          <span>👤</span> Mijn profiel
+        </h1>
 
+        <div className="rounded-2xl bg-white shadow-xl">
           {isLoading ? (
-            <p className="mt-6 text-sm text-slate-500">Loading...</p>
+            <p className="p-7 text-sm text-slate-500">Laden...</p>
           ) : (
             <>
-              <div className="mt-6 flex items-center gap-4">
+              {/* Profielfoto */}
+              <div className="flex flex-col items-center gap-3 border-b border-slate-100 p-7">
                 <div className="relative">
-                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-semibold text-blue-700">
+                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-3xl font-semibold text-blue-700">
                     {imageUrl ? (
                       <img
                         src={imageUrl}
-                        alt="Profile"
+                        alt="Profiel"
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -103,7 +152,7 @@ function ProfileSettingsPage() {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingImage}
                     className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
-                    aria-label="Change profile picture"
+                    aria-label="Wijzig profielfoto"
                   >
                     <CameraIcon />
                   </button>
@@ -117,93 +166,120 @@ function ProfileSettingsPage() {
                   />
                 </div>
 
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    Profiel foto
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {isUploadingImage
-                      ? "Uploading..."
-                      : "JPG or PNG, up to 5MB."}
-                  </p>
-                  {imageError && (
-                    <p className="mt-1 text-xs text-red-600">{imageError}</p>
-                  )}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingImage}
+                  className="text-sm font-medium text-blue-600 hover:underline disabled:opacity-60"
+                >
+                  {isUploadingImage ? "Uploaden..." : "Wijzig foto"}
+                </button>
+
+                {imageError && (
+                  <p className="text-xs text-red-600">{imageError}</p>
+                )}
+              </div>
+
+              {/* Persoonlijke gegevens */}
+              <div className="border-b border-slate-100 p-7">
+                <p className="mb-1 text-sm font-semibold text-slate-900">
+                  Persoonlijke gegevens
+                </p>
+                <div className="divide-y divide-slate-100">
+                  <InfoRow icon="👤" label="Naam" value={profile?.name ?? ""} locked />
+                  <InfoRow
+                    icon="📧"
+                    label="School e-mailadres"
+                    value={profile?.email ?? ""}
+                    locked
+                  />
+                  <InfoRow
+                    icon="🆔"
+                    label="Studentnummer"
+                    value={profile?.studentId ?? ""}
+                    locked
+                  />
                 </div>
               </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Volledig Naam
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500"
-                    type="text"
-                    value={profile?.name ?? ""}
-                    disabled
+              {/* Studiegegevens */}
+              <div className="border-b border-slate-100 p-7">
+                <p className="mb-1 text-sm font-semibold text-slate-900">
+                  Studiegegevens
+                </p>
+                <div className="divide-y divide-slate-100">
+                  <InfoRow icon="🏫" label="School" value={profile?.school ?? ""} />
+                  <InfoRow icon="💻" label="Opleiding" value={profile?.study ?? ""} />
+                  <InfoRow
+                    icon="📅"
+                    label="Huidig schooljaar"
+                    value={currentSchoolYear}
                   />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    E-mail Adres
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500"
-                    type="email"
-                    value={profile?.email ?? ""}
-                    disabled
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    School
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                    type="text"
-                    value={profile?.school ?? ""}
-                    disabled
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Studie Richting
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                    type="text"
-                    value={profile?.study ?? ""}
-                    disabled
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Klas
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                    type="text"
+                  <InfoRow
+                    icon="👥"
+                    label="Klas"
                     value={profile?.studentClass ?? ""}
-                    disabled
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Mobiel Nummer
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                    type="tel"
-                    value={profile?.phoneNumber ?? ""}
-                    disabled
-                  />
+              {/* Studiegeschiedenis */}
+              <div className="border-b border-slate-100 p-7">
+                <p className="mb-3 text-sm font-semibold text-slate-900">
+                  Studiegeschiedenis
+                </p>
+
+                {history.length === 0 ? (
+                  <p className="text-sm text-slate-400">
+                    Nog geen studiegeschiedenis beschikbaar.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {history.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-slate-700">
+                          {entry.schoolYear} &nbsp; {entry.className}
+                        </span>
+                        {entry.status === "CURRENT" ? (
+                          <span className="flex items-center gap-1 font-medium text-green-600">
+                            🟢 Huidig
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-slate-500">
+                            ✔ Behaald
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Info footer */}
+              <div className="p-7">
+                {error && (
+                  <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    {error}
+                  </p>
+                )}
+
+                <div className="flex gap-2 rounded-lg bg-slate-50 p-4">
+                  <span>ℹ️</span>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Gegevens onjuist?
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Je persoonlijke gegevens worden beheerd door de
+                      schooladministratie. Neem contact op met de
+                      administratie om wijzigingen door te geven.
+                    </p>
+                  </div>
                 </div>
-
+              </div>
             </>
           )}
         </div>
@@ -211,3 +287,4 @@ function ProfileSettingsPage() {
     </main>
   );
 }
+

@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
-import { classSchedule, exercises, stressLevels, tasks, progress, teacherNotes } from "../db/schema.js";
+import { classSchedule, exercises, stressLevels, tasks, progress, teacherNotes, notifications } from "../db/schema.js";
 import { user } from "../db/auth-schema.js";
 import { requireUser } from "../lib/auth-session.js";
 
@@ -719,6 +719,45 @@ router.post("/notes", checkTeacherRole, async (req: any, res) => {
     res.status(201).json(inserted[0]);
   } catch (error) {
     console.error("Create note error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+const ANNOUNCEMENT_TYPES = ["CLASS_CANCELED", "CLASS_MOVED", "TEST_ANNOUNCEMENT", "GENERAL"];
+
+router.post("/announce", checkTeacherRole, async (req: any, res) => {
+  try {
+    const { className, title, message, type = "GENERAL" } = req.body;
+
+    if (!className || !title || !message) {
+      return res.status(400).json({ error: "className, title, and message are required" });
+    }
+
+    if (!ANNOUNCEMENT_TYPES.includes(type)) {
+      return res.status(400).json({
+        error: `type must be one of: ${ANNOUNCEMENT_TYPES.join(", ")}`,
+      });
+    }
+
+    const students = await db.select().from(user).where(eq(user.studentClass, className));
+
+    if (students.length === 0) {
+      return res.status(404).json({ error: "No students found in that class" });
+    }
+
+    await db.insert(notifications).values(
+      students.map((student) => ({
+        id: nanoid(),
+        userId: student.id,
+        title,
+        message,
+        type,
+      }))
+    );
+
+    res.status(201).json({ message: `Announcement sent to ${students.length} students` });
+  } catch (error) {
+    console.error("Send announcement error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

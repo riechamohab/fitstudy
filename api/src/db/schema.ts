@@ -303,3 +303,20 @@ export const teacherNotes = pgTable("teacher_notes", {
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const ENROLLMENT_STATUSES = ["CURRENT", "COMPLETED"] as const;
+export type EnrollmentStatus = (typeof ENROLLMENT_STATUSES)[number];
+ 
+export const enrollmentHistory = pgTable("enrollment_history", {
+  id: text("id").primaryKey(),
+ 
+  studentId: text("student_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+ 
+  schoolYear: text("school_year").notNull(), 
+  className: text("class_name").notNull(),
+  status: text("status").notNull().default("COMPLETED"), 
+ 
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

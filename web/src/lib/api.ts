@@ -543,6 +543,19 @@ export async function getMotivation() {
   return apiRequest<MotivationMessage>("/api/progress/motivation");
 }
 
+export type EnrollmentEntry = {
+  id: string;
+  studentId: string;
+  schoolYear: string;
+  className: string;
+  status: "CURRENT" | "COMPLETED";
+  createdAt: string;
+};
+ 
+export async function getEnrollmentHistory() {
+  return apiRequest<EnrollmentEntry[]>("/api/users/enrollment-history");
+}
+
 export async function getTasks() {
   return apiRequest<Task[]>("/api/tasks");
 }
