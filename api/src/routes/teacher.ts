@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
-import { classSchedule, exercises, stressLevels, tasks, progress } from "../db/schema.js";
+import { classSchedule, exercises, stressLevels, tasks, progress, teacherNotes } from "../db/schema.js";
 import { user } from "../db/auth-schema.js";
 import { requireUser } from "../lib/auth-session.js";
 
@@ -19,6 +19,24 @@ async function checkTeacherRole(req: any, res: any, next: any) {
   if (currentUser.role !== "teacher" && currentUser.role !== "admin") {
     return res.status(403).json({
       error: "Access denied. Teacher role required.",
+    });
+  }
+
+  req.currentUser = currentUser;
+
+  next();
+}
+
+async function checkAdminRole(req: any, res: any, next: any) {
+  const currentUser = await requireUser(req, res);
+
+  if (!currentUser) {
+    return;
+  }
+
+  if (currentUser.role !== "admin") {
+    return res.status(403).json({
+      error: "Access denied. Admin role required.",
     });
   }
 
@@ -560,9 +578,7 @@ router.get("/wellness-reports", checkTeacherRole, async (req, res) => {
   }
 });
 
-// --- Class schedule management ---
-
-router.get("/class-schedule", checkTeacherRole, async (req: any, res) => {
+router.get("/class-schedule", checkAdminRole, async (req: any, res) => {
   try {
     const teacherId = req.currentUser.id;
 
@@ -579,7 +595,7 @@ router.get("/class-schedule", checkTeacherRole, async (req: any, res) => {
   }
 });
 
-router.post("/class-schedule", checkTeacherRole, async (req: any, res) => {
+router.post("/class-schedule", checkAdminRole, async (req: any, res) => {
   try {
     const teacherId = req.currentUser.id;
 
@@ -615,7 +631,7 @@ router.post("/class-schedule", checkTeacherRole, async (req: any, res) => {
   }
 });
 
-router.put("/class-schedule/:id", checkTeacherRole, async (req: any, res) => {
+router.put("/class-schedule/:id", checkAdminRole, async (req: any, res) => {
   try {
     const teacherId = req.currentUser.id;
     const { id } = req.params;
@@ -657,7 +673,7 @@ router.put("/class-schedule/:id", checkTeacherRole, async (req: any, res) => {
   }
 });
 
-router.delete("/class-schedule/:id", checkTeacherRole, async (req: any, res) => {
+router.delete("/class-schedule/:id", checkAdminRole, async (req: any, res) => {
   try {
     const teacherId = req.currentUser.id;
     const { id } = req.params;
@@ -677,6 +693,32 @@ router.delete("/class-schedule/:id", checkTeacherRole, async (req: any, res) => 
     res.json({ message: "Class schedule entry deleted" });
   } catch (error) {
     console.error("Delete class schedule error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/notes", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const { studentId, message } = req.body;
+
+    if (!studentId || !message || typeof message !== "string") {
+      return res.status(400).json({ error: "studentId and message are required" });
+    }
+
+    const inserted = await db
+      .insert(teacherNotes)
+      .values({
+        id: nanoid(),
+        studentId,
+        teacherId,
+        message,
+      })
+      .returning();
+
+    res.status(201).json(inserted[0]);
+  } catch (error) {
+    console.error("Create note error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

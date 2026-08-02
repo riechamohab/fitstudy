@@ -18,16 +18,16 @@ import { requireUser } from "../lib/auth-session.js";
 const router = Router();
 
 const defaultMotivationMessages = [
-  "You're doing great! Every step forward is progress.",
-  "Believe in yourself! You're capable of amazing things.",
-  "Small progress is still progress. Keep going!",
-  "Your hard work will pay off. Stay focused!",
-  "Take it one task at a time. You've got this!",
-  "Success is the sum of small efforts repeated daily.",
-  "You're stronger than you think. Keep pushing forward!",
-  "Every expert was once a beginner. Keep learning!",
-  "Your future self will thank you for the work you're doing today.",
-  "Progress, not perfection. You're on the right track!",
+  "Je doet het geweldig! Elke stap vooruit is vooruitgang.",
+  "Geloof in jezelf! Je bent tot geweldige dingen in staat.",
+  "Kleine vooruitgang is nog steeds vooruitgang. Ga zo door!",
+  "Je harde werk gaat lonen. Blijf gefocust!",
+  "Neem het één taak tegelijk. Je kan dit!",
+  "Succes is de optelsom van kleine inspanningen, dag na dag.",
+  "Je bent sterker dan je denkt. Blijf doorzetten!",
+  "Elke expert was ooit een beginner. Blijf leren!",
+  "Je toekomstige zelf zal je dankbaar zijn voor het werk dat je vandaag doet.",
+  "Vooruitgang, geen perfectie. Je zit op de goede weg!",
 ];
 
 router.get("/", async (req, res) => {
@@ -418,6 +418,165 @@ async function buildMonthlyOverview(userId: string) {
     },
   };
 }
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(key: string) {
+  return new Date(`${key}T00:00:00`);
+}
+
+function diffInDays(a: Date, b: Date) {
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  return Math.round((a.getTime() - b.getTime()) / MS_PER_DAY);
+}
+
+function weekRange(weeksAgo: number) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayOfWeek = today.getDay();
+
+  const start = new Date(today);
+  start.setDate(today.getDate() - dayOfWeek - weeksAgo * 7);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+
+  return { start, end };
+}
+
+function computeStreak(activeDateKeysDesc: string[]) {
+  if (activeDateKeysDesc.length === 0) {
+    return { count: 0, status: "none" as const, daysSinceLastActive: null };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const mostRecent = parseDateKey(activeDateKeysDesc[0]);
+  const daysSinceLastActive = diffInDays(today, mostRecent);
+
+  if (daysSinceLastActive > 2) {
+    return { count: 0, status: "broken" as const, daysSinceLastActive };
+  }
+
+  let count = 1;
+  for (let i = 1; i < activeDateKeysDesc.length; i++) {
+    const gap = diffInDays(
+      parseDateKey(activeDateKeysDesc[i - 1]),
+      parseDateKey(activeDateKeysDesc[i])
+    );
+    if (gap <= 3) {
+      count++;
+    } else {
+      break;
+    }
+  }
+
+  const status = daysSinceLastActive === 0 ? ("active" as const) : ("frozen" as const);
+  return { count, status, daysSinceLastActive };
+}
+
+router.get("/dashboard-week", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    const userId = currentUser.id;
+
+    const { start: thisWeekStart, end: thisWeekEnd } = weekRange(0);
+    const { start: lastWeekStart, end: lastWeekEnd } = weekRange(1);
+
+    const thisWeekSessions = await db
+      .select()
+      .from(focusSessions)
+      .where(
+        and(
+          eq(focusSessions.userId, userId),
+          gte(focusSessions.startedAt, thisWeekStart),
+          lt(focusSessions.startedAt, thisWeekEnd)
+        )
+      );
+
+    const thisWeekMinutes = thisWeekSessions.reduce(
+      (sum, s) => sum + s.durationMinutes,
+      0
+    );
+    const thisWeekHours = Number((thisWeekMinutes / 60).toFixed(1));
+    const percentOfWeek = Number(((thisWeekMinutes / 60 / 84) * 100).toFixed(1));
+
+    const lastWeekSessions = await db
+      .select()
+      .from(focusSessions)
+      .where(
+        and(
+          eq(focusSessions.userId, userId),
+          gte(focusSessions.startedAt, lastWeekStart),
+          lt(focusSessions.startedAt, lastWeekEnd)
+        )
+      );
+
+    const lastWeekMinutes = lastWeekSessions.reduce(
+      (sum, s) => sum + s.durationMinutes,
+      0
+    );
+
+    let weeklyChangePercent: number | null = null;
+    if (lastWeekMinutes > 0) {
+      weeklyChangePercent = Number(
+        (((thisWeekMinutes - lastWeekMinutes) / lastWeekMinutes) * 100).toFixed(1)
+      );
+    } else if (thisWeekMinutes > 0) {
+      weeklyChangePercent = 100;
+    }
+
+    const userTasks = await db.select().from(tasks).where(eq(tasks.userId, userId));
+
+    const weekTasks = userTasks.filter((task) => {
+      if (!task.deadline) return false;
+      const deadline = new Date(task.deadline);
+      return deadline >= thisWeekStart && deadline < thisWeekEnd;
+    });
+
+    const weekTasksCompleted = weekTasks.filter((t) => t.status === "COMPLETED").length;
+
+    const allSessions = await db
+      .select()
+      .from(focusSessions)
+      .where(eq(focusSessions.userId, userId));
+
+    const activeDateKeys = Array.from(
+      new Set(allSessions.map((s) => toDateKey(new Date(s.startedAt))))
+    ).sort((a, b) => (a < b ? 1 : -1)); 
+
+    const streak = computeStreak(activeDateKeys);
+
+    res.json({
+      studyHours: {
+        hours: thisWeekHours,
+        minutes: thisWeekMinutes,
+        percentOfWeek,
+      },
+      tasksThisWeek: {
+        completed: weekTasksCompleted,
+        total: weekTasks.length,
+      },
+      weeklyComparison: {
+        thisWeekMinutes,
+        lastWeekMinutes,
+        changePercent: weeklyChangePercent,
+      },
+      streak,
+    });
+  } catch (error) {
+    console.error("Get dashboard week error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.get("/monthly", async (req, res) => {
   try {

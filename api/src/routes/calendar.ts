@@ -284,8 +284,9 @@ router.get("/planner", async (req, res) => {
     }
 
     const view = (req.query.view as string) || "week";
-    const referenceDate = req.query.date
-      ? new Date(req.query.date as string)
+    const dateParam = req.query.date as string | undefined;
+    const referenceDate = dateParam
+      ? new Date(`${dateParam}T00:00:00`)
       : new Date();
 
     if (Number.isNaN(referenceDate.getTime())) {
@@ -373,6 +374,30 @@ router.get("/planner", async (req, res) => {
     });
   } catch (error) {
     console.error("Get planner error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/schedule", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    const studentClass = (currentUser as { studentClass?: string | null }).studentClass;
+
+    if (!studentClass) {
+      return res.json({ className: null, entries: [] });
+    }
+
+    const entries = await db
+      .select()
+      .from(classSchedule)
+      .where(eq(classSchedule.className, studentClass))
+      .orderBy(classSchedule.dayOfWeek, classSchedule.startTime);
+
+    res.json({ className: studentClass, entries });
+  } catch (error) {
+    console.error("Get class schedule error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

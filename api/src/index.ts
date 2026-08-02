@@ -14,6 +14,7 @@ import calendarRouter from "./routes/calendar.js";
 import teacherRouter from "./routes/teacher.js";
 import coursesRouter from "./routes/courses.js";
 import focusSessionsRouter from "./routes/focus-sessions.js";
+import notesRouter from "./routes/notes.js";
 import { startDeadlineChecker } from "./services/deadline-checker.js";
 import usersRouter from "./routes/users.js";
  
@@ -42,6 +43,7 @@ app.use("/api/progress", progressRouter);
 app.use("/api/calendar", calendarRouter);
 app.use("/api/courses", coursesRouter);
 app.use("/api/focus-sessions", focusSessionsRouter);
+app.use("/api/notes", notesRouter);
 app.use("/api/teacher", teacherRouter);
 app.use("/api/users", usersRouter);
  

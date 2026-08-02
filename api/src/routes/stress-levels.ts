@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
   
       const userId = currentUser.id;
 
-    const { level, focus, notes } = req.body;
+    const { level, focus, sleepHours, notes } = req.body;
 
     const stressLevel = Number(level);
     const focusLevel = Number(focus);
@@ -40,6 +40,14 @@ router.post("/", async (req, res) => {
       });
     }
 
+    let sleepHoursValue: number | null = null;
+    if (sleepHours !== undefined && sleepHours !== null && sleepHours !== "") {
+      sleepHoursValue = Number(sleepHours);
+      if (Number.isNaN(sleepHoursValue) || sleepHoursValue < 0 || sleepHoursValue > 24) {
+        return res.status(400).json({ error: "sleepHours must be between 0 and 24" });
+      }
+    }
+
     const insertedStressLevels = await db
       .insert(stressLevels)
       .values({
@@ -47,6 +55,7 @@ router.post("/", async (req, res) => {
         userId,
         level: stressLevel,
         focus: focusLevel,
+        sleepHours: sleepHoursValue,
         notes: notes ?? null,
       })
       .returning();
@@ -229,6 +238,61 @@ router.get("/recommendations", async (req, res) => {
     res.json({ recommendations });
   } catch (error) {
     console.error("Get recommendations error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/wellbeing-status", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const entries = await db
+      .select()
+      .from(stressLevels)
+      .where(gte(stressLevels.createdAt, startDate));
+
+    const userEntries = entries.filter((entry) => entry.userId === currentUser.id);
+
+    if (userEntries.length === 0) {
+      return res.json({
+        status: "unknown",
+        avgStress: null,
+        avgSleep: null,
+        entries: 0,
+      });
+    }
+
+    const avgStress =
+      userEntries.reduce((sum, entry) => sum + entry.level, 0) / userEntries.length;
+
+    const sleepEntries = userEntries.filter((entry) => entry.sleepHours !== null);
+    const avgSleep =
+      sleepEntries.length > 0
+        ? sleepEntries.reduce((sum, entry) => sum + (entry.sleepHours ?? 0), 0) /
+          sleepEntries.length
+        : null;
+
+    let status: "healthy" | "at_risk" | "critical";
+
+    if (avgStress >= 8 || (avgSleep !== null && avgSleep < 5)) {
+      status = "critical";
+    } else if (avgStress >= 6 || (avgSleep !== null && avgSleep < 7)) {
+      status = "at_risk";
+    } else {
+      status = "healthy";
+    }
+
+    res.json({
+      status,
+      avgStress: Number(avgStress.toFixed(1)),
+      avgSleep: avgSleep !== null ? Number(avgSleep.toFixed(1)) : null,
+      entries: userEntries.length,
+    });
+  } catch (error) {
+    console.error("Get wellbeing status error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

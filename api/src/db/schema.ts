@@ -17,6 +17,8 @@ export const tasks = pgTable("tasks", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 
+  courseId: text("course_id").references(() => courses.id, { onDelete: "set null" }),
+
   title: text("title").notNull(),
   description: text("description"),
   deadline: timestamp("deadline"),
@@ -51,6 +53,7 @@ export const stressLevels = pgTable("stress_levels", {
 
   level: integer("level").notNull(),
   focus: integer("focus").notNull(),
+  sleepHours: integer("sleep_hours"),
   notes: text("notes"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -122,8 +125,8 @@ export const courses = pgTable("courses", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 
-  scope: text("scope").notNull(), // "class" | "personal"
-  className: text("class_name"), // required when scope = "class"
+  scope: text("scope").notNull(), 
+  className: text("class_name"), 
 
   title: text("title").notNull(),
   description: text("description"),
@@ -132,7 +135,7 @@ export const courses = pgTable("courses", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const lessons = pgTable("lessons", {
+export const chapters = pgTable("chapters", {
   id: text("id").primaryKey(),
 
   courseId: text("course_id")
@@ -145,6 +148,59 @@ export const lessons = pgTable("lessons", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const lessons = pgTable("lessons", {
+  id: text("id").primaryKey(),
+
+  courseId: text("course_id")
+    .notNull()
+    .references(() => courses.id, { onDelete: "cascade" }),
+
+  chapterId: text("chapter_id").references(() => chapters.id, { onDelete: "cascade" }),
+
+  title: text("title").notNull(),
+  order: integer("order").notNull().default(0),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const lessonItems = pgTable("lesson_items", {
+  id: text("id").primaryKey(),
+
+  lessonId: text("lesson_id")
+    .notNull()
+    .references(() => lessons.id, { onDelete: "cascade" }),
+
+  title: text("title").notNull(),
+  order: integer("order").notNull().default(0),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const lessonItemProgress = pgTable(
+  "lesson_item_progress",
+  {
+    id: text("id").primaryKey(),
+
+    studentId: text("student_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+
+    itemId: text("item_id")
+      .notNull()
+      .references(() => lessonItems.id, { onDelete: "cascade" }),
+
+    completed: boolean("completed").notNull().default(false),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("lesson_item_progress_student_item_idx").on(
+      table.studentId,
+      table.itemId
+    ),
+  ]
+);
 
 export const LESSON_STATUSES = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] as const;
 export type LessonStatus = (typeof LESSON_STATUSES)[number];
@@ -205,7 +261,7 @@ export const focusSessions = pgTable("focus_sessions", {
     .references(() => tasks.id, { onDelete: "cascade" }),
 
   durationMinutes: integer("duration_minutes").notNull().default(25),
-  breakType: text("break_type"), // "SHORT" | "LONG", set once the break is chosen
+  breakType: text("break_type"), 
 
   startedAt: timestamp("started_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
@@ -225,8 +281,25 @@ export const grades = pgTable("grades", {
     .references(() => user.id, { onDelete: "cascade" }),
 
   subject: text("subject").notNull(),
-  score: integer("score").notNull(), // 0-100
+  score: integer("score").notNull(), 
 
   gradedAt: timestamp("graded_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const teacherNotes = pgTable("teacher_notes", {
+  id: text("id").primaryKey(),
+
+  studentId: text("student_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  teacherId: text("teacher_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  message: text("message").notNull(),
+  read: boolean("read").notNull().default(false),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

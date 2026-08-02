@@ -3,7 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
-import { notifications, progress, tasks, taskChecklistItems, TASK_STATUSES } from "../db/schema.js";
+import { notifications, progress, tasks, taskChecklistItems, TASK_STATUSES, courses, lessons } from "../db/schema.js";
 import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
@@ -85,22 +85,50 @@ router.post("/", async (req, res) => {
 
     const userId = currentUser.id;
 
-    const {
-      title,
-      description,
-      deadline,
-      priority = "MEDIUM",
-    } = req.body;
+    const { courseId, lessonIds, deadline, priority = "MEDIUM" } = req.body;
 
-    if (!title) {
-      return res.status(400).json({ error: "Title is required" });
+    if (!courseId || typeof courseId !== "string") {
+      return res.status(400).json({ error: "courseId is required" });
     }
+
+    const courseRows = await db.select().from(courses).where(eq(courses.id, courseId)).limit(1);
+    const course = courseRows[0];
+
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    const studentClass = (currentUser as { studentClass?: string | null }).studentClass;
+    const canAccessCourse =
+      course.creatorId === userId ||
+      (course.scope === "class" && studentClass && course.className === studentClass);
+
+    if (!canAccessCourse) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    let selectedLessons: { id: string; title: string }[] = [];
+
+    if (Array.isArray(lessonIds) && lessonIds.length > 0) {
+      const courseLessons = await db
+        .select()
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId));
+
+      selectedLessons = courseLessons.filter((l) => lessonIds.includes(l.id));
+    }
+
+    const title =
+      selectedLessons.length > 0
+        ? `${course.title}: ${selectedLessons.map((l) => l.title).join(", ")}`
+        : course.title;
 
     const newTask = {
       id: nanoid(),
       userId,
+      courseId,
       title,
-      description: description ?? null,
+      description: null,
       deadline: deadline ? new Date(deadline) : null,
       priority,
       status: "ONGOING" as const,
@@ -108,6 +136,17 @@ router.post("/", async (req, res) => {
 
     const insertedTasks = await db.insert(tasks).values(newTask).returning();
     const task = insertedTasks[0];
+
+    if (selectedLessons.length > 0) {
+      await db.insert(taskChecklistItems).values(
+        selectedLessons.map((lesson, index) => ({
+          id: nanoid(),
+          taskId: task.id,
+          title: lesson.title,
+          order: index,
+        }))
+      );
+    }
 
     if (deadline) {
       await db.insert(notifications).values({
@@ -157,6 +196,12 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Task not found" });
     }
 
+    if (status !== undefined && existingTask.status !== "ONGOING") {
+      return res.status(400).json({
+        error: "This task's status has already been set and can no longer be changed",
+      });
+    }
+
     const updatedTasks = await db
       .update(tasks)
       .set({
@@ -197,8 +242,6 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-// --- Task checklist items ---
 
 router.get("/:taskId/checklist", async (req, res) => {
   try {
