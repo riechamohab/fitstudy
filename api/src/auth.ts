@@ -30,9 +30,6 @@ export const auth = betterAuth({
   usePlural: false,
 }),
 
-logger: {
-  level: "debug",
-},
  
   emailAndPassword: {
     enabled: true,
