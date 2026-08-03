@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { getProfile, signIn } from "../lib/api";
@@ -88,8 +88,8 @@ function ProgressIcon() {
 function LoginPage() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("test@example.com");
-  const [password, setPassword] = useState("Test123456!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const [error, setError] = useState("");
@@ -105,6 +105,17 @@ try {
 
   const user = await getProfile();
 
+console.log("INGELOGDE USER:", JSON.stringify(user, null, 2));
+  
+if (
+  user.mustChangePassword &&
+  user.role !== "admin"
+) {
+  await navigate({
+    to: "/change-password",
+  });
+  return;
+}
   if (user.role === "admin") {
     await navigate({
       to: "/admin",

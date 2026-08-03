@@ -20,6 +20,10 @@ export const user = pgTable("user", {
   phoneNumber: text("phone_number"),
   studentClass: text("student_class"),
 
+    mustChangePassword: boolean("must_change_password")
+    .default(true)
+    .notNull(),
+    
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),

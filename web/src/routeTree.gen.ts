@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeacherRouteImport } from './routes/teacher'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ const TeacherRoute = TeacherRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChangePasswordRoute = ChangePasswordRouteImport.update({
+  id: '/change-password',
+  path: '/change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -98,6 +104,7 @@ const AppFocusTimerRoute = AppFocusTimerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/teacher': typeof TeacherRoute
   '/focus-timer': typeof AppFocusTimerRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/teacher': typeof TeacherRoute
   '/focus-timer': typeof AppFocusTimerRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/admin': typeof AdminRoute
+  '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/teacher': typeof TeacherRoute
   '/_app/focus-timer': typeof AppFocusTimerRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/change-password'
     | '/login'
     | '/teacher'
     | '/focus-timer'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/change-password'
     | '/login'
     | '/teacher'
     | '/focus-timer'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/admin'
+    | '/change-password'
     | '/login'
     | '/teacher'
     | '/_app/focus-timer'
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AdminRoute: typeof AdminRoute
+  ChangePasswordRoute: typeof ChangePasswordRoute
   LoginRoute: typeof LoginRoute
   TeacherRoute: typeof TeacherRoute
 }
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/change-password': {
+      id: '/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof ChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -332,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AdminRoute: AdminRoute,
+  ChangePasswordRoute: ChangePasswordRoute,
   LoginRoute: LoginRoute,
   TeacherRoute: TeacherRoute,
 }

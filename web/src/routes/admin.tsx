@@ -15,7 +15,12 @@ function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
+ const [form, setForm] = useState<{
+  name: string;
+  email: string;
+  password: string;
+  role: "teacher" | "student" | "admin";
+}>({
   name: "",
   email: "",
   password: "",
