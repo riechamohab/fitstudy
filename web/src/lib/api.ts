@@ -1,5 +1,4 @@
-export const API_BASE_URL = "https://fitstudy-api.onrender.com";
-
+export const API_BASE_URL = "http://localhost:3000";
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {}
