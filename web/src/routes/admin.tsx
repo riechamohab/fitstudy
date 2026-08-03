@@ -15,6 +15,7 @@ function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
  const [form, setForm] = useState<{
   name: string;
   email: string;
@@ -146,20 +147,29 @@ async function handleDeleteUser(id: string) {
         })
       }
     />
+<div className="relative">
+  <input
+    className="w-full rounded border p-2 pr-12"
+    type={showPassword ? "text" : "password"}
+    placeholder="Password"
+    value={form.password}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        password: e.target.value,
+      })
+    }
+  />
 
-    <input
-      className="w-full rounded border p-2"
-      type="password"
-      placeholder="Password"
-      value={form.password}
-      onChange={(e) =>
-        setForm({
-          ...form,
-          password: e.target.value,
-        })
-      }
-    />
-
+  <button
+    type="button"
+    aria-label="Toon of verberg wachtwoord"
+    onClick={() => setShowPassword((prev) => !prev)}
+    className="absolute right-3 top-1/2 -translate-y-1/2"
+  >
+    {showPassword ? "🙈" : "👁️"}
+  </button>
+</div>
     <select
       className="w-full rounded border p-2"
       value={form.role}
