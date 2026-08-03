@@ -78,5 +78,37 @@ router.delete("/users/:id", requireAdmin, async (req, res) => {
   }
 });
 
+router.put("/users/:id", requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      email,
+      role,
+    } = req.body;
+
+    const updatedUser = await db
+      .update(user)
+      .set({
+        name,
+        email,
+        role,
+      })
+      .where(eq(user.id, id))
+      .returning();
+
+    res.json({
+      message: "User updated successfully",
+      user: updatedUser[0],
+    });
+
+  } catch (error) {
+    console.error("Update user error:", error);
+
+    res.status(500).json({
+      error: "Could not update user",
+    });
+  }
+});
 
 export default router;
