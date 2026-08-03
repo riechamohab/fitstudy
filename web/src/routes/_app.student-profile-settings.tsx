@@ -32,6 +32,88 @@ function LockIcon() {
   );
 }
 
+function UserIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m4 6 8 6 8-6" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M6 3h3l1.5 5-2 1.5a12 12 0 0 0 6 6l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2Z" />
+    </svg>
+  );
+}
+
+function IdCardIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="12" r="2" />
+      <path d="M14 10h4M14 14h4" />
+    </svg>
+  );
+}
+
+function SchoolIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="m2 9 10-5 10 5-10 5-10-5Z" />
+      <path d="M6 11v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
+    </svg>
+  );
+}
+
+function LaptopIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <rect x="4" y="4" width="16" height="10" rx="1" />
+      <path d="M2 19h20l-2-3H4l-2 3Z" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <rect x="3" y="4.5" width="18" height="16.5" rx="2" />
+      <path d="M16 2.5v4M8 2.5v4M3 9.5h18" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 8.5a3 3 0 1 1 3.5 3M19 20a5.5 5.5 0 0 0-3-4.9" />
+    </svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </svg>
+  );
+}
+
 function getSchoolYearLabel(date: Date) {
   const year = date.getFullYear();
   const month = date.getMonth();
@@ -45,7 +127,7 @@ function InfoRow({
   value,
   locked,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   value: string;
   locked?: boolean;
@@ -53,7 +135,7 @@ function InfoRow({
   return (
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-2 text-sm text-slate-500">
-        <span>{icon}</span>
+        {icon}
         <span>{label}</span>
       </div>
       <div className="flex items-center gap-2">
@@ -124,7 +206,7 @@ function ProfileSettingsPage() {
     <main className="p-8">
       <div className="mx-auto max-w-xl">
         <h1 className="mb-4 flex items-center gap-2 text-2xl font-bold text-slate-900">
-          <span>👤</span> Mijn profiel
+          <UserIcon /> Mijn profiel
         </h1>
 
         <div className="rounded-2xl bg-white shadow-xl">
@@ -186,15 +268,21 @@ function ProfileSettingsPage() {
                   Persoonlijke gegevens
                 </p>
                 <div className="divide-y divide-slate-100">
-                  <InfoRow icon="👤" label="Naam" value={profile?.name ?? ""} locked />
+                  <InfoRow icon={<UserIcon />} label="Naam" value={profile?.name ?? ""} locked />
                   <InfoRow
-                    icon="📧"
+                    icon={<MailIcon />}
                     label="School e-mailadres"
                     value={profile?.email ?? ""}
                     locked
                   />
                   <InfoRow
-                    icon="🆔"
+                    icon={<PhoneIcon />}
+                    label="Telefoonnummer"
+                    value={profile?.phoneNumber ?? ""}
+                    locked
+                  />
+                  <InfoRow
+                    icon={<IdCardIcon />}
                     label="Studentnummer"
                     value={profile?.studentId ?? ""}
                     locked
@@ -208,17 +296,29 @@ function ProfileSettingsPage() {
                   Studiegegevens
                 </p>
                 <div className="divide-y divide-slate-100">
-                  <InfoRow icon="🏫" label="School" value={profile?.school ?? ""} />
-                  <InfoRow icon="💻" label="Opleiding" value={profile?.study ?? ""} />
                   <InfoRow
-                    icon="📅"
-                    label="Huidig schooljaar"
-                    value={currentSchoolYear}
+                    icon={<SchoolIcon />}
+                    label="School"
+                    value={profile?.school ?? ""}
+                    locked
                   />
                   <InfoRow
-                    icon="👥"
+                    icon={<LaptopIcon />}
+                    label="Opleiding"
+                    value={profile?.study ?? ""}
+                    locked
+                  />
+                  <InfoRow
+                    icon={<CalendarIcon />}
+                    label="Huidig schooljaar"
+                    value={currentSchoolYear}
+                    locked
+                  />
+                  <InfoRow
+                    icon={<UsersIcon />}
                     label="Klas"
                     value={profile?.studentClass ?? ""}
+                    locked
                   />
                 </div>
               </div>
@@ -267,7 +367,7 @@ function ProfileSettingsPage() {
                 )}
 
                 <div className="flex gap-2 rounded-lg bg-slate-50 p-4">
-                  <span>ℹ️</span>
+                  <InfoIcon />
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
                       Gegevens onjuist?
@@ -287,4 +387,3 @@ function ProfileSettingsPage() {
     </main>
   );
 }
-

@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { db } from "../db/index.js";
 import { focusSessions, tasks, BREAK_TYPES } from "../db/schema.js";
 import { requireUser } from "../lib/auth-session.js";
+import { checkAndUnlockAchievements } from "./achievements.js";
 
 const router = Router();
 
@@ -59,6 +60,8 @@ router.post("/", async (req, res) => {
       .returning();
 
     res.status(201).json(inserted[0]);
+
+    checkAndUnlockAchievements(currentUser.id).catch(() => {});
   } catch (error) {
     console.error("Create focus session error:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -101,6 +104,8 @@ router.put("/:id/complete", async (req, res) => {
       .returning();
 
     res.json(updated[0]);
+
+    checkAndUnlockAchievements(currentUser.id).catch(() => {});
   } catch (error) {
     console.error("Complete focus session error:", error);
     res.status(500).json({ error: "Internal server error" });

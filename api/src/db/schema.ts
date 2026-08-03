@@ -107,9 +107,9 @@ export const classSchedule = pgTable("class_schedule", {
   subject: text("subject").notNull(),
   room: text("room"),
 
-  dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday ... 6 = Saturday
-  startTime: text("start_time").notNull(), // "09:00"
-  endTime: text("end_time").notNull(), // "10:00"
+  dayOfWeek: integer("day_of_week").notNull(), 
+  startTime: text("start_time").notNull(), 
+  endTime: text("end_time").notNull(), 
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -317,6 +317,56 @@ export const enrollmentHistory = pgTable("enrollment_history", {
   schoolYear: text("school_year").notNull(), 
   className: text("class_name").notNull(),
   status: text("status").notNull().default("COMPLETED"), 
+ 
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const achievementsUnlocked = pgTable(
+  "achievements_unlocked",
+  {
+    id: text("id").primaryKey(),
+ 
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+ 
+    achievementKey: text("achievement_key").notNull(),
+    unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("achievements_unlocked_user_key_idx").on(
+      table.userId,
+      table.achievementKey
+    ),
+  ]
+);
+ 
+export const userAchievements = pgTable(
+  "user_achievements",
+  {
+    id: text("id").primaryKey(),
+ 
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+ 
+    achievementKey: text("achievement_key").notNull(),
+    unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("user_achievements_user_key_idx").on(
+      table.userId,
+      table.achievementKey
+    ),
+  ]
+);
+
+export const waterLogs = pgTable("water_logs", {
+  id: text("id").primaryKey(),
+ 
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
  
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

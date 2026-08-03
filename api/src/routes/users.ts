@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { db } from "../db/index.js";
 import { user as authUser } from "../db/auth-schema.js";
 import { enrollmentHistory } from "../db/schema.js";
+import { checkAndUnlockAchievements } from "./achievements.js";
 import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
@@ -161,29 +162,34 @@ router.post("/profile/picture", (req, res, next) => {
 }, async (req, res) => {
   try {
     const currentUser = await requireUser(req, res);
-
+ 
     if (!currentUser) {
       return;
     }
-
+ 
     if (!req.file) {
       return res.status(400).json({ error: "No image file provided" });
     }
-
+ 
     const imageUrl = `/uploads/profile-pictures/${req.file.filename}`;
-
+ 
     const updatedUsers = await db
       .update(authUser)
       .set({ image: imageUrl, updatedAt: new Date() })
       .where(eq(authUser.id, currentUser.id))
       .returning(profileColumns);
-
+ 
     const updatedProfile = updatedUsers[0];
-
+ 
     if (!updatedProfile) {
       return res.status(404).json({ error: "User not found" });
     }
-
+ 
+    try {
+      await checkAndUnlockAchievements(currentUser.id);
+    } catch {
+    }
+ 
     res.json(updatedProfile);
   } catch (error) {
     console.error("Upload profile picture error:", error);

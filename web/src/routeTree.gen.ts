@@ -21,6 +21,7 @@ import { Route as AppStudentPlannerRouteImport } from './routes/_app.student-pla
 import { Route as AppStudentNotesRouteImport } from './routes/_app.student-notes'
 import { Route as AppStudentDashboardRouteImport } from './routes/_app.student-dashboard'
 import { Route as AppStudentCoursesRouteImport } from './routes/_app.student-courses'
+import { Route as AppStudentAchievementsRouteImport } from './routes/_app.student-achievements'
 import { Route as AppFocusTimerRouteImport } from './routes/_app.focus-timer'
 
 const TeacherRoute = TeacherRouteImport.update({
@@ -83,6 +84,11 @@ const AppStudentCoursesRoute = AppStudentCoursesRouteImport.update({
   path: '/student-courses',
   getParentRoute: () => AppRoute,
 } as any)
+const AppStudentAchievementsRoute = AppStudentAchievementsRouteImport.update({
+  id: '/student-achievements',
+  path: '/student-achievements',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFocusTimerRoute = AppFocusTimerRouteImport.update({
   id: '/focus-timer',
   path: '/focus-timer',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/teacher': typeof TeacherRoute
   '/focus-timer': typeof AppFocusTimerRoute
+  '/student-achievements': typeof AppStudentAchievementsRoute
   '/student-courses': typeof AppStudentCoursesRoute
   '/student-dashboard': typeof AppStudentDashboardRoute
   '/student-notes': typeof AppStudentNotesRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/teacher': typeof TeacherRoute
   '/focus-timer': typeof AppFocusTimerRoute
+  '/student-achievements': typeof AppStudentAchievementsRoute
   '/student-courses': typeof AppStudentCoursesRoute
   '/student-dashboard': typeof AppStudentDashboardRoute
   '/student-notes': typeof AppStudentNotesRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/teacher': typeof TeacherRoute
   '/_app/focus-timer': typeof AppFocusTimerRoute
+  '/_app/student-achievements': typeof AppStudentAchievementsRoute
   '/_app/student-courses': typeof AppStudentCoursesRoute
   '/_app/student-dashboard': typeof AppStudentDashboardRoute
   '/_app/student-notes': typeof AppStudentNotesRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/teacher'
     | '/focus-timer'
+    | '/student-achievements'
     | '/student-courses'
     | '/student-dashboard'
     | '/student-notes'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/teacher'
     | '/focus-timer'
+    | '/student-achievements'
     | '/student-courses'
     | '/student-dashboard'
     | '/student-notes'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/teacher'
     | '/_app/focus-timer'
+    | '/_app/student-achievements'
     | '/_app/student-courses'
     | '/_app/student-dashboard'
     | '/_app/student-notes'
@@ -273,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStudentCoursesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/student-achievements': {
+      id: '/_app/student-achievements'
+      path: '/student-achievements'
+      fullPath: '/student-achievements'
+      preLoaderRoute: typeof AppStudentAchievementsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/focus-timer': {
       id: '/_app/focus-timer'
       path: '/focus-timer'
@@ -285,6 +304,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppFocusTimerRoute: typeof AppFocusTimerRoute
+  AppStudentAchievementsRoute: typeof AppStudentAchievementsRoute
   AppStudentCoursesRoute: typeof AppStudentCoursesRoute
   AppStudentDashboardRoute: typeof AppStudentDashboardRoute
   AppStudentNotesRoute: typeof AppStudentNotesRoute
@@ -296,6 +316,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppFocusTimerRoute: AppFocusTimerRoute,
+  AppStudentAchievementsRoute: AppStudentAchievementsRoute,
   AppStudentCoursesRoute: AppStudentCoursesRoute,
   AppStudentDashboardRoute: AppStudentDashboardRoute,
   AppStudentNotesRoute: AppStudentNotesRoute,

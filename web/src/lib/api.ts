@@ -556,6 +556,65 @@ export async function getEnrollmentHistory() {
   return apiRequest<EnrollmentEntry[]>("/api/users/enrollment-history");
 }
 
+export type AchievementKey =
+  | "FIRST_PROFILE_PICTURE"
+  | "FIRST_SESSION_COMPLETED"
+  | "FOCUS_SESSIONS_10"
+  | "FOCUS_SESSIONS_50"
+  | "FOCUS_SESSIONS_100"
+  | "STUDY_HOURS_10"
+  | "STUDY_HOURS_50"
+  | "STUDY_HOURS_100"
+  | "STUDY_HOURS_250"
+  | "STUDY_HOURS_500"
+  | "STREAK_7"
+  | "STREAK_14"
+  | "STREAK_30"
+  | "STREAK_60"
+  | "STREAK_100"
+  | "CHECKINS_5"
+  | "CHECKINS_25"
+  | "WELLBEING_HEALTHY_30_DAYS"
+  | "WELLBEING_HEALTHY_90_DAYS"
+  | "FIRST_TASK_CREATED"
+  | "TASKS_PLANNED_50"
+  | "FULL_WEEK_PLANNED"
+  | "FIRST_TASK_COMPLETED"
+  | "TASKS_COMPLETED_50"
+  | "TASKS_COMPLETED_100"
+  | "BREAKS_TAKEN_25"
+  | "WATER_LOGGED_100"
+  | "HEALTHY_ROUTINE_30_DAYS"
+  | "EARLY_BIRD_10"
+  | "NIGHT_OWL_10"
+  | "ACHIEVEMENTS_25"
+  | "ACHIEVEMENTS_ALL";
+ 
+export type Achievement = {
+  key: AchievementKey;
+  unlocked: boolean;
+  unlockedAt: string | null;
+};
+ 
+export async function getAchievements() {
+  return apiRequest<Achievement[]>("/api/achievements");
+}
+ 
+export type WaterIntake = {
+  todayCount: number;
+  totalCount: number;
+};
+ 
+export async function getWaterIntake() {
+  return apiRequest<WaterIntake>("/api/water");
+}
+ 
+export async function logWaterIntake() {
+  return apiRequest<{ id: string }>("/api/water", {
+    method: "POST",
+  });
+}
+
 export async function getTasks() {
   return apiRequest<Task[]>("/api/tasks");
 }

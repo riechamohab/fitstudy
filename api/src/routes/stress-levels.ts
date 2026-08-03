@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { db } from "../db/index.js";
 import { notifications, stressLevels } from "../db/schema.js";
 import { requireUser } from "../lib/auth-session.js";
+import { checkAndUnlockAchievements } from "./achievements.js";
 
 const router = Router();
 
@@ -74,6 +75,8 @@ router.post("/", async (req, res) => {
     }
 
     res.status(201).json(createdStressLevel);
+
+    checkAndUnlockAchievements(userId).catch(() => {});
   } catch (error) {
     console.error("Create stress level error:", error);
     res.status(500).json({ error: "Internal server error" });

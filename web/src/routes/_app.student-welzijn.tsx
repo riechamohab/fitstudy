@@ -7,12 +7,15 @@ import {
   getExerciseTypes,
   getMotivation,
   getStressLevels,
+  getWaterIntake,
   getWellbeingStatus,
+  logWaterIntake,
   startExercise,
   type Exercise,
   type ExerciseType,
   type MotivationMessage,
   type StressEntry,
+  type WaterIntake,
   type WellbeingStatus,
 } from "../lib/api";
 
@@ -20,7 +23,7 @@ export const Route = createFileRoute("/_app/student-welzijn")({
   component: WellbeingPage,
 });
 
-type Tab = "ontspanning" | "begeleiding" | "registratie" | "quiz";
+type Tab = "ontspanning" | "begeleiding" | "registratie" | "water" | "quiz";
 
 function formatClock(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -50,8 +53,6 @@ function StatusBadge({ status }: { status: WellbeingStatus | null }) {
     </div>
   );
 }
-
-// --- Tab 1: Ontspanningsplannen ---
 
 function RelaxationTab() {
   const [types, setTypes] = useState<ExerciseType[]>([]);
@@ -156,8 +157,6 @@ function RelaxationTab() {
   );
 }
 
-// --- Tab 2: Dagelijkse begeleiding ---
-
 function GuidanceTab() {
   const [message, setMessage] = useState<MotivationMessage | null>(null);
   const [error, setError] = useState("");
@@ -200,8 +199,6 @@ function GuidanceTab() {
     </div>
   );
 }
-
-// --- Tab 3: Stress- en slaapregistratie ---
 
 function TrackingTab({ onNewEntry }: { onNewEntry: () => void }) {
   const [entries, setEntries] = useState<StressEntry[]>([]);
@@ -362,7 +359,78 @@ function TrackingTab({ onNewEntry }: { onNewEntry: () => void }) {
   );
 }
 
-// --- Tab 4: Interactieve quiz (zelfreflectie, client-side, geen opslag) ---
+const DAILY_GOAL = 8;
+
+function WaterTab() {
+  const [intake, setIntake] = useState<WaterIntake | null>(null);
+  const [error, setError] = useState("");
+  const [isLogging, setIsLogging] = useState(false);
+
+  async function loadIntake() {
+    try {
+      const data = await getWaterIntake();
+      setIntake(data);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Kon waterinname niet laden");
+    }
+  }
+
+  useEffect(() => {
+    loadIntake();
+  }, []);
+
+  async function handleLog() {
+    setIsLogging(true);
+    setError("");
+    try {
+      await logWaterIntake();
+      await loadIntake();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Kon waterinname niet loggen");
+    } finally {
+      setIsLogging(false);
+    }
+  }
+
+  const todayCount = intake?.todayCount ?? 0;
+  const percent = Math.min(100, Math.round((todayCount / DAILY_GOAL) * 100));
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+      {error && <p className="mb-4 text-sm text-red-700">{error}</p>}
+
+      <p className="mb-1 text-sm font-medium uppercase tracking-wide text-blue-600">
+        Vandaag
+      </p>
+      <p className="mb-4 text-5xl font-bold text-slate-900">
+        {todayCount}
+        <span className="text-lg font-medium text-slate-400">/{DAILY_GOAL} glazen</span>
+      </p>
+
+      <div className="mx-auto mb-6 h-2 w-full max-w-xs overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full bg-blue-500 transition-all"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleLog}
+        disabled={isLogging}
+        className="rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+      >
+        {isLogging ? "Bezig..." : "+ Glas water"}
+      </button>
+
+      {intake && (
+        <p className="mt-4 text-xs text-slate-400">
+          In totaal {intake.totalCount} keer gelogd
+        </p>
+      )}
+    </div>
+  );
+}
 
 const QUIZ_QUESTIONS = [
   {
@@ -459,7 +527,6 @@ function WellbeingPage() {
       const data = await getWellbeingStatus();
       setStatus(data);
     } catch {
-      // non-fatal
     }
   }
 
@@ -471,6 +538,7 @@ function WellbeingPage() {
     { id: "ontspanning", label: "Ontspanning" },
     { id: "begeleiding", label: "Dagelijkse begeleiding" },
     { id: "registratie", label: "Registratie" },
+    { id: "water", label: "Waterinname" },
     { id: "quiz", label: "Quiz" },
   ];
 
@@ -505,6 +573,7 @@ function WellbeingPage() {
         {tab === "ontspanning" && <RelaxationTab />}
         {tab === "begeleiding" && <GuidanceTab />}
         {tab === "registratie" && <TrackingTab onNewEntry={loadStatus} />}
+        {tab === "water" && <WaterTab />}
         {tab === "quiz" && <QuizTab />}
       </div>
     </main>
