@@ -37,7 +37,7 @@ function AdminPage() {
     role: "student",
   });
 
-  const [scheduleForm, setScheduleForm] = useState({
+const [scheduleForm, setScheduleForm] = useState({
   title: "",
   role: "student",
   day: "",
@@ -52,6 +52,7 @@ useEffect(() => {
   async function fetchData() {
     try {
       const usersData = await getAdminUsers();
+      console.log("USERS:", usersData);
       setUsers(usersData);
 
       const schedulesData = await getSchedules();
@@ -389,6 +390,37 @@ useEffect(() => {
       />
 
       <input
+  className="w-full rounded border p-2"
+  type="date"
+  value={scheduleForm.date}
+  onChange={(e) =>
+    setScheduleForm({
+      ...scheduleForm,
+      date: e.target.value,
+    })
+  }
+/>
+
+<select
+  className="w-full rounded border p-2"
+  value={scheduleForm.role}
+  onChange={(e) =>
+    setScheduleForm({
+      ...scheduleForm,
+      role: e.target.value,
+    })
+  }
+>
+  <option value="student">
+    Student
+  </option>
+
+  <option value="teacher">
+    Teacher
+  </option>
+</select>
+
+      <input
         className="w-full rounded border p-2"
         placeholder="Vak"
         value={scheduleForm.subject}
@@ -467,28 +499,30 @@ useEffect(() => {
 
 
     {schedules.length === 0 ? (
+  <p>
+    Geen rooster gevonden.
+  </p>
+) : (
+  schedules.map((item) => (
+    <div
+      key={item.id}
+      className="mb-3 rounded border p-4"
+    >
+      <b>{item.subject}</b>
+
       <p>
-        Geen rooster gevonden.
+        {item.day} {item.startTime} - {item.endTime}
       </p>
-    ) : (
-      schedules.map((item) => (
-        <div
-          key={item.id}
-          className="mb-3 rounded border p-4"
-        >
-          <b>{item.subject}</b>
 
-          <p>
-            {item.day} {item.startTime} - {item.endTime}
-          </p>
-
-          <p>
-            {item.location}
-          </p>
-
-        </div>
-      ))
-    )}
-
-  </div>
+      <p>
+        {item.location}
+      </p>
+    </div>
+  ))
 )}
+
+      </div>
+    )}
+  </div>
+);
+}

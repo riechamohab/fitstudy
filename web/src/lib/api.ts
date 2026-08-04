@@ -28,13 +28,18 @@ async function apiRequest<T>(
       );
     }
 
-    if (response.status === 401) {
-      throw new Error("Invalid email or password.");
-    }
+if (response.status === 401) {
+  throw new Error("Invalid email or password.");
+}
 
-   throw new Error(
-      backendMessage || "Something went wrong. Please try again."
-    );
+console.error("API ERROR", {
+  status: response.status,
+  backendMessage,
+});
+
+throw new Error(
+  `${response.status}: ${backendMessage || "Something went wrong. Please try again."}`
+);
   }
 
   return response.json();

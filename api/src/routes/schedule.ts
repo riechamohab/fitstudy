@@ -34,8 +34,7 @@ router.get("/", async (_req, res) => {
 
 
 // Nieuw rooster maken (admin)
-router.post("/", async (req, res) => {
-    try {
+router.post("/", requireAdmin, async (req, res) => {    try {
 const {
   title,
   role,
@@ -48,7 +47,7 @@ const {
 } = req.body;
 
 const createdBy = req.currentUser!.id;
-
+console.log("CURRENT USER:", req.currentUser);
     const newSchedule = await db
       .insert(schedule)
     .values({

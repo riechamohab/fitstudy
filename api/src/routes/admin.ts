@@ -7,6 +7,28 @@ import { requireAdmin } from "../lib/auth-session.js";
 
 const router = Router();
 
+router.get("/users", requireAdmin, async (_req, res) => {
+  try {
+    const users = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+      })
+      .from(user);
+
+    res.json(users);
+  } catch (error) {
+    console.error("Get users error:", error);
+
+    res.status(500).json({
+      error: "Could not load users",
+    });
+  }
+});
+
 router.post("/users", requireAdmin, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
