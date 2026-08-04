@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-
+import { boolean, date, index, pgTable, text, time, timestamp } from "drizzle-orm/pg-core";
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -88,6 +87,36 @@ export const verification = pgTable(
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
+
+export const schedule = pgTable("schedule", {
+  id: text("id").primaryKey(),
+
+  title: text("title").notNull(),
+
+  role: text("role")
+    .default("student")
+    .notNull(),
+
+  day: text("day").notNull(),
+
+  date: date("date"),
+
+  startTime: time("start_time").notNull(),
+
+  endTime: time("end_time").notNull(),
+
+  location: text("location"),
+
+  subject: text("subject").notNull(),
+
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  createdAt: timestamp("created_at")
+    .defaultNow()
+    .notNull(),
+});
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),

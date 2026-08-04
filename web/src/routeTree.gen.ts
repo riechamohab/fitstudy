@@ -10,24 +10,31 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeacherRouteImport } from './routes/teacher'
+import { Route as StudentScheduleRouteImport } from './routes/student-schedule'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as StudentAppRouteImport } from './routes/_studentApp'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StudentAppStudentWelzijnRouteImport } from './routes/_studentApp.student-welzijn'
-import { Route as StudentAppStudentProgressRouteImport } from './routes/_studentApp.student-progress'
-import { Route as StudentAppStudentProfileSettingsRouteImport } from './routes/_studentApp.student-profile-settings'
-import { Route as StudentAppStudentPlannerRouteImport } from './routes/_studentApp.student-planner'
-import { Route as StudentAppStudentNotesRouteImport } from './routes/_studentApp.student-notes'
-import { Route as StudentAppStudentDashboardRouteImport } from './routes/_studentApp.student-dashboard'
-import { Route as StudentAppStudentCoursesRouteImport } from './routes/_studentApp.student-courses'
-import { Route as StudentAppStudentAchievementsRouteImport } from './routes/_studentApp.student-achievements'
-import { Route as StudentAppFocusTimerRouteImport } from './routes/_studentApp.focus-timer'
+import { Route as AppStudentWelzijnRouteImport } from './routes/_app.student-welzijn'
+import { Route as AppStudentProgressRouteImport } from './routes/_app.student-progress'
+import { Route as AppStudentProfileSettingsRouteImport } from './routes/_app.student-profile-settings'
+import { Route as AppStudentPlannerRouteImport } from './routes/_app.student-planner'
+import { Route as AppStudentNotesRouteImport } from './routes/_app.student-notes'
+import { Route as AppStudentDashboardRouteImport } from './routes/_app.student-dashboard'
+import { Route as AppStudentCoursesRouteImport } from './routes/_app.student-courses'
+import { Route as AppStudentAchievementsRouteImport } from './routes/_app.student-achievements'
+import { Route as AppFocusTimerRouteImport } from './routes/_app.focus-timer'
+import { Route as SrcRoutesLoginRouteImport } from './routes/src/routes/login'
 
 const TeacherRoute = TeacherRouteImport.update({
   id: '/teacher',
   path: '/teacher',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudentScheduleRoute = StudentScheduleRouteImport.update({
+  id: '/student-schedule',
+  path: '/student-schedule',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -45,8 +52,8 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StudentAppRoute = StudentAppRouteImport.update({
-  id: '/_studentApp',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -54,57 +61,56 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StudentAppStudentWelzijnRoute =
-  StudentAppStudentWelzijnRouteImport.update({
-    id: '/student-welzijn',
-    path: '/student-welzijn',
-    getParentRoute: () => StudentAppRoute,
-  } as any)
-const StudentAppStudentProgressRoute =
-  StudentAppStudentProgressRouteImport.update({
-    id: '/student-progress',
-    path: '/student-progress',
-    getParentRoute: () => StudentAppRoute,
-  } as any)
-const StudentAppStudentProfileSettingsRoute =
-  StudentAppStudentProfileSettingsRouteImport.update({
+const AppStudentWelzijnRoute = AppStudentWelzijnRouteImport.update({
+  id: '/student-welzijn',
+  path: '/student-welzijn',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentProgressRoute = AppStudentProgressRouteImport.update({
+  id: '/student-progress',
+  path: '/student-progress',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentProfileSettingsRoute =
+  AppStudentProfileSettingsRouteImport.update({
     id: '/student-profile-settings',
     path: '/student-profile-settings',
-    getParentRoute: () => StudentAppRoute,
+    getParentRoute: () => AppRoute,
   } as any)
-const StudentAppStudentPlannerRoute =
-  StudentAppStudentPlannerRouteImport.update({
-    id: '/student-planner',
-    path: '/student-planner',
-    getParentRoute: () => StudentAppRoute,
-  } as any)
-const StudentAppStudentNotesRoute = StudentAppStudentNotesRouteImport.update({
+const AppStudentPlannerRoute = AppStudentPlannerRouteImport.update({
+  id: '/student-planner',
+  path: '/student-planner',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentNotesRoute = AppStudentNotesRouteImport.update({
   id: '/student-notes',
   path: '/student-notes',
-  getParentRoute: () => StudentAppRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const StudentAppStudentDashboardRoute =
-  StudentAppStudentDashboardRouteImport.update({
-    id: '/student-dashboard',
-    path: '/student-dashboard',
-    getParentRoute: () => StudentAppRoute,
-  } as any)
-const StudentAppStudentCoursesRoute =
-  StudentAppStudentCoursesRouteImport.update({
-    id: '/student-courses',
-    path: '/student-courses',
-    getParentRoute: () => StudentAppRoute,
-  } as any)
-const StudentAppStudentAchievementsRoute =
-  StudentAppStudentAchievementsRouteImport.update({
-    id: '/student-achievements',
-    path: '/student-achievements',
-    getParentRoute: () => StudentAppRoute,
-  } as any)
-const StudentAppFocusTimerRoute = StudentAppFocusTimerRouteImport.update({
+const AppStudentDashboardRoute = AppStudentDashboardRouteImport.update({
+  id: '/student-dashboard',
+  path: '/student-dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentCoursesRoute = AppStudentCoursesRouteImport.update({
+  id: '/student-courses',
+  path: '/student-courses',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentAchievementsRoute = AppStudentAchievementsRouteImport.update({
+  id: '/student-achievements',
+  path: '/student-achievements',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFocusTimerRoute = AppFocusTimerRouteImport.update({
   id: '/focus-timer',
   path: '/focus-timer',
-  getParentRoute: () => StudentAppRoute,
+  getParentRoute: () => AppRoute,
+} as any)
+const SrcRoutesLoginRoute = SrcRoutesLoginRouteImport.update({
+  id: '/src/routes/login',
+  path: '/src/routes/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -112,50 +118,56 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
+  '/student-schedule': typeof StudentScheduleRoute
   '/teacher': typeof TeacherRoute
-  '/focus-timer': typeof StudentAppFocusTimerRoute
-  '/student-achievements': typeof StudentAppStudentAchievementsRoute
-  '/student-courses': typeof StudentAppStudentCoursesRoute
-  '/student-dashboard': typeof StudentAppStudentDashboardRoute
-  '/student-notes': typeof StudentAppStudentNotesRoute
-  '/student-planner': typeof StudentAppStudentPlannerRoute
-  '/student-profile-settings': typeof StudentAppStudentProfileSettingsRoute
-  '/student-progress': typeof StudentAppStudentProgressRoute
-  '/student-welzijn': typeof StudentAppStudentWelzijnRoute
+  '/focus-timer': typeof AppFocusTimerRoute
+  '/student-achievements': typeof AppStudentAchievementsRoute
+  '/student-courses': typeof AppStudentCoursesRoute
+  '/student-dashboard': typeof AppStudentDashboardRoute
+  '/student-notes': typeof AppStudentNotesRoute
+  '/student-planner': typeof AppStudentPlannerRoute
+  '/student-profile-settings': typeof AppStudentProfileSettingsRoute
+  '/student-progress': typeof AppStudentProgressRoute
+  '/student-welzijn': typeof AppStudentWelzijnRoute
+  '/src/routes/login': typeof SrcRoutesLoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
+  '/student-schedule': typeof StudentScheduleRoute
   '/teacher': typeof TeacherRoute
-  '/focus-timer': typeof StudentAppFocusTimerRoute
-  '/student-achievements': typeof StudentAppStudentAchievementsRoute
-  '/student-courses': typeof StudentAppStudentCoursesRoute
-  '/student-dashboard': typeof StudentAppStudentDashboardRoute
-  '/student-notes': typeof StudentAppStudentNotesRoute
-  '/student-planner': typeof StudentAppStudentPlannerRoute
-  '/student-profile-settings': typeof StudentAppStudentProfileSettingsRoute
-  '/student-progress': typeof StudentAppStudentProgressRoute
-  '/student-welzijn': typeof StudentAppStudentWelzijnRoute
+  '/focus-timer': typeof AppFocusTimerRoute
+  '/student-achievements': typeof AppStudentAchievementsRoute
+  '/student-courses': typeof AppStudentCoursesRoute
+  '/student-dashboard': typeof AppStudentDashboardRoute
+  '/student-notes': typeof AppStudentNotesRoute
+  '/student-planner': typeof AppStudentPlannerRoute
+  '/student-profile-settings': typeof AppStudentProfileSettingsRoute
+  '/student-progress': typeof AppStudentProgressRoute
+  '/student-welzijn': typeof AppStudentWelzijnRoute
+  '/src/routes/login': typeof SrcRoutesLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_studentApp': typeof StudentAppRouteWithChildren
+  '/_app': typeof AppRouteWithChildren
   '/admin': typeof AdminRoute
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
+  '/student-schedule': typeof StudentScheduleRoute
   '/teacher': typeof TeacherRoute
-  '/_studentApp/focus-timer': typeof StudentAppFocusTimerRoute
-  '/_studentApp/student-achievements': typeof StudentAppStudentAchievementsRoute
-  '/_studentApp/student-courses': typeof StudentAppStudentCoursesRoute
-  '/_studentApp/student-dashboard': typeof StudentAppStudentDashboardRoute
-  '/_studentApp/student-notes': typeof StudentAppStudentNotesRoute
-  '/_studentApp/student-planner': typeof StudentAppStudentPlannerRoute
-  '/_studentApp/student-profile-settings': typeof StudentAppStudentProfileSettingsRoute
-  '/_studentApp/student-progress': typeof StudentAppStudentProgressRoute
-  '/_studentApp/student-welzijn': typeof StudentAppStudentWelzijnRoute
+  '/_app/focus-timer': typeof AppFocusTimerRoute
+  '/_app/student-achievements': typeof AppStudentAchievementsRoute
+  '/_app/student-courses': typeof AppStudentCoursesRoute
+  '/_app/student-dashboard': typeof AppStudentDashboardRoute
+  '/_app/student-notes': typeof AppStudentNotesRoute
+  '/_app/student-planner': typeof AppStudentPlannerRoute
+  '/_app/student-profile-settings': typeof AppStudentProfileSettingsRoute
+  '/_app/student-progress': typeof AppStudentProgressRoute
+  '/_app/student-welzijn': typeof AppStudentWelzijnRoute
+  '/src/routes/login': typeof SrcRoutesLoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/change-password'
     | '/login'
+    | '/student-schedule'
     | '/teacher'
     | '/focus-timer'
     | '/student-achievements'
@@ -174,12 +187,14 @@ export interface FileRouteTypes {
     | '/student-profile-settings'
     | '/student-progress'
     | '/student-welzijn'
+    | '/src/routes/login'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/change-password'
     | '/login'
+    | '/student-schedule'
     | '/teacher'
     | '/focus-timer'
     | '/student-achievements'
@@ -190,32 +205,37 @@ export interface FileRouteTypes {
     | '/student-profile-settings'
     | '/student-progress'
     | '/student-welzijn'
+    | '/src/routes/login'
   id:
     | '__root__'
     | '/'
-    | '/_studentApp'
+    | '/_app'
     | '/admin'
     | '/change-password'
     | '/login'
+    | '/student-schedule'
     | '/teacher'
-    | '/_studentApp/focus-timer'
-    | '/_studentApp/student-achievements'
-    | '/_studentApp/student-courses'
-    | '/_studentApp/student-dashboard'
-    | '/_studentApp/student-notes'
-    | '/_studentApp/student-planner'
-    | '/_studentApp/student-profile-settings'
-    | '/_studentApp/student-progress'
-    | '/_studentApp/student-welzijn'
+    | '/_app/focus-timer'
+    | '/_app/student-achievements'
+    | '/_app/student-courses'
+    | '/_app/student-dashboard'
+    | '/_app/student-notes'
+    | '/_app/student-planner'
+    | '/_app/student-profile-settings'
+    | '/_app/student-progress'
+    | '/_app/student-welzijn'
+    | '/src/routes/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  StudentAppRoute: typeof StudentAppRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
   AdminRoute: typeof AdminRoute
   ChangePasswordRoute: typeof ChangePasswordRoute
   LoginRoute: typeof LoginRoute
+  StudentScheduleRoute: typeof StudentScheduleRoute
   TeacherRoute: typeof TeacherRoute
+  SrcRoutesLoginRoute: typeof SrcRoutesLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -225,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/teacher'
       fullPath: '/teacher'
       preLoaderRoute: typeof TeacherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/student-schedule': {
+      id: '/student-schedule'
+      path: '/student-schedule'
+      fullPath: '/student-schedule'
+      preLoaderRoute: typeof StudentScheduleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -248,11 +275,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_studentApp': {
-      id: '/_studentApp'
+    '/_app': {
+      id: '/_app'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof StudentAppRouteImport
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -262,107 +289,114 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_studentApp/student-welzijn': {
-      id: '/_studentApp/student-welzijn'
+    '/_app/student-welzijn': {
+      id: '/_app/student-welzijn'
       path: '/student-welzijn'
       fullPath: '/student-welzijn'
-      preLoaderRoute: typeof StudentAppStudentWelzijnRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentWelzijnRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/student-progress': {
-      id: '/_studentApp/student-progress'
+    '/_app/student-progress': {
+      id: '/_app/student-progress'
       path: '/student-progress'
       fullPath: '/student-progress'
-      preLoaderRoute: typeof StudentAppStudentProgressRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentProgressRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/student-profile-settings': {
-      id: '/_studentApp/student-profile-settings'
+    '/_app/student-profile-settings': {
+      id: '/_app/student-profile-settings'
       path: '/student-profile-settings'
       fullPath: '/student-profile-settings'
-      preLoaderRoute: typeof StudentAppStudentProfileSettingsRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentProfileSettingsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/student-planner': {
-      id: '/_studentApp/student-planner'
+    '/_app/student-planner': {
+      id: '/_app/student-planner'
       path: '/student-planner'
       fullPath: '/student-planner'
-      preLoaderRoute: typeof StudentAppStudentPlannerRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentPlannerRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/student-notes': {
-      id: '/_studentApp/student-notes'
+    '/_app/student-notes': {
+      id: '/_app/student-notes'
       path: '/student-notes'
       fullPath: '/student-notes'
-      preLoaderRoute: typeof StudentAppStudentNotesRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentNotesRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/student-dashboard': {
-      id: '/_studentApp/student-dashboard'
+    '/_app/student-dashboard': {
+      id: '/_app/student-dashboard'
       path: '/student-dashboard'
       fullPath: '/student-dashboard'
-      preLoaderRoute: typeof StudentAppStudentDashboardRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentDashboardRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/student-courses': {
-      id: '/_studentApp/student-courses'
+    '/_app/student-courses': {
+      id: '/_app/student-courses'
       path: '/student-courses'
       fullPath: '/student-courses'
-      preLoaderRoute: typeof StudentAppStudentCoursesRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentCoursesRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/student-achievements': {
-      id: '/_studentApp/student-achievements'
+    '/_app/student-achievements': {
+      id: '/_app/student-achievements'
       path: '/student-achievements'
       fullPath: '/student-achievements'
-      preLoaderRoute: typeof StudentAppStudentAchievementsRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppStudentAchievementsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_studentApp/focus-timer': {
-      id: '/_studentApp/focus-timer'
+    '/_app/focus-timer': {
+      id: '/_app/focus-timer'
       path: '/focus-timer'
       fullPath: '/focus-timer'
-      preLoaderRoute: typeof StudentAppFocusTimerRouteImport
-      parentRoute: typeof StudentAppRoute
+      preLoaderRoute: typeof AppFocusTimerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/src/routes/login': {
+      id: '/src/routes/login'
+      path: '/src/routes/login'
+      fullPath: '/src/routes/login'
+      preLoaderRoute: typeof SrcRoutesLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface StudentAppRouteChildren {
-  StudentAppFocusTimerRoute: typeof StudentAppFocusTimerRoute
-  StudentAppStudentAchievementsRoute: typeof StudentAppStudentAchievementsRoute
-  StudentAppStudentCoursesRoute: typeof StudentAppStudentCoursesRoute
-  StudentAppStudentDashboardRoute: typeof StudentAppStudentDashboardRoute
-  StudentAppStudentNotesRoute: typeof StudentAppStudentNotesRoute
-  StudentAppStudentPlannerRoute: typeof StudentAppStudentPlannerRoute
-  StudentAppStudentProfileSettingsRoute: typeof StudentAppStudentProfileSettingsRoute
-  StudentAppStudentProgressRoute: typeof StudentAppStudentProgressRoute
-  StudentAppStudentWelzijnRoute: typeof StudentAppStudentWelzijnRoute
+interface AppRouteChildren {
+  AppFocusTimerRoute: typeof AppFocusTimerRoute
+  AppStudentAchievementsRoute: typeof AppStudentAchievementsRoute
+  AppStudentCoursesRoute: typeof AppStudentCoursesRoute
+  AppStudentDashboardRoute: typeof AppStudentDashboardRoute
+  AppStudentNotesRoute: typeof AppStudentNotesRoute
+  AppStudentPlannerRoute: typeof AppStudentPlannerRoute
+  AppStudentProfileSettingsRoute: typeof AppStudentProfileSettingsRoute
+  AppStudentProgressRoute: typeof AppStudentProgressRoute
+  AppStudentWelzijnRoute: typeof AppStudentWelzijnRoute
 }
 
-const StudentAppRouteChildren: StudentAppRouteChildren = {
-  StudentAppFocusTimerRoute: StudentAppFocusTimerRoute,
-  StudentAppStudentAchievementsRoute: StudentAppStudentAchievementsRoute,
-  StudentAppStudentCoursesRoute: StudentAppStudentCoursesRoute,
-  StudentAppStudentDashboardRoute: StudentAppStudentDashboardRoute,
-  StudentAppStudentNotesRoute: StudentAppStudentNotesRoute,
-  StudentAppStudentPlannerRoute: StudentAppStudentPlannerRoute,
-  StudentAppStudentProfileSettingsRoute: StudentAppStudentProfileSettingsRoute,
-  StudentAppStudentProgressRoute: StudentAppStudentProgressRoute,
-  StudentAppStudentWelzijnRoute: StudentAppStudentWelzijnRoute,
+const AppRouteChildren: AppRouteChildren = {
+  AppFocusTimerRoute: AppFocusTimerRoute,
+  AppStudentAchievementsRoute: AppStudentAchievementsRoute,
+  AppStudentCoursesRoute: AppStudentCoursesRoute,
+  AppStudentDashboardRoute: AppStudentDashboardRoute,
+  AppStudentNotesRoute: AppStudentNotesRoute,
+  AppStudentPlannerRoute: AppStudentPlannerRoute,
+  AppStudentProfileSettingsRoute: AppStudentProfileSettingsRoute,
+  AppStudentProgressRoute: AppStudentProgressRoute,
+  AppStudentWelzijnRoute: AppStudentWelzijnRoute,
 }
 
-const StudentAppRouteWithChildren = StudentAppRoute._addFileChildren(
-  StudentAppRouteChildren,
-)
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  StudentAppRoute: StudentAppRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
   AdminRoute: AdminRoute,
   ChangePasswordRoute: ChangePasswordRoute,
   LoginRoute: LoginRoute,
+  StudentScheduleRoute: StudentScheduleRoute,
   TeacherRoute: TeacherRoute,
+  SrcRoutesLoginRoute: SrcRoutesLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

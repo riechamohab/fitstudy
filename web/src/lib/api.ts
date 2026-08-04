@@ -672,3 +672,36 @@ export async function deleteAdminUser(id: string) {
     method: "DELETE",
   });
 }
+
+export type Schedule = {
+  id: string;
+  title: string;
+  role: string;
+  day: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  subject: string;
+  createdBy: string;
+};
+
+export async function getSchedules() {
+  return apiRequest<Schedule[]>("/api/schedule");
+}
+
+export async function createSchedule(data: {
+  title: string;
+  role: string;
+  day: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  subject: string;
+}) {
+  return apiRequest<Schedule>("/api/schedule", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}

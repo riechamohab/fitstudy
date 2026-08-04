@@ -5,6 +5,7 @@ import path from "node:path";
  
 import { auth } from "./auth.js";
 import { testDatabaseConnection } from "./db/index.js";
+import achievementsRouter from "./routes/achievements.js";
 import adminRouter from "./routes/admin.js";
 import calendarRouter from "./routes/calendar.js";
 import coursesRouter from "./routes/courses.js";
@@ -13,12 +14,12 @@ import focusSessionsRouter from "./routes/focus-sessions.js";
 import notesRouter from "./routes/notes.js";
 import notificationsRouter from "./routes/notifications.js";
 import progressRouter from "./routes/progress.js";
+import scheduleRouter from "./routes/schedule.js";
 import stressLevelsRouter from "./routes/stress-levels.js";
-import achievementsRouter from "./routes/achievements.js";
-import waterRouter from "./routes/water.js";
 import tasksRouter from "./routes/tasks.js";
 import teacherRouter from "./routes/teacher.js";
 import usersRouter from "./routes/users.js";
+import waterRouter from "./routes/water.js";
 import { startDeadlineChecker } from "./services/deadline-checker.js";
 
 const app = express();
@@ -56,6 +57,14 @@ app.use("/api/water", waterRouter);
 app.use("/api/teacher", teacherRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/admin", adminRouter);
+
+app.get("/test-api", (_req, res) => {
+  res.json({
+    message: "API works"
+  });
+});
+
+app.use("/api/schedule", scheduleRouter);
  
 app.get("/", (_req, res) => {
   res.json({
