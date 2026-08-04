@@ -80,8 +80,10 @@ app.get("/api/health", async (_req, res) => {
   }
 });
  
-app.listen(port, async () => {
-  console.log(`FitStudy API is running on http://localhost:${port}`);
+const host = "0.0.0.0";
+
+app.listen(Number(port), host, async () => {
+  console.log(`FitStudy API is running on http://${host}:${port}`);
  
   try {
     const result = await testDatabaseConnection();
