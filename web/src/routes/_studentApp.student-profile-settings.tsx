@@ -10,7 +10,7 @@ import {
   type UserProfile,
 } from "../lib/api";
 
-export const Route = createFileRoute("/_app/student-profile-settings")({
+export const Route = createFileRoute("/_studentApp/student-profile-settings")({
   component: ProfileSettingsPage,
 });
 

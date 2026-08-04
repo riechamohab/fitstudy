@@ -12,7 +12,7 @@ import {
   type Task,
 } from "../lib/api";
 
-export const Route = createFileRoute("/_app/student-planner")({
+export const Route = createFileRoute("/_studentApp/student-planner")({
   component: PlannerPage,
 });
 

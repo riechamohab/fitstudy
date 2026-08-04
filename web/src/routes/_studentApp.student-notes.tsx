@@ -9,7 +9,7 @@ import {
   isNotificationApiSupported,
 } from "../lib/browserNotifications";
 
-export const Route = createFileRoute("/_app/student-notes")({
+export const Route = createFileRoute("/_studentApp/student-notes")({
   component: NotesPage,
 });
 

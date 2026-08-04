@@ -2,20 +2,25 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import {
+  getCourses,
   getDashboardWeek,
   getImageUrl,
+  getNotes,
   getNotifications,
   getProfile,
   markAllNotificationsRead,
   markNotificationRead,
   type AppNotification,
+  type Course,
   type DashboardWeek,
+  type Lesson,
   type StreakStatus,
+  type TeacherNote,
   type UserProfile,
 } from "../lib/api";
 import { showBrowserNotification } from "../lib/browserNotifications";
 
-export const Route = createFileRoute("/_app/student-dashboard")({
+export const Route = createFileRoute("/_studentApp/student-dashboard")({
   component: StudentDashboardPage,
 });
 
@@ -185,6 +190,26 @@ function StudentDashboardPage() {
   const seenNotifIdsRef = useRef<Set<string>>(new Set());
   const isFirstNotifPollRef = useRef(true);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchCourses, setSearchCourses] = useState<Course[]>([]);
+  const [searchNotes, setSearchNotes] = useState<TeacherNote[]>([]);
+  const searchDataLoadedRef = useRef(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchResults(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     async function load() {
       try {
@@ -244,6 +269,44 @@ function StudentDashboardPage() {
 
   const unreadNotifCount = notifications.filter((n) => !n.read).length;
 
+  async function loadSearchDataIfNeeded() {
+    if (searchDataLoadedRef.current) return;
+    searchDataLoadedRef.current = true;
+    try {
+      const [coursesData, notesData] = await Promise.all([getCourses(), getNotes()]);
+      setSearchCourses(coursesData);
+      setSearchNotes(notesData);
+    } catch {
+      searchDataLoadedRef.current = false;
+    }
+  }
+
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+
+  const matchedCourses = trimmedQuery
+    ? searchCourses.filter((c) => c.title.toLowerCase().includes(trimmedQuery))
+    : [];
+
+  const matchedLessons: { courseId: string; courseTitle: string; lesson: Lesson }[] = trimmedQuery
+    ? searchCourses.flatMap((c) =>
+        [...c.chapters.flatMap((ch) => ch.lessons), ...c.lessons]
+          .filter((l) => l.title.toLowerCase().includes(trimmedQuery))
+          .map((lesson) => ({ courseId: c.id, courseTitle: c.title, lesson }))
+      )
+    : [];
+
+  const matchedNotes = trimmedQuery
+    ? searchNotes.filter((n) => n.message.toLowerCase().includes(trimmedQuery))
+    : [];
+
+  const hasSearchResults =
+    matchedCourses.length > 0 || matchedLessons.length > 0 || matchedNotes.length > 0;
+
+  function closeSearch() {
+    setShowSearchResults(false);
+    setSearchQuery("");
+  }
+
   async function handleOpenNotification(notif: AppNotification) {
     if (!notif.read) {
       setNotifications((prev) =>
@@ -289,9 +352,91 @@ function StudentDashboardPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400">
-            <SearchIcon />
-            <span>Zoek vakken, notities...</span>
+          <div className="relative" ref={searchContainerRef}>
+            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+              <SearchIcon />
+              <input
+                type="text"
+                value={searchQuery}
+                onFocus={() => {
+                  loadSearchDataIfNeeded();
+                  setShowSearchResults(true);
+                }}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  setShowSearchResults(true);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") closeSearch();
+                }}
+                placeholder="Zoek vakken, lessen, notities..."
+                className="w-56 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none"
+              />
+            </div>
+
+            {showSearchResults && trimmedQuery && (
+              <div className="absolute right-0 z-20 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                {!hasSearchResults ? (
+                  <p className="p-4 text-sm text-slate-400">Geen resultaten gevonden.</p>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {matchedCourses.map((course) => (
+                      <button
+                        key={`course-${course.id}`}
+                        type="button"
+                        onClick={() => {
+                          closeSearch();
+                          navigate({ to: "/student-courses" });
+                        }}
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-slate-50"
+                      >
+                        <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
+                          VAK
+                        </span>
+                        <span className="text-slate-700">{course.title}</span>
+                      </button>
+                    ))}
+
+                    {matchedLessons.map(({ lesson, courseTitle }) => (
+                      <button
+                        key={`lesson-${lesson.id}`}
+                        type="button"
+                        onClick={() => {
+                          closeSearch();
+                          navigate({ to: "/student-courses" });
+                        }}
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-slate-50"
+                      >
+                        <span className="rounded bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-600">
+                          LES
+                        </span>
+                        <span className="text-slate-700">
+                          {lesson.title}
+                          <span className="text-slate-400"> — {courseTitle}</span>
+                        </span>
+                      </button>
+                    ))}
+
+                    {matchedNotes.map((note) => (
+                      <button
+                        key={`note-${note.id}`}
+                        type="button"
+                        onClick={() => {
+                          closeSearch();
+                          navigate({ to: "/student-notes" });
+                        }}
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-slate-50"
+                      >
+                        <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
+                          NOTITIE
+                        </span>
+                        <span className="truncate text-slate-700">{note.message}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="relative">
@@ -468,3 +613,4 @@ function StudentDashboardPage() {
     </main>
   );
 }
+

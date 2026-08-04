@@ -10,7 +10,7 @@ import {
   type Lesson,
 } from "../lib/api";
 
-export const Route = createFileRoute("/_app/student-courses")({
+export const Route = createFileRoute("/_studentApp/student-courses")({
   component: CoursesPage,
 });
 

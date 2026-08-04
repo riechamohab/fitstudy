@@ -14,7 +14,7 @@ import {
   type Task,
 } from "../lib/api";
 
-export const Route = createFileRoute("/_app/focus-timer")({
+export const Route = createFileRoute("/_studentApp/focus-timer")({
   component: FocusTimerPage,
 });
 

@@ -19,7 +19,7 @@ import {
   type WellbeingStatus,
 } from "../lib/api";
 
-export const Route = createFileRoute("/_app/student-welzijn")({
+export const Route = createFileRoute("/_studentApp/student-welzijn")({
   component: WellbeingPage,
 });
 

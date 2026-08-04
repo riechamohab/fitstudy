@@ -8,7 +8,7 @@ import {
   RARITY_META,
 } from "../lib/achievementDefinitions";
 
-export const Route = createFileRoute("/_app/student-achievements")({
+export const Route = createFileRoute("/_studentApp/student-achievements")({
   component: AchievementsPage,
 });
 
