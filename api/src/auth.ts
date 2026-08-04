@@ -82,4 +82,12 @@ export const auth = betterAuth({
   "http://localhost:3002",
   "https://fitstudy-web.onrender.com",
 ],
+
+advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+      httpOnly: true,
+    },
+  },
 });
