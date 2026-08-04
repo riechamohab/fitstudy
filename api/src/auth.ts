@@ -30,9 +30,6 @@ export const auth = betterAuth({
   usePlural: false,
 }),
 
-logger: {
-  level: "debug",
-},
  
   emailAndPassword: {
     enabled: true,
@@ -83,5 +80,6 @@ logger: {
   "http://localhost:5173",
   "http://localhost:3001",
   "http://localhost:3002",
+  "https://fitstudy-web.onrender.com",
 ],
 });

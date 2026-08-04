@@ -1,5 +1,4 @@
 export const API_BASE_URL = "http://localhost:3000";
-
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {}
@@ -53,6 +52,7 @@ export type UserProfile = {
   study: string | null;
   phoneNumber: string | null;
   studentClass: string | null;
+  mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -63,6 +63,21 @@ export function getImageUrl(image: string | null | undefined) {
   return `${API_BASE_URL}${image}`;
 }
 
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+) {
+  return apiRequest<{ success: boolean; message: string }>(
+    "/api/users/change-password",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+      }),
+    },
+  );
+}
 export async function signIn(email: string, password: string) {
   return apiRequest("/api/auth/sign-in/email", {
     method: "POST",
@@ -72,7 +87,6 @@ export async function signIn(email: string, password: string) {
     }),
   });
 }
-
 export async function signOut() {
   return apiRequest("/api/auth/sign-out", {
     method: "POST",

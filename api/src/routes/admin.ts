@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { Router } from "express";
 import { auth } from "../auth.js";
 import { user } from "../db/auth-schema.js";
@@ -20,6 +20,7 @@ router.get("/users", requireAdmin, async (_req, res) => {
       .from(user);
 
     res.json(users);
+
   } catch (error) {
     console.error("Admin users error:", error);
 
@@ -28,6 +29,7 @@ router.get("/users", requireAdmin, async (_req, res) => {
     });
   }
 });
+
 
 router.post("/users", requireAdmin, async (req, res) => {
   try {
@@ -59,11 +61,17 @@ router.post("/users", requireAdmin, async (req, res) => {
 
 router.delete("/users/:id", requireAdmin, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id;
 
-    await db
-      .delete(user)
-      .where(eq(user.id, id));
+    if (!id) {
+      return res.status(400).json({
+        error: "User id is required",
+      });
+    }
+
+  await db
+  .delete(user)
+  .where(sql`${user.id} = ${id}`);
 
     res.json({
       message: "User deleted successfully",
@@ -74,6 +82,47 @@ router.delete("/users/:id", requireAdmin, async (req, res) => {
 
     res.status(500).json({
       error: "Could not delete user",
+    });
+  }
+});
+
+
+router.put("/users/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({
+        error: "User id is required",
+      });
+    }
+
+    const {
+      name,
+      email,
+      role,
+    } = req.body;
+
+    const updatedUser = await db
+      .update(user)
+      .set({
+        name,
+        email,
+        role,
+      })
+.where(sql`${user.id} = ${id}`)
+      .returning();
+
+    res.json({
+      message: "User updated successfully",
+      user: updatedUser[0],
+    });
+
+  } catch (error) {
+    console.error("Update user error:", error);
+
+    res.status(500).json({
+      error: "Could not update user",
     });
   }
 });
