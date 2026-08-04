@@ -7,48 +7,38 @@ import { requireAdmin } from "../lib/auth-session.js";
 
 const router = Router();
 
-router.get("/users", requireAdmin, async (_req, res) => {
-  try {
-    const users = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-      })
-      .from(user);
-
-    res.json(users);
-
-  } catch (error) {
-    console.error("Admin users error:", error);
-
-    res.status(500).json({
-      error: "Internal server error",
-    });
-  }
-});
-
-
 router.post("/users", requireAdmin, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    const newUser = await auth.api.createUser({
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({
+        error: "Name, email, password and role are required",
+      });
+    }
+
+    const newUser = await auth.api.signUpEmail({
       body: {
         name,
         email,
         password,
-        role,
       },
     });
 
+    await db
+      .update(user)
+      .set({
+        role,
+      })
+      .where(sql`${user.id} = ${newUser.user.id}`);
+
     res.status(201).json({
       message: "User created successfully",
-      user: newUser,
+      user: {
+        ...newUser.user,
+        role,
+      },
     });
-
   } catch (error) {
     console.error("Create user error:", error);
 
