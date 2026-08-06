@@ -19,7 +19,7 @@ export const studentNavSections = [
   {
     title: "Centraal",
     items: [
-      { label: "Dashboard", icon: DashboardIcon, path: "/student-dashboard" },
+      { label: "Portaal", icon: DashboardIcon, path: "/student-dashboard" },
       { label: "Planner", icon: PlannerIcon, path: "/student-planner" },
       { label: "Studieprogramma", icon: CoursesIcon, path: "/student-courses" },
       { label: "Focus Timer", icon: FocusTimerIcon, path: "/focus-timer" },
@@ -29,9 +29,9 @@ export const studentNavSections = [
   {
     title: "Inzichten",
     items: [
-      { label: "Progress", icon: ProgressIcon, path: "/student-progress" },
+      { label: "Voortgang", icon: ProgressIcon, path: "/student-progress" },
       { label: "Welzijn", icon: WellbeingIcon, path: "/student-welzijn" },
-      { label: "Achievements", icon: AchievementsIcon, path: "/student-achievements" },
+      { label: "Mijlpalen", icon: AchievementsIcon, path: "/student-achievements" },
     ] as NavItem[],
   },
 ];

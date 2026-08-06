@@ -70,6 +70,62 @@ export function AchievementsIcon() {
   );
 }
 
+export function StatisticsIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 20h16" />
+      <rect x="6" y="11" width="2.5" height="7" rx="0.5" />
+      <rect x="10.75" y="7" width="2.5" height="11" rx="0.5" />
+      <rect x="15.5" y="4" width="2.5" height="14" rx="0.5" />
+    </svg>
+  );
+}
+
+export function StudentIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 8l9-4 9 4-9 4-9-4Z" />
+      <path d="M6 10v4c0 1.8 2.7 3 6 3s6-1.2 6-3v-4" />
+      <path d="M21 8v5" />
+    </svg>
+  );
+}
+
+export function TeacherIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+    >
+      <circle cx="8" cy="8" r="3" />
+      <path d="M3 19c0-3 2.2-5 5-5s5 2 5 5" />
+      <rect x="15" y="5" width="6" height="8" rx="1" />
+      <path d="M16.5 8h3" />
+      <path d="M18 6.5v3" />
+      <path d="M15 19h6" />
+    </svg>
+  );
+}
+
 export function LogoutIcon() {
   return (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
