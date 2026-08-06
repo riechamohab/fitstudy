@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-import { getAchievements, type Achievement } from "../lib/api";
+import { getAchievements, type Achievement } from "../../lib/api";
 import {
   ACHIEVEMENT_CATEGORY_ORDER,
   ACHIEVEMENT_DEFINITIONS,
