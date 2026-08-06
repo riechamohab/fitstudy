@@ -386,7 +386,7 @@ function StudentDashboardPage() {
                         type="button"
                         onClick={() => {
                           closeSearch();
-                          navigate({ to: "/student-courses" });
+                          navigate({ to: "/student/studieprogramma" });
                         }}
                         className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-slate-50"
                       >
@@ -403,7 +403,7 @@ function StudentDashboardPage() {
                         type="button"
                         onClick={() => {
                           closeSearch();
-                          navigate({ to: "/student-courses" });
+                          navigate({ to: "/student/studieprogramma" });
                         }}
                         className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-slate-50"
                       >
@@ -423,7 +423,7 @@ function StudentDashboardPage() {
                         type="button"
                         onClick={() => {
                           closeSearch();
-                          navigate({ to: "/student-notes" });
+                          navigate({ to: "/student/notities" });
                         }}
                         className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-slate-50"
                       >
@@ -504,7 +504,7 @@ function StudentDashboardPage() {
 
           <button
             type="button"
-            onClick={() => navigate({ to: "/student-profile-settings" })}
+            onClick={() => navigate({ to: "/student/profiel-settings" })}
             className="flex items-center gap-2 rounded-lg px-2 py-1 text-left transition hover:bg-slate-100"
           >
             <div className="text-right">
