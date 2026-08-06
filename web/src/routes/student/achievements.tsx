@@ -6,7 +6,7 @@ import {
   ACHIEVEMENT_CATEGORY_ORDER,
   ACHIEVEMENT_DEFINITIONS,
   RARITY_META,
-} from "../lib/achievementDefinitions";
+} from "../../lib/achievementDefinitions";
 
 export const Route = createFileRoute("/student/achievements")({
   component: AchievementsPage,

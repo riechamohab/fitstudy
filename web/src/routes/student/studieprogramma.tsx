@@ -8,7 +8,7 @@ import {
   type ClassScheduleOverview,
   type Course,
   type Lesson,
-} from "../lib/api";
+} from "../../lib/api";
 
 export const Route = createFileRoute("/student/studieprogramma")({
   component: CoursesPage,

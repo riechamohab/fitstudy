@@ -17,8 +17,8 @@ import {
   type StreakStatus,
   type TeacherNote,
   type UserProfile,
-} from "../lib/api";
-import { showBrowserNotification } from "../lib/browserNotifications";
+} from "../../lib/api";
+import { showBrowserNotification } from "../../lib/browserNotifications";
 
 export const Route = createFileRoute("/student/portaal")({
   component: StudentDashboardPage,

@@ -7,7 +7,7 @@ import {
   getProgressExportUrl,
   type Grade,
   type MonthlyProgress,
-} from "../lib/api";
+} from "../../lib/api";
 
 export const Route = createFileRoute("/student/voortgang")({
   component: ProgressPage,

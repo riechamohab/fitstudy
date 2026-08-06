@@ -10,7 +10,7 @@ import {
   type PlannerDay,
   type PlannerResponse,
   type Task,
-} from "../lib/api";
+} from "../../lib/api";
 
 export const Route = createFileRoute("/student/planning")({
   component: PlannerPage,

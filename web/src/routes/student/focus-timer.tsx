@@ -12,7 +12,7 @@ import {
   type ChecklistItem,
   type FocusSession,
   type Task,
-} from "../lib/api";
+} from "../../lib/api";
 
 export const Route = createFileRoute("/student/focus-timer")({
   component: FocusTimerPage,

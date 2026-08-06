@@ -7,7 +7,7 @@ import {
   enableBrowserNotifications,
   isBrowserNotificationsEnabled,
   isNotificationApiSupported,
-} from "../lib/browserNotifications";
+} from "../../lib/browserNotifications";
 
 export const Route = createFileRoute("/student/notities")({
   component: NotesPage,

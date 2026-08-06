@@ -17,7 +17,7 @@ import {
   type StressEntry,
   type WaterIntake,
   type WellbeingStatus,
-} from "../lib/api";
+} from "../../lib/api";
 
 export const Route = createFileRoute("/student/welzijn")({
   component: WellbeingPage,
