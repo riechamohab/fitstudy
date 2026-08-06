@@ -12,7 +12,7 @@ export interface NavItem {
   path: string;
 }
 
-export const studentNavSections = [
+export const adminNavSections = [
   {
     title: "Centraal",
     items: [

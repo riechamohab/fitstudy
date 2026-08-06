@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-export const Route = createFileRoute("/student-schedule")({
+export const Route = createFileRoute("/admin/student-schedule")({
   component: StudentSchedulePage,
 });
 

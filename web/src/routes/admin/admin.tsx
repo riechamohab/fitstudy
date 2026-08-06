@@ -8,9 +8,9 @@ import {
   getSchedules,
   type AdminUser,
   type Schedule
-} from "../lib/api";
+} from "../../lib/api";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/admin")({
   component: AdminPage,
 });
 
