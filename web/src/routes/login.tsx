@@ -104,8 +104,6 @@ try {
   await signIn(email, password);
 
   const user = await getProfile();
-
-console.log("INGELOGDE USER:", JSON.stringify(user, null, 2));
   
 if (
   user.mustChangePassword &&
