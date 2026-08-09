@@ -7,8 +7,6 @@ export async function getCurrentUser(req: Request) {
   const session = await auth.api.getSession({
     headers: fromNodeHeaders(req.headers),
   });
-
-   console.log("USER SESSION:", session?.user);
    
   return session?.user ?? null;
 }

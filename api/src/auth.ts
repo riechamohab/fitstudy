@@ -16,8 +16,7 @@ if (!process.env.BETTER_AUTH_URL) {
  
 export const auth = betterAuth({
   logger: {
-    level: "debug",
-    disabled: false,
+    disabled: true,
   },
 
   secret: process.env.BETTER_AUTH_SECRET,
@@ -26,7 +25,7 @@ export const auth = betterAuth({
  database: drizzleAdapter(db, {
   provider: "pg",
   schema: authSchema,
-  debugLogs: true,
+  debugLogs: false,
   usePlural: false,
 }),
 
