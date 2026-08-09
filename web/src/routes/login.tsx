@@ -118,15 +118,15 @@ if (
 }
   if (user.role === "admin") {
     await navigate({
-      to: "/admin",
+      to: "/admin/admin",
     });
   } else if (user.role === "teacher") {
     await navigate({
-      to: "/teacher",
+      to: "/docent/portaal",
     });
   } else {
     await navigate({
-      to: "/student-dashboard",
+      to: "/student/portaal",
     });
   }
 

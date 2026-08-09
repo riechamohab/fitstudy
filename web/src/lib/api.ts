@@ -710,3 +710,168 @@ export async function createSchedule(data: {
     body: JSON.stringify(data),
   });
 }
+
+//docent api's hieronder
+
+export interface ScheduleItem {
+  id: string;
+  day: string;
+  time: string;
+  subject: string;
+  room: string | null;
+  className: string;
+}
+ 
+export interface StudentDetailGrade {
+  id: string;
+  subject: string;
+  score: number;
+  gradedAt: string;
+}
+ 
+export interface StudentDetails {
+  student: {
+    id: string;
+    name: string;
+    email: string;
+    className: string | null;
+    createdAt: string;
+  };
+  taskStats: { total: number; completed: number; inProgress: number; overdue: number };
+  exerciseStats: { total: number; completed: number; totalMinutes: number };
+  stressStats: { avgLevel: number; avgFocus: number; entries: number };
+  grades: StudentDetailGrade[];
+}
+ 
+export async function getTeacherStudentDetails(studentId: string) {
+  return apiRequest<StudentDetails>(`/api/teacher/students/${studentId}/details`);
+}
+ 
+export async function getTeacherSchedule() {
+  return apiRequest<ScheduleItem[]>("/api/teacher/schedule");
+}
+ 
+export interface TeacherTask {
+  id: string;
+  title: string;
+  className: string;
+  deadline: string | null;
+  submittedCount: number;
+  totalCount: number;
+}
+ 
+export async function getTeacherTasks(className?: string) {
+  const url = className && className !== "ALL"
+    ? `/api/teacher/tasks?className=${encodeURIComponent(className)}`
+    : "/api/teacher/tasks";
+  return apiRequest<TeacherTask[]>(url);
+}
+ 
+export type CreateAssignmentInput = {
+  className: string;
+  title: string;
+  description?: string;
+  deadline?: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH";
+};
+ 
+export async function createAssignment(data: CreateAssignmentInput) {
+  return apiRequest<{ assignmentGroupId: string; studentsAssigned: number }>(
+    "/api/teacher/assignments",
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    }
+  );
+}
+ 
+export interface StudentProgress {
+  id: string;
+  name: string;
+  className: string | null;
+}
+ 
+export async function getTeacherStudents() {
+  return apiRequest<StudentProgress[]>("/api/teacher/students");
+}
+ 
+export interface GradeTrend {
+  period: string;
+  value: number;
+}
+ 
+export async function getTeacherGrades(filterId?: string) {
+  const url = filterId ? `/api/teacher/grades?student=${filterId}` : "/api/teacher/grades";
+  return apiRequest<GradeTrend[]>(url);
+}
+ 
+export type AddGradeInput = {
+  studentId: string;
+  subject: string;
+  score: number;
+  gradedAt?: string;
+};
+ 
+export async function addGrade(data: AddGradeInput) {
+  return apiRequest("/api/teacher/grades", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function sendNote(studentId: string, message: string) {
+  return apiRequest("/api/teacher/notes", {
+    method: "POST",
+    body: JSON.stringify({ studentId, message }),
+  });
+}
+ 
+export type AnnouncementType = "CLASS_CANCELED" | "CLASS_MOVED" | "TEST_ANNOUNCEMENT" | "GENERAL";
+ 
+export async function sendAnnouncement(data: {
+  className: string;
+  title: string;
+  message: string;
+  type?: AnnouncementType;
+}) {
+  return apiRequest("/api/teacher/announce", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export interface GradePageItem {
+  id: string;
+  studentId: string;
+  subject: string;
+  score: number;
+  assessmentName: string;
+  gradedAt: string;
+}
+
+// Haalt alle ingevoerde cijfers op voor de beoordelingenpagina
+export async function getTeacherGradesPage() {
+  return apiRequest<GradePageItem[]>("/api/teacher/grades-page");
+}
+
+// Uitbreiding voor addGrade om ook assessmentName mee te kunnen sturen
+export type AddGradePageInput = {
+  studentId: string;
+  subject: string;
+  score: number;
+  assessmentName: string;
+};
+
+export async function addGradePage(data: AddGradePageInput) {
+  return apiRequest<GradePageItem>("/api/teacher/grades", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// Verwijdert een cijfer op basis van ID
+export async function deleteTeacherGrade(gradeId: string) {
+  return apiRequest<{ message: string }>(`/api/teacher/grades/${gradeId}`, {
+    method: "DELETE",
+  });
+}

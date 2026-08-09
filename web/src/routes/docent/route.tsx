@@ -6,7 +6,7 @@ import { signOut } from "../../lib/api";
 import { teacherNavSections } from "../../lib/navigation/teacherNav";
 import { AppShell } from "../../components/ui/AppShell";
 
-export const Route = createFileRoute("/teacher/_layout")({
+export const Route = createFileRoute("/docent")({
   component: TeacherAppLayout,
 });
 

@@ -17,9 +17,11 @@ import progressRouter from "./routes/progress.js";
 import scheduleRouter from "./routes/schedule.js";
 import stressLevelsRouter from "./routes/stress-levels.js";
 import tasksRouter from "./routes/tasks.js";
-import teacherRouter from "./routes/teacher.js";
 import usersRouter from "./routes/users.js";
 import waterRouter from "./routes/water.js";
+
+import teacherRouter from "./routes/teacher.js";
+
 import { startDeadlineChecker } from "./services/deadline-checker.js";
 
 const app = express();
@@ -54,9 +56,10 @@ app.use("/api/focus-sessions", focusSessionsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/achievements", achievementsRouter);
 app.use("/api/water", waterRouter);
-app.use("/api/teacher", teacherRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/admin", adminRouter);
+
+app.use("/api/teacher", teacherRouter);
 
 app.get("/test-api", (_req, res) => {
   res.json({

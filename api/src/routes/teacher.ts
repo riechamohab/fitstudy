@@ -1,14 +1,15 @@
 import { Router } from "express";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
-import { classSchedule, exercises, stressLevels, tasks, progress, teacherNotes, notifications } from "../db/schema.js";
+import { teacherPrograms, exercises, stressLevels, tasks, progress, teacherNotes, notifications, schedule, grades } from "../db/schema.js";
 import { user } from "../db/auth-schema.js";
 import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
+// Strenge check: Alleen docenten krijgen toegang (geen admins)
 async function checkTeacherRole(req: any, res: any, next: any) {
   const currentUser = await requireUser(req, res);
 
@@ -16,7 +17,7 @@ async function checkTeacherRole(req: any, res: any, next: any) {
     return;
   }
 
-  if (currentUser.role !== "teacher" && currentUser.role !== "admin") {
+  if (currentUser.role !== "teacher") {
     return res.status(403).json({
       error: "Access denied. Teacher role required.",
     });
@@ -26,26 +27,6 @@ async function checkTeacherRole(req: any, res: any, next: any) {
 
   next();
 }
-
-async function checkAdminRole(req: any, res: any, next: any) {
-  const currentUser = await requireUser(req, res);
-
-  if (!currentUser) {
-    return;
-  }
-
-  if (currentUser.role !== "admin") {
-    return res.status(403).json({
-      error: "Access denied. Admin role required.",
-    });
-  }
-
-  req.currentUser = currentUser;
-
-  next();
-}
-
-const DAYS_OF_WEEK = [0, 1, 2, 3, 4, 5, 6];
 
 router.get("/overview", checkTeacherRole, async (_req, res) => {
   try {
@@ -84,7 +65,8 @@ router.get("/overview", checkTeacherRole, async (_req, res) => {
 
 router.get("/students", checkTeacherRole, async (_req, res) => {
   try {
-    const students = await db.select().from(user);
+    const allUsers = await db.select().from(user);
+    const students = allUsers.filter((u) => u.role === "student");
     const allTasks = await db.select().from(tasks);
     const allExercises = await db.select().from(exercises);
     const allStressLevels = await db.select().from(stressLevels);
@@ -124,6 +106,7 @@ router.get("/students", checkTeacherRole, async (_req, res) => {
           id: student.id,
           name: student.name,
           email: student.email,
+          className: student.studentClass,
           createdAt: student.createdAt,
           counts: {
             tasks: studentTasks.length,
@@ -241,16 +224,24 @@ router.get("/students/:id/details", checkTeacherRole, async (req, res) => {
             entries: 0,
           };
 
+    const studentGrades = await db
+      .select()
+      .from(grades)
+      .where(eq(grades.studentId, id))
+      .orderBy(desc(grades.gradedAt));
+
     res.json({
       student: {
         id: student.id,
         name: student.name,
         email: student.email,
+        className: student.studentClass,
         createdAt: student.createdAt,
       },
       taskStats,
       exerciseStats,
       stressStats,
+      grades: studentGrades,
       recentActivity: {
         tasks: studentTasks.slice(0, 20),
         exercises: studentExercises.slice(0, 10),
@@ -578,125 +569,6 @@ router.get("/wellness-reports", checkTeacherRole, async (req, res) => {
   }
 });
 
-router.get("/class-schedule", checkAdminRole, async (req: any, res) => {
-  try {
-    const teacherId = req.currentUser.id;
-
-    const entries = await db
-      .select()
-      .from(classSchedule)
-      .where(eq(classSchedule.teacherId, teacherId))
-      .orderBy(classSchedule.dayOfWeek, classSchedule.startTime);
-
-    res.json(entries);
-  } catch (error) {
-    console.error("Get class schedule error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.post("/class-schedule", checkAdminRole, async (req: any, res) => {
-  try {
-    const teacherId = req.currentUser.id;
-
-    const { className, subject, room, dayOfWeek, startTime, endTime } = req.body;
-
-    if (!className || !subject || !startTime || !endTime) {
-      return res.status(400).json({
-        error: "className, subject, startTime, and endTime are required",
-      });
-    }
-
-    if (!DAYS_OF_WEEK.includes(Number(dayOfWeek))) {
-      return res.status(400).json({ error: "dayOfWeek must be 0-6" });
-    }
-
-    const newEntry = {
-      id: nanoid(),
-      teacherId,
-      className,
-      subject,
-      room: room ?? null,
-      dayOfWeek: Number(dayOfWeek),
-      startTime,
-      endTime,
-    };
-
-    const inserted = await db.insert(classSchedule).values(newEntry).returning();
-
-    res.status(201).json(inserted[0]);
-  } catch (error) {
-    console.error("Create class schedule error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.put("/class-schedule/:id", checkAdminRole, async (req: any, res) => {
-  try {
-    const teacherId = req.currentUser.id;
-    const { id } = req.params;
-
-    const { className, subject, room, dayOfWeek, startTime, endTime } = req.body;
-
-    if (dayOfWeek !== undefined && !DAYS_OF_WEEK.includes(Number(dayOfWeek))) {
-      return res.status(400).json({ error: "dayOfWeek must be 0-6" });
-    }
-
-    const existing = await db
-      .select()
-      .from(classSchedule)
-      .where(eq(classSchedule.id, id))
-      .limit(1);
-
-    if (!existing[0] || existing[0].teacherId !== teacherId) {
-      return res.status(404).json({ error: "Class schedule entry not found" });
-    }
-
-    const updated = await db
-      .update(classSchedule)
-      .set({
-        ...(className !== undefined && { className }),
-        ...(subject !== undefined && { subject }),
-        ...(room !== undefined && { room }),
-        ...(dayOfWeek !== undefined && { dayOfWeek: Number(dayOfWeek) }),
-        ...(startTime !== undefined && { startTime }),
-        ...(endTime !== undefined && { endTime }),
-        updatedAt: new Date(),
-      })
-      .where(eq(classSchedule.id, id))
-      .returning();
-
-    res.json(updated[0]);
-  } catch (error) {
-    console.error("Update class schedule error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.delete("/class-schedule/:id", checkAdminRole, async (req: any, res) => {
-  try {
-    const teacherId = req.currentUser.id;
-    const { id } = req.params;
-
-    const existing = await db
-      .select()
-      .from(classSchedule)
-      .where(eq(classSchedule.id, id))
-      .limit(1);
-
-    if (!existing[0] || existing[0].teacherId !== teacherId) {
-      return res.status(404).json({ error: "Class schedule entry not found" });
-    }
-
-    await db.delete(classSchedule).where(eq(classSchedule.id, id));
-
-    res.json({ message: "Class schedule entry deleted" });
-  } catch (error) {
-    console.error("Delete class schedule error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 router.post("/notes", checkTeacherRole, async (req: any, res) => {
   try {
     const teacherId = req.currentUser.id;
@@ -758,6 +630,272 @@ router.post("/announce", checkTeacherRole, async (req: any, res) => {
     res.status(201).json({ message: `Announcement sent to ${students.length} students` });
   } catch (error) {
     console.error("Send announcement error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- Docent Rooster opgehaald via de centrale schedule tabel ---
+
+router.get("/schedule", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+
+    const teacherSchedule = await db
+      .select()
+      .from(schedule)
+      .where(eq(schedule.teacherId, teacherId));
+
+    res.json(teacherSchedule);
+  } catch (error) {
+    console.error("Get teacher schedule error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/teacher/subjects -> Geeft de vakken van de ingelogde docent terug
+router.get("/subjects", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+
+    // Haal de docent op uit de database
+    const teacherData = await db.select().from(user).where(eq(user.id, teacherId));
+    
+    if (teacherData.length === 0) {
+      return res.status(404).json({ error: "Docent niet gevonden." });
+    }
+
+    // Stel dat de docent een veld 'subjects' heeft (bijv. ["Natuurkunde", "Wiskunde"])
+    // Als dit veld niet bestaat, kun je hier een fallback array gebruiken of uit een relatietabel halen.
+    const subjects = teacherData[0].subjects ?? ["Natuurkunde"]; // Fallback voorbeeld
+
+    res.json({ subjects });
+  } catch (error) {
+    console.error("Get teacher subjects error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/programs", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const programs = await db
+      .select()
+      .from(teacherPrograms)
+      .where(eq(teacherPrograms.teacherId, teacherId))
+      .orderBy(desc(teacherPrograms.createdAt));
+
+    res.json(programs);
+  } catch (error) {
+    console.error("Get teacher programs error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /api/teacher/programs -> Voegt een nieuw item toe aan het vakprogramma
+router.post("/programs", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const { subject, period, chapter, lesson, topics } = req.body;
+
+    if (!subject || !period || !chapter || !lesson) {
+      return res.status(400).json({ error: "Vak, periode, hoofdstuk en les zijn verplicht." });
+    }
+
+    const newProgram = await db
+      .insert(teacherPrograms)
+      .values({
+        id: nanoid(),
+        teacherId,
+        subject,
+        period,
+        chapter,
+        lesson,
+        topics: topics || null,
+      })
+      .returning();
+
+    res.status(201).json(newProgram[0]);
+  } catch (error) {
+    console.error("Create teacher program error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/teacher/grades -> Cijfers-trend van de docent, gegroepeerd per maand
+router.get("/grades", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const studentFilter = req.query.student as string | undefined;
+
+    const conditions = [eq(grades.teacherId, teacherId)];
+    if (studentFilter) {
+      conditions.push(eq(grades.studentId, studentFilter));
+    }
+
+    const teacherGrades = await db
+      .select()
+      .from(grades)
+      .where(and(...conditions));
+
+    const byMonth = new Map<string, number[]>();
+
+    for (const grade of teacherGrades) {
+      const date = new Date(grade.gradedAt);
+      const monthKey = date.toLocaleDateString("nl-NL", { month: "short", year: "numeric" });
+      if (!byMonth.has(monthKey)) byMonth.set(monthKey, []);
+      byMonth.get(monthKey)!.push(grade.score);
+    }
+
+    const trend = Array.from(byMonth.entries())
+      .map(([period, scores]) => ({
+        period,
+        value: Number((scores.reduce((sum, s) => sum + s, 0) / scores.length).toFixed(1)),
+      }))
+      .sort((a, b) => (a.period > b.period ? 1 : -1));
+
+    res.json(trend);
+  } catch (error) {
+    console.error("Get teacher grades error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/teacher/grades-page -> Haalt cijfers op gesorteerd op klas/student
+router.get("/grades-page", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const allGrades = await db
+      .select()
+      .from(grades)
+      .where(eq(grades.teacherId, teacherId))
+      .orderBy(desc(grades.gradedAt));
+
+    res.json(allGrades);
+  } catch (error) {
+    console.error("Get teacher grades-page error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /api/teacher/grades -> Cijfer toevoegen (met assessmentName)
+router.post("/grades", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const { studentId, subject, score, assessmentName } = req.body;
+
+    if (!studentId || !subject || score === undefined || !assessmentName) {
+      return res.status(400).json({ error: "Alle velden zijn verplicht." });
+    }
+
+    const newGrade = await db
+      .insert(grades)
+      .values({
+        id: nanoid(),
+        studentId,
+        teacherId,
+        subject,
+        score: Number(score),
+        assessmentName,
+        gradedAt: new Date(),
+      })
+      .returning();
+
+    res.status(201).json(newGrade[0]);
+  } catch (error) {
+    console.error("Create grade error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// DELETE /api/teacher/grades/:id -> Cijfer verwijderen
+router.delete("/grades/:id", checkTeacherRole, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    await db.delete(grades).where(eq(grades.id, id));
+    res.json({ message: "Cijfer succesvol verwijderd." });
+  } catch (error) {
+    console.error("Delete grade error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/assignments", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const { className, title, description, deadline, priority = "MEDIUM" } = req.body;
+
+    if (!className || !title) {
+      return res.status(400).json({ error: "className and title are required" });
+    }
+
+    const students = await db.select().from(user).where(eq(user.studentClass, className));
+
+    if (students.length === 0) {
+      return res.status(404).json({ error: "No students found in that class" });
+    }
+
+    const assignmentGroupId = nanoid();
+
+    await db.insert(tasks).values(
+      students.map((student) => ({
+        id: nanoid(),
+        userId: student.id,
+        title,
+        description: description ?? null,
+        deadline: deadline ? new Date(deadline) : null,
+        priority,
+        status: "ONGOING" as const,
+        assignedByTeacherId: teacherId,
+        assignmentGroupId,
+        assignedClassName: className,
+      }))
+    );
+
+    res.status(201).json({ assignmentGroupId, studentsAssigned: students.length });
+  } catch (error) {
+    console.error("Create assignment error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/tasks", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const classFilter = req.query.className as string | undefined;
+
+    const conditions = [eq(tasks.assignedByTeacherId, teacherId)];
+    if (classFilter && classFilter !== "ALL") {
+      conditions.push(eq(tasks.assignedClassName, classFilter));
+    }
+
+    const assignedTasks = await db
+      .select()
+      .from(tasks)
+      .where(and(...conditions))
+      .orderBy(desc(tasks.createdAt));
+
+    const groups = new Map<string, typeof assignedTasks>();
+    for (const task of assignedTasks) {
+      const key = task.assignmentGroupId ?? task.id;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(task);
+    }
+
+    const result = Array.from(groups.entries()).map(([groupId, rows]) => {
+      const first = rows[0];
+      return {
+        id: groupId,
+        title: first.title,
+        className: first.assignedClassName,
+        deadline: first.deadline,
+        totalCount: rows.length,
+        submittedCount: rows.filter((r) => r.status === "COMPLETED").length,
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Get teacher assignments error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

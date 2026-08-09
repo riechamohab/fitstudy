@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-import { getNotes, markNoteRead, type TeacherNote } from "../lib/api";
+import { getNotes, markNoteRead, type TeacherNote } from "../../lib/api";
 import {
   disableBrowserNotifications,
   enableBrowserNotifications,

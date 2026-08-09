@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
-export const Route = createFileRoute('/teacher/teacher')({
+export const Route = createFileRoute('/docent/teacher')({
   component: TeacherDashboard,
 })
 

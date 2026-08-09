@@ -2,7 +2,8 @@ import { Router } from "express";
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
-import { tasks, classSchedule } from "../db/schema.js";
+import { tasks, schedule } from "../db/schema.js";
+import { DAY_VALUES } from "./schedule.js";
 import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
@@ -333,8 +334,8 @@ router.get("/planner", async (req, res) => {
     const classEntries = studentClass
       ? await db
           .select()
-          .from(classSchedule)
-          .where(eq(classSchedule.className, studentClass))
+          .from(schedule)
+          .where(eq(schedule.className, studentClass))
       : [];
 
     const days = [];
@@ -350,8 +351,10 @@ router.get("/planner", async (req, res) => {
         return toDateKey(new Date(task.deadline)) === dateKey;
       });
 
+      const dayName = DAY_VALUES[dayOfWeek]; // "monday", etc.
+
       const dayClasses = classEntries
-        .filter((entry) => entry.dayOfWeek === dayOfWeek)
+        .filter((entry) => entry.day === dayName)
         .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
       days.push({
@@ -391,9 +394,9 @@ router.get("/schedule", async (req, res) => {
 
     const entries = await db
       .select()
-      .from(classSchedule)
-      .where(eq(classSchedule.className, studentClass))
-      .orderBy(classSchedule.dayOfWeek, classSchedule.startTime);
+      .from(schedule)
+      .where(eq(schedule.className, studentClass))
+      .orderBy(schedule.day, schedule.startTime);
 
     res.json({ className: studentClass, entries });
   } catch (error) {

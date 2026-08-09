@@ -12,9 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as StudentRouteRouteImport } from './routes/student/route'
+import { Route as DocentRouteRouteImport } from './routes/docent/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as TeacherTeacherRouteImport } from './routes/teacher/teacher'
-import { Route as TeacherLayoutRouteImport } from './routes/teacher/_layout'
 import { Route as StudentWelzijnRouteImport } from './routes/student/welzijn'
 import { Route as StudentVoortgangRouteImport } from './routes/student/voortgang'
 import { Route as StudentStudieprogrammaRouteImport } from './routes/student/studieprogramma'
@@ -24,7 +25,14 @@ import { Route as StudentPlanningRouteImport } from './routes/student/planning'
 import { Route as StudentNotitiesRouteImport } from './routes/student/notities'
 import { Route as StudentFocusTimerRouteImport } from './routes/student/focus-timer'
 import { Route as StudentAchievementsRouteImport } from './routes/student/achievements'
-import { Route as StudentLayoutRouteImport } from './routes/student/_layout'
+import { Route as DocentWelzijnRouteImport } from './routes/docent/welzijn'
+import { Route as DocentTeacherRouteImport } from './routes/docent/teacher'
+import { Route as DocentRoosterRouteImport } from './routes/docent/rooster'
+import { Route as DocentProgrammaRouteImport } from './routes/docent/programma'
+import { Route as DocentPortaalRouteImport } from './routes/docent/portaal'
+import { Route as DocentOpdrachtenRouteImport } from './routes/docent/opdrachten'
+import { Route as DocentFeedbackRouteImport } from './routes/docent/feedback'
+import { Route as DocentBeoordelingenRouteImport } from './routes/docent/beoordelingen'
 import { Route as AdminStudentScheduleRouteImport } from './routes/admin/student-schedule'
 import { Route as AdminAdminRouteImport } from './routes/admin/admin'
 
@@ -42,89 +50,139 @@ const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentRouteRoute = StudentRouteRouteImport.update({
+  id: '/student',
+  path: '/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocentRouteRoute = DocentRouteRouteImport.update({
+  id: '/docent',
+  path: '/docent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const TeacherTeacherRoute = TeacherTeacherRouteImport.update({
-  id: '/teacher/teacher',
-  path: '/teacher/teacher',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TeacherLayoutRoute = TeacherLayoutRouteImport.update({
-  id: '/teacher/_layout',
-  path: '/teacher',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StudentWelzijnRoute = StudentWelzijnRouteImport.update({
-  id: '/student/welzijn',
-  path: '/student/welzijn',
-  getParentRoute: () => rootRouteImport,
+  id: '/welzijn',
+  path: '/welzijn',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentVoortgangRoute = StudentVoortgangRouteImport.update({
-  id: '/student/voortgang',
-  path: '/student/voortgang',
-  getParentRoute: () => rootRouteImport,
+  id: '/voortgang',
+  path: '/voortgang',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentStudieprogrammaRoute = StudentStudieprogrammaRouteImport.update({
-  id: '/student/studieprogramma',
-  path: '/student/studieprogramma',
-  getParentRoute: () => rootRouteImport,
+  id: '/studieprogramma',
+  path: '/studieprogramma',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentProfielSettingsRoute = StudentProfielSettingsRouteImport.update({
-  id: '/student/profiel-settings',
-  path: '/student/profiel-settings',
-  getParentRoute: () => rootRouteImport,
+  id: '/profiel-settings',
+  path: '/profiel-settings',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentPortaalRoute = StudentPortaalRouteImport.update({
-  id: '/student/portaal',
-  path: '/student/portaal',
-  getParentRoute: () => rootRouteImport,
+  id: '/portaal',
+  path: '/portaal',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentPlanningRoute = StudentPlanningRouteImport.update({
-  id: '/student/planning',
-  path: '/student/planning',
-  getParentRoute: () => rootRouteImport,
+  id: '/planning',
+  path: '/planning',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentNotitiesRoute = StudentNotitiesRouteImport.update({
-  id: '/student/notities',
-  path: '/student/notities',
-  getParentRoute: () => rootRouteImport,
+  id: '/notities',
+  path: '/notities',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentFocusTimerRoute = StudentFocusTimerRouteImport.update({
-  id: '/student/focus-timer',
-  path: '/student/focus-timer',
-  getParentRoute: () => rootRouteImport,
+  id: '/focus-timer',
+  path: '/focus-timer',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentAchievementsRoute = StudentAchievementsRouteImport.update({
-  id: '/student/achievements',
-  path: '/student/achievements',
-  getParentRoute: () => rootRouteImport,
+  id: '/achievements',
+  path: '/achievements',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
-const StudentLayoutRoute = StudentLayoutRouteImport.update({
-  id: '/student/_layout',
-  path: '/student',
-  getParentRoute: () => rootRouteImport,
+const DocentWelzijnRoute = DocentWelzijnRouteImport.update({
+  id: '/welzijn',
+  path: '/welzijn',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
+const DocentTeacherRoute = DocentTeacherRouteImport.update({
+  id: '/teacher',
+  path: '/teacher',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
+const DocentRoosterRoute = DocentRoosterRouteImport.update({
+  id: '/rooster',
+  path: '/rooster',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
+const DocentProgrammaRoute = DocentProgrammaRouteImport.update({
+  id: '/programma',
+  path: '/programma',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
+const DocentPortaalRoute = DocentPortaalRouteImport.update({
+  id: '/portaal',
+  path: '/portaal',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
+const DocentOpdrachtenRoute = DocentOpdrachtenRouteImport.update({
+  id: '/opdrachten',
+  path: '/opdrachten',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
+const DocentFeedbackRoute = DocentFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
+const DocentBeoordelingenRoute = DocentBeoordelingenRouteImport.update({
+  id: '/beoordelingen',
+  path: '/beoordelingen',
+  getParentRoute: () => DocentRouteRoute,
 } as any)
 const AdminStudentScheduleRoute = AdminStudentScheduleRouteImport.update({
-  id: '/admin/student-schedule',
-  path: '/admin/student-schedule',
-  getParentRoute: () => rootRouteImport,
+  id: '/student-schedule',
+  path: '/student-schedule',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminRoute = AdminAdminRouteImport.update({
-  id: '/admin/admin',
-  path: '/admin/admin',
-  getParentRoute: () => rootRouteImport,
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/docent': typeof DocentRouteRouteWithChildren
+  '/student': typeof StudentRouteRouteWithChildren
   '/': typeof AppIndexRoute
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/admin/admin': typeof AdminAdminRoute
   '/admin/student-schedule': typeof AdminStudentScheduleRoute
-  '/student': typeof StudentLayoutRoute
+  '/docent/beoordelingen': typeof DocentBeoordelingenRoute
+  '/docent/feedback': typeof DocentFeedbackRoute
+  '/docent/opdrachten': typeof DocentOpdrachtenRoute
+  '/docent/portaal': typeof DocentPortaalRoute
+  '/docent/programma': typeof DocentProgrammaRoute
+  '/docent/rooster': typeof DocentRoosterRoute
+  '/docent/teacher': typeof DocentTeacherRoute
+  '/docent/welzijn': typeof DocentWelzijnRoute
   '/student/achievements': typeof StudentAchievementsRoute
   '/student/focus-timer': typeof StudentFocusTimerRoute
   '/student/notities': typeof StudentNotitiesRoute
@@ -134,15 +192,23 @@ export interface FileRoutesByFullPath {
   '/student/studieprogramma': typeof StudentStudieprogrammaRoute
   '/student/voortgang': typeof StudentVoortgangRoute
   '/student/welzijn': typeof StudentWelzijnRoute
-  '/teacher': typeof TeacherLayoutRoute
-  '/teacher/teacher': typeof TeacherTeacherRoute
 }
 export interface FileRoutesByTo {
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/docent': typeof DocentRouteRouteWithChildren
+  '/student': typeof StudentRouteRouteWithChildren
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/admin/admin': typeof AdminAdminRoute
   '/admin/student-schedule': typeof AdminStudentScheduleRoute
-  '/student': typeof StudentLayoutRoute
+  '/docent/beoordelingen': typeof DocentBeoordelingenRoute
+  '/docent/feedback': typeof DocentFeedbackRoute
+  '/docent/opdrachten': typeof DocentOpdrachtenRoute
+  '/docent/portaal': typeof DocentPortaalRoute
+  '/docent/programma': typeof DocentProgrammaRoute
+  '/docent/rooster': typeof DocentRoosterRoute
+  '/docent/teacher': typeof DocentTeacherRoute
+  '/docent/welzijn': typeof DocentWelzijnRoute
   '/student/achievements': typeof StudentAchievementsRoute
   '/student/focus-timer': typeof StudentFocusTimerRoute
   '/student/notities': typeof StudentNotitiesRoute
@@ -152,18 +218,26 @@ export interface FileRoutesByTo {
   '/student/studieprogramma': typeof StudentStudieprogrammaRoute
   '/student/voortgang': typeof StudentVoortgangRoute
   '/student/welzijn': typeof StudentWelzijnRoute
-  '/teacher': typeof TeacherLayoutRoute
-  '/teacher/teacher': typeof TeacherTeacherRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/docent': typeof DocentRouteRouteWithChildren
+  '/student': typeof StudentRouteRouteWithChildren
   '/_app': typeof AppRouteWithChildren
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/admin/admin': typeof AdminAdminRoute
   '/admin/student-schedule': typeof AdminStudentScheduleRoute
-  '/student/_layout': typeof StudentLayoutRoute
+  '/docent/beoordelingen': typeof DocentBeoordelingenRoute
+  '/docent/feedback': typeof DocentFeedbackRoute
+  '/docent/opdrachten': typeof DocentOpdrachtenRoute
+  '/docent/portaal': typeof DocentPortaalRoute
+  '/docent/programma': typeof DocentProgrammaRoute
+  '/docent/rooster': typeof DocentRoosterRoute
+  '/docent/teacher': typeof DocentTeacherRoute
+  '/docent/welzijn': typeof DocentWelzijnRoute
   '/student/achievements': typeof StudentAchievementsRoute
   '/student/focus-timer': typeof StudentFocusTimerRoute
   '/student/notities': typeof StudentNotitiesRoute
@@ -173,19 +247,27 @@ export interface FileRoutesById {
   '/student/studieprogramma': typeof StudentStudieprogrammaRoute
   '/student/voortgang': typeof StudentVoortgangRoute
   '/student/welzijn': typeof StudentWelzijnRoute
-  '/teacher/_layout': typeof TeacherLayoutRoute
-  '/teacher/teacher': typeof TeacherTeacherRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/admin'
+    | '/docent'
+    | '/student'
     | '/'
     | '/change-password'
     | '/login'
     | '/admin/admin'
     | '/admin/student-schedule'
-    | '/student'
+    | '/docent/beoordelingen'
+    | '/docent/feedback'
+    | '/docent/opdrachten'
+    | '/docent/portaal'
+    | '/docent/programma'
+    | '/docent/rooster'
+    | '/docent/teacher'
+    | '/docent/welzijn'
     | '/student/achievements'
     | '/student/focus-timer'
     | '/student/notities'
@@ -195,15 +277,23 @@ export interface FileRouteTypes {
     | '/student/studieprogramma'
     | '/student/voortgang'
     | '/student/welzijn'
-    | '/teacher'
-    | '/teacher/teacher'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/admin'
+    | '/docent'
+    | '/student'
     | '/change-password'
     | '/login'
     | '/admin/admin'
     | '/admin/student-schedule'
-    | '/student'
+    | '/docent/beoordelingen'
+    | '/docent/feedback'
+    | '/docent/opdrachten'
+    | '/docent/portaal'
+    | '/docent/programma'
+    | '/docent/rooster'
+    | '/docent/teacher'
+    | '/docent/welzijn'
     | '/student/achievements'
     | '/student/focus-timer'
     | '/student/notities'
@@ -213,17 +303,25 @@ export interface FileRouteTypes {
     | '/student/studieprogramma'
     | '/student/voortgang'
     | '/student/welzijn'
-    | '/teacher'
-    | '/teacher/teacher'
     | '/'
   id:
     | '__root__'
+    | '/admin'
+    | '/docent'
+    | '/student'
     | '/_app'
     | '/change-password'
     | '/login'
     | '/admin/admin'
     | '/admin/student-schedule'
-    | '/student/_layout'
+    | '/docent/beoordelingen'
+    | '/docent/feedback'
+    | '/docent/opdrachten'
+    | '/docent/portaal'
+    | '/docent/programma'
+    | '/docent/rooster'
+    | '/docent/teacher'
+    | '/docent/welzijn'
     | '/student/achievements'
     | '/student/focus-timer'
     | '/student/notities'
@@ -233,29 +331,16 @@ export interface FileRouteTypes {
     | '/student/studieprogramma'
     | '/student/voortgang'
     | '/student/welzijn'
-    | '/teacher/_layout'
-    | '/teacher/teacher'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  DocentRouteRoute: typeof DocentRouteRouteWithChildren
+  StudentRouteRoute: typeof StudentRouteRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   ChangePasswordRoute: typeof ChangePasswordRoute
   LoginRoute: typeof LoginRoute
-  AdminAdminRoute: typeof AdminAdminRoute
-  AdminStudentScheduleRoute: typeof AdminStudentScheduleRoute
-  StudentLayoutRoute: typeof StudentLayoutRoute
-  StudentAchievementsRoute: typeof StudentAchievementsRoute
-  StudentFocusTimerRoute: typeof StudentFocusTimerRoute
-  StudentNotitiesRoute: typeof StudentNotitiesRoute
-  StudentPlanningRoute: typeof StudentPlanningRoute
-  StudentPortaalRoute: typeof StudentPortaalRoute
-  StudentProfielSettingsRoute: typeof StudentProfielSettingsRoute
-  StudentStudieprogrammaRoute: typeof StudentStudieprogrammaRoute
-  StudentVoortgangRoute: typeof StudentVoortgangRoute
-  StudentWelzijnRoute: typeof StudentWelzijnRoute
-  TeacherLayoutRoute: typeof TeacherLayoutRoute
-  TeacherTeacherRoute: typeof TeacherTeacherRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -281,6 +366,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student': {
+      id: '/student'
+      path: '/student'
+      fullPath: '/student'
+      preLoaderRoute: typeof StudentRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docent': {
+      id: '/docent'
+      path: '/docent'
+      fullPath: '/docent'
+      preLoaderRoute: typeof DocentRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/': {
       id: '/_app/'
       path: '/'
@@ -288,106 +394,209 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/teacher/teacher': {
-      id: '/teacher/teacher'
-      path: '/teacher/teacher'
-      fullPath: '/teacher/teacher'
-      preLoaderRoute: typeof TeacherTeacherRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/teacher/_layout': {
-      id: '/teacher/_layout'
-      path: '/teacher'
-      fullPath: '/teacher'
-      preLoaderRoute: typeof TeacherLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/student/welzijn': {
       id: '/student/welzijn'
-      path: '/student/welzijn'
+      path: '/welzijn'
       fullPath: '/student/welzijn'
       preLoaderRoute: typeof StudentWelzijnRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/voortgang': {
       id: '/student/voortgang'
-      path: '/student/voortgang'
+      path: '/voortgang'
       fullPath: '/student/voortgang'
       preLoaderRoute: typeof StudentVoortgangRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/studieprogramma': {
       id: '/student/studieprogramma'
-      path: '/student/studieprogramma'
+      path: '/studieprogramma'
       fullPath: '/student/studieprogramma'
       preLoaderRoute: typeof StudentStudieprogrammaRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/profiel-settings': {
       id: '/student/profiel-settings'
-      path: '/student/profiel-settings'
+      path: '/profiel-settings'
       fullPath: '/student/profiel-settings'
       preLoaderRoute: typeof StudentProfielSettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/portaal': {
       id: '/student/portaal'
-      path: '/student/portaal'
+      path: '/portaal'
       fullPath: '/student/portaal'
       preLoaderRoute: typeof StudentPortaalRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/planning': {
       id: '/student/planning'
-      path: '/student/planning'
+      path: '/planning'
       fullPath: '/student/planning'
       preLoaderRoute: typeof StudentPlanningRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/notities': {
       id: '/student/notities'
-      path: '/student/notities'
+      path: '/notities'
       fullPath: '/student/notities'
       preLoaderRoute: typeof StudentNotitiesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/focus-timer': {
       id: '/student/focus-timer'
-      path: '/student/focus-timer'
+      path: '/focus-timer'
       fullPath: '/student/focus-timer'
       preLoaderRoute: typeof StudentFocusTimerRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/achievements': {
       id: '/student/achievements'
-      path: '/student/achievements'
+      path: '/achievements'
       fullPath: '/student/achievements'
       preLoaderRoute: typeof StudentAchievementsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
-    '/student/_layout': {
-      id: '/student/_layout'
-      path: '/student'
-      fullPath: '/student'
-      preLoaderRoute: typeof StudentLayoutRouteImport
-      parentRoute: typeof rootRouteImport
+    '/docent/welzijn': {
+      id: '/docent/welzijn'
+      path: '/welzijn'
+      fullPath: '/docent/welzijn'
+      preLoaderRoute: typeof DocentWelzijnRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
+    '/docent/teacher': {
+      id: '/docent/teacher'
+      path: '/teacher'
+      fullPath: '/docent/teacher'
+      preLoaderRoute: typeof DocentTeacherRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
+    '/docent/rooster': {
+      id: '/docent/rooster'
+      path: '/rooster'
+      fullPath: '/docent/rooster'
+      preLoaderRoute: typeof DocentRoosterRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
+    '/docent/programma': {
+      id: '/docent/programma'
+      path: '/programma'
+      fullPath: '/docent/programma'
+      preLoaderRoute: typeof DocentProgrammaRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
+    '/docent/portaal': {
+      id: '/docent/portaal'
+      path: '/portaal'
+      fullPath: '/docent/portaal'
+      preLoaderRoute: typeof DocentPortaalRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
+    '/docent/opdrachten': {
+      id: '/docent/opdrachten'
+      path: '/opdrachten'
+      fullPath: '/docent/opdrachten'
+      preLoaderRoute: typeof DocentOpdrachtenRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
+    '/docent/feedback': {
+      id: '/docent/feedback'
+      path: '/feedback'
+      fullPath: '/docent/feedback'
+      preLoaderRoute: typeof DocentFeedbackRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
+    '/docent/beoordelingen': {
+      id: '/docent/beoordelingen'
+      path: '/beoordelingen'
+      fullPath: '/docent/beoordelingen'
+      preLoaderRoute: typeof DocentBeoordelingenRouteImport
+      parentRoute: typeof DocentRouteRoute
     }
     '/admin/student-schedule': {
       id: '/admin/student-schedule'
-      path: '/admin/student-schedule'
+      path: '/student-schedule'
       fullPath: '/admin/student-schedule'
       preLoaderRoute: typeof AdminStudentScheduleRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/admin': {
       id: '/admin/admin'
-      path: '/admin/admin'
+      path: '/admin'
       fullPath: '/admin/admin'
       preLoaderRoute: typeof AdminAdminRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
   }
 }
+
+interface AdminRouteRouteChildren {
+  AdminAdminRoute: typeof AdminAdminRoute
+  AdminStudentScheduleRoute: typeof AdminStudentScheduleRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAdminRoute: AdminAdminRoute,
+  AdminStudentScheduleRoute: AdminStudentScheduleRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
+interface DocentRouteRouteChildren {
+  DocentBeoordelingenRoute: typeof DocentBeoordelingenRoute
+  DocentFeedbackRoute: typeof DocentFeedbackRoute
+  DocentOpdrachtenRoute: typeof DocentOpdrachtenRoute
+  DocentPortaalRoute: typeof DocentPortaalRoute
+  DocentProgrammaRoute: typeof DocentProgrammaRoute
+  DocentRoosterRoute: typeof DocentRoosterRoute
+  DocentTeacherRoute: typeof DocentTeacherRoute
+  DocentWelzijnRoute: typeof DocentWelzijnRoute
+}
+
+const DocentRouteRouteChildren: DocentRouteRouteChildren = {
+  DocentBeoordelingenRoute: DocentBeoordelingenRoute,
+  DocentFeedbackRoute: DocentFeedbackRoute,
+  DocentOpdrachtenRoute: DocentOpdrachtenRoute,
+  DocentPortaalRoute: DocentPortaalRoute,
+  DocentProgrammaRoute: DocentProgrammaRoute,
+  DocentRoosterRoute: DocentRoosterRoute,
+  DocentTeacherRoute: DocentTeacherRoute,
+  DocentWelzijnRoute: DocentWelzijnRoute,
+}
+
+const DocentRouteRouteWithChildren = DocentRouteRoute._addFileChildren(
+  DocentRouteRouteChildren,
+)
+
+interface StudentRouteRouteChildren {
+  StudentAchievementsRoute: typeof StudentAchievementsRoute
+  StudentFocusTimerRoute: typeof StudentFocusTimerRoute
+  StudentNotitiesRoute: typeof StudentNotitiesRoute
+  StudentPlanningRoute: typeof StudentPlanningRoute
+  StudentPortaalRoute: typeof StudentPortaalRoute
+  StudentProfielSettingsRoute: typeof StudentProfielSettingsRoute
+  StudentStudieprogrammaRoute: typeof StudentStudieprogrammaRoute
+  StudentVoortgangRoute: typeof StudentVoortgangRoute
+  StudentWelzijnRoute: typeof StudentWelzijnRoute
+}
+
+const StudentRouteRouteChildren: StudentRouteRouteChildren = {
+  StudentAchievementsRoute: StudentAchievementsRoute,
+  StudentFocusTimerRoute: StudentFocusTimerRoute,
+  StudentNotitiesRoute: StudentNotitiesRoute,
+  StudentPlanningRoute: StudentPlanningRoute,
+  StudentPortaalRoute: StudentPortaalRoute,
+  StudentProfielSettingsRoute: StudentProfielSettingsRoute,
+  StudentStudieprogrammaRoute: StudentStudieprogrammaRoute,
+  StudentVoortgangRoute: StudentVoortgangRoute,
+  StudentWelzijnRoute: StudentWelzijnRoute,
+}
+
+const StudentRouteRouteWithChildren = StudentRouteRoute._addFileChildren(
+  StudentRouteRouteChildren,
+)
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
@@ -400,23 +609,12 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  AdminRouteRoute: AdminRouteRouteWithChildren,
+  DocentRouteRoute: DocentRouteRouteWithChildren,
+  StudentRouteRoute: StudentRouteRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   ChangePasswordRoute: ChangePasswordRoute,
   LoginRoute: LoginRoute,
-  AdminAdminRoute: AdminAdminRoute,
-  AdminStudentScheduleRoute: AdminStudentScheduleRoute,
-  StudentLayoutRoute: StudentLayoutRoute,
-  StudentAchievementsRoute: StudentAchievementsRoute,
-  StudentFocusTimerRoute: StudentFocusTimerRoute,
-  StudentNotitiesRoute: StudentNotitiesRoute,
-  StudentPlanningRoute: StudentPlanningRoute,
-  StudentPortaalRoute: StudentPortaalRoute,
-  StudentProfielSettingsRoute: StudentProfielSettingsRoute,
-  StudentStudieprogrammaRoute: StudentStudieprogrammaRoute,
-  StudentVoortgangRoute: StudentVoortgangRoute,
-  StudentWelzijnRoute: StudentWelzijnRoute,
-  TeacherLayoutRoute: TeacherLayoutRoute,
-  TeacherTeacherRoute: TeacherTeacherRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

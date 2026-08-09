@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp, uniqueIndex, date, time } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
 
 export const TASK_STATUSES = [
@@ -25,6 +25,12 @@ export const tasks = pgTable("tasks", {
 
   status: text("status").notNull().default("ONGOING"),
   priority: text("priority").notNull().default("MEDIUM"),
+
+  assignedByTeacherId: text("assigned_by_teacher_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  assignedClassName: text("assigned_class_name"),
+  assignmentGroupId: text("assignment_group_id"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -94,25 +100,6 @@ export const motivationMessages = pgTable("motivation_messages", {
   id: text("id").primaryKey(),
   message: text("message").notNull(),
   active: boolean("active").notNull().default(true),
-});
-
-export const classSchedule = pgTable("class_schedule", {
-  id: text("id").primaryKey(),
-
-  teacherId: text("teacher_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-
-  className: text("class_name").notNull(),
-  subject: text("subject").notNull(),
-  room: text("room"),
-
-  dayOfWeek: integer("day_of_week").notNull(), 
-  startTime: text("start_time").notNull(), 
-  endTime: text("end_time").notNull(), 
-
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const COURSE_SCOPES = ["class", "personal"] as const;
@@ -281,7 +268,8 @@ export const grades = pgTable("grades", {
     .references(() => user.id, { onDelete: "cascade" }),
 
   subject: text("subject").notNull(),
-  score: integer("score").notNull(), 
+  score: integer("score").notNull(),
+  assessmentName: text("assessment_name"),
 
   gradedAt: timestamp("graded_at").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -368,5 +356,36 @@ export const waterLogs = pgTable("water_logs", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const schedule = pgTable("schedule", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  role: text("role").default("student").notNull(),
+  day: text("day").notNull(),
+  date: date("date"),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  location: text("location"),
+  subject: text("subject").notNull(),
+  className: text("class_name").notNull(), // De klas (bijv. "B 4")
+  teacherId: text("teacher_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }), // Gekoppeld aan de docent
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }), // De admin die het aanmaakt
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const teacherPrograms = pgTable("teacher_programs", {
+  id: text("id").primaryKey(),
+  teacherId: text("teacher_id").notNull(),
+  subject: text("subject").notNull(),
+  period: text("period").notNull(), // Bijv. "Kwartaal 1" of "2026 - Jaar"
+  chapter: text("chapter").notNull(), // Bijv. "Hoofdstuk 4"
+  lesson: text("lesson").notNull(), // Bijv. "Les 2: Krachten en Beweging"
+  topics: text("topics"), // Bijv. "Zwaartekracht, wrijving, formule F=m*a"
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

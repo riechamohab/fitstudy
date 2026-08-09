@@ -7,7 +7,7 @@ import { showBrowserNotification } from "../../lib/browserNotifications";
 import { studentNavSections } from "../../lib/navigation/studentNav";
 import { AppShell } from "../../components/ui/AppShell";
 
-export const Route = createFileRoute("/student/_layout")({
+export const Route = createFileRoute("/student")({
   component: StudentAppLayout,
 });
 
