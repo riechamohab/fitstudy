@@ -17,10 +17,29 @@ export const DAY_VALUES = [
   "saturday",
 ] as const;
 
-// 0. Alle roosters ophalen (admin overzicht)
+// 0. Alle roosters ophalen (admin overzicht), inclusief naam van de docent
 router.get("/", requireAdmin, async (_req: any, res: any) => {
   try {
-    const allSchedules = await db.select().from(schedule);
+    const allSchedules = await db
+      .select({
+        id: schedule.id,
+        title: schedule.title,
+        role: schedule.role,
+        day: schedule.day,
+        date: schedule.date,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        location: schedule.location,
+        subject: schedule.subject,
+        className: schedule.className,
+        teacherId: schedule.teacherId,
+        teacherName: user.name,
+        createdBy: schedule.createdBy,
+        createdAt: schedule.createdAt,
+      })
+      .from(schedule)
+      .leftJoin(user, eq(schedule.teacherId, user.id));
+
     return res.json(allSchedules);
   } catch (error) {
     console.error("Get schedules error:", error);

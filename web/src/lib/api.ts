@@ -161,6 +161,7 @@ export type Schedule = {
   subject: string;
   className: string;
   teacherId: string;
+  teacherName: string | null;
   createdBy: string;
 };
 
@@ -285,13 +286,13 @@ export async function addChapter(courseId: string, title: string, order?: number
   });
 }
 
-export type ClassScheduleOverview = {
+export type ClassScheduleResponse = {
   className: string | null;
   entries: Schedule[];
 };
 
 export async function getClassSchedule() {
-  return apiRequest<ClassScheduleOverview>("/api/calendar/schedule");
+  return apiRequest<ClassScheduleResponse>("/api/calendar/schedule");
 }
 
 export async function toggleLessonItem(itemId: string, completed: boolean) {
@@ -765,15 +766,6 @@ export async function createWeekSchedule(className: string, entries: WeekSchedul
 }
 
 //docent api's hieronder
-
-export interface ScheduleItem {
-  id: string;
-  day: string;
-  time: string;
-  subject: string;
-  room: string | null;
-  className: string;
-}
  
 export interface StudentDetailGrade {
   id: string;
@@ -801,7 +793,7 @@ export async function getTeacherStudentDetails(studentId: string) {
 }
  
 export async function getTeacherSchedule() {
-  return apiRequest<ScheduleItem[]>("/api/teacher/schedule");
+  return apiRequest<Schedule[]>("/api/teacher/schedule");
 }
  
 export interface TeacherTask {

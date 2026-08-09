@@ -79,6 +79,9 @@ function AdminRoosterPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
+  // State voor het bekijken van bestaande roosters per klas
+  const [selectedViewClass, setSelectedViewClass] = useState<string>("");
+
   useEffect(() => {
     loadSchedules();
   }, []);
@@ -184,14 +187,25 @@ function AdminRoosterPage() {
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDeleteClassSchedule(targetClassName: string) {
+    if (!confirm(`Weet je zeker dat je het rooster voor klas ${targetClassName} wilt verwijderen?`)) return;
     try {
-      await deleteSchedule(id);
-      setSchedules((prev) => prev.filter((s) => s.id !== id));
+      const itemsToDelete = schedules.filter((s) => s.className === targetClassName);
+      for (const item of itemsToDelete) {
+        await deleteSchedule(item.id);
+      }
+      setSchedules((prev) => prev.filter((s) => s.className !== targetClassName));
+      setSelectedViewClass("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kon rooster niet verwijderen.");
     }
   }
+
+  // Unieke klassen afleiden uit de opgehaalde schedules
+  const availableClasses = Array.from(new Set(schedules.map((s) => s.className))).filter(Boolean);
+
+  // Filter schedules voor de geselecteerde klas om in de tabel te tonen
+  const selectedClassSchedules = schedules.filter((s) => s.className === selectedViewClass);
 
   return (
     <main className="p-8">
@@ -318,7 +332,7 @@ function AdminRoosterPage() {
       {loading && <p className="mt-4 text-sm text-slate-500">Roosters laden...</p>}
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-      {!loading && !error && schedules.length === 0 && (
+      {!loading && !error && availableClasses.length === 0 && (
         <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
           <p className="font-semibold text-slate-700">Nog geen roosters</p>
           <p className="mt-2 text-sm text-slate-500">
@@ -327,30 +341,106 @@ function AdminRoosterPage() {
         </div>
       )}
 
-      <div className="mt-4 grid gap-3">
-        {schedules.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <div>
-              <p className="font-semibold text-slate-900">
-                {item.subject} — {item.className}
-              </p>
-              <p className="text-sm text-slate-500">
-                {DAY_LABELS[item.day] ?? item.day} · {item.startTime} - {item.endTime}
-                {item.location ? ` · ${item.location}` : ""}
-              </p>
-            </div>
-            <button
-              onClick={() => handleDelete(item.id)}
-              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+      {/* Klas selecteren om bestaand rooster in tabelvorm te bekijken */}
+      {!loading && !error && availableClasses.length > 0 && (
+        <div className="mt-4">
+          <div className="max-w-xs mb-4">
+            <label className="block text-sm font-medium text-slate-700">Selecteer klas om rooster te bekijken</label>
+            <select
+              value={selectedViewClass}
+              onChange={(e) => setSelectedViewClass(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
             >
-              Verwijderen
-            </button>
+              <option value="">-- Kies een klas --</option>
+              {availableClasses.map((cls) => (
+                <option key={cls} value={cls}>
+                  Klas {cls}
+                </option>
+              ))}
+            </select>
           </div>
-        ))}
-      </div>
+
+          {selectedViewClass && (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-slate-900">Rooster voor klas {selectedViewClass}</h3>
+                <button
+                  onClick={() => handleDeleteClassSchedule(selectedViewClass)}
+                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                  Rooster Verwijderen
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr>
+                      <th className="w-32 border-b border-slate-200 p-2 text-left font-medium text-slate-500">
+                        Tijdsblok
+                      </th>
+                      {DAYS.map((day) => (
+                        <th
+                          key={day.value}
+                          className="border-b border-slate-200 p-2 text-left font-medium text-slate-500"
+                        >
+                          {day.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {TIME_BLOCKS.map((block) => {
+                      if (block.locked) {
+                        return (
+                          <tr key={block.id} className="bg-slate-50">
+                            <td colSpan={DAYS.length + 1} className="p-2 text-center text-xs font-medium text-slate-400">
+                              {block.label} ({block.start} - {block.end}) — vast
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return (
+                        <tr key={block.id} className="align-top">
+                          <td className="border-b border-slate-100 p-2 text-xs text-slate-500">
+                            {block.label}
+                            <br />
+                            {block.start} - {block.end}
+                          </td>
+                          {DAYS.map((day) => {
+                            const entry = selectedClassSchedules.find((s) => {
+                              if (s.day.toLowerCase() !== day.value.toLowerCase()) return false;
+                              
+                              const entryTime = s.startTime.trim().substring(0, 5);
+                              const blockTime = block.start.trim().substring(0, 5);
+                              
+                              return entryTime === blockTime || entryTime.startsWith(blockTime);
+                            });
+
+                            return (
+                              <td key={`view-${day.value}-${block.id}`} className="border-b border-slate-100 p-2 text-xs">
+                                {entry ? (
+                                  <div className="rounded-md bg-slate-50 p-2 border border-slate-200">
+                                    <p className="font-semibold text-slate-900">{entry.subject}</p>
+                                    <p className="text-slate-500 mt-0.5">{entry.teacherName || entry.location || "Ingepland"}</p>
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-300">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   );
 }
