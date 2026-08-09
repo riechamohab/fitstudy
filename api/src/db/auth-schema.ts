@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -20,6 +19,8 @@ export const user = pgTable("user", {
   phoneNumber: text("phone_number"),
   studentClass: text("student_class"),
   subjects: text("subjects").array(),
+  mentorClassName: text("mentor_class_name"),
+  mentorSchoolYear: text("mentor_school_year"),
 
     mustChangePassword: boolean("must_change_password")
     .default(true)

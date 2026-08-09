@@ -149,22 +149,26 @@ export type Task = {
   updatedAt: string;
 };
 
-export type ClassScheduleEntry = {
+export type Schedule = {
   id: string;
-  teacherId: string;
-  className: string;
-  subject: string;
-  room: string | null;
-  dayOfWeek: number;
+  title: string;
+  role: string;
+  day: string;
+  date: string | null;
   startTime: string;
   endTime: string;
+  location: string;
+  subject: string;
+  className: string;
+  teacherId: string;
+  createdBy: string;
 };
 
 export type PlannerDay = {
   date: string;
   dayName: string;
   isCurrentMonth: boolean;
-  classSchedule: ClassScheduleEntry[];
+  classSchedule: Schedule[];
   tasks: Task[];
 };
 
@@ -283,7 +287,7 @@ export async function addChapter(courseId: string, title: string, order?: number
 
 export type ClassScheduleOverview = {
   className: string | null;
-  entries: ClassScheduleEntry[];
+  entries: Schedule[];
 };
 
 export async function getClassSchedule() {
@@ -652,22 +656,48 @@ export type AdminUser = {
   name: string;
   email: string;
   role: "admin" | "student" | "teacher";
+  studentClass: string | null;
+  subjects: string[] | null;
+  mentorClassName: string | null;
+  mentorSchoolYear: string | null;
   createdAt: string;
 };
 
 export async function getAdminUsers() {
   return apiRequest<AdminUser[]>("/api/admin/users");
 }
+
 export type CreateAdminUserInput = {
   name: string;
   email: string;
   password: string;
   role: "student" | "teacher" | "admin";
+  studentClass?: string;
+  subjects?: string[];
+  mentorClassName?: string;
+  mentorSchoolYear?: string;
 };
 
 export async function createAdminUser(data: CreateAdminUserInput) {
   return apiRequest("/api/admin/users", {
     method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export type UpdateAdminUserInput = {
+  name?: string;
+  email?: string;
+  role?: "student" | "teacher" | "admin";
+  studentClass?: string;
+  subjects?: string[];
+  mentorClassName?: string;
+  mentorSchoolYear?: string;
+};
+
+export async function updateAdminUser(id: string, data: UpdateAdminUserInput) {
+  return apiRequest<{ message: string; user: AdminUser }>(`/api/admin/users/${id}`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
 }
@@ -678,37 +708,60 @@ export async function deleteAdminUser(id: string) {
   });
 }
 
-export type Schedule = {
-  id: string;
-  title: string;
-  role: string;
-  day: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  location: string;
-  subject: string;
-  createdBy: string;
-};
-
 export async function getSchedules() {
   return apiRequest<Schedule[]>("/api/schedule");
 }
 
 export async function createSchedule(data: {
   title: string;
-  role: string;
+  role?: string;
   day: string;
-  date: string;
+  date?: string;
   startTime: string;
   endTime: string;
-  location: string;
+  location?: string;
   subject: string;
+  className: string;
+  teacherId: string;
 }) {
-  return apiRequest<Schedule>("/api/schedule", {
+  return apiRequest<{ message: string; schedule: Schedule }>("/api/schedule", {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+export async function deleteSchedule(id: string) {
+  return apiRequest<{ message: string }>(`/api/schedule/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export type TeacherOption = { id: string; name: string };
+
+export async function getTeachersBySubject(subject: string) {
+  return apiRequest<TeacherOption[]>(
+    `/api/schedule/teachers/by-subject?subject=${encodeURIComponent(subject)}`
+  );
+}
+
+export type WeekScheduleEntry = {
+  day: string;
+  startTime: string;
+  endTime: string;
+  subject: string;
+  teacherId: string;
+  location?: string;
+  title?: string;
+};
+
+export async function createWeekSchedule(className: string, entries: WeekScheduleEntry[]) {
+  return apiRequest<{ message: string; count: number; schedules: Schedule[] }>(
+    "/api/schedule/bulk",
+    {
+      method: "POST",
+      body: JSON.stringify({ className, entries }),
+    }
+  );
 }
 
 //docent api's hieronder

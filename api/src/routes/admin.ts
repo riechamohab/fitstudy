@@ -15,6 +15,10 @@ router.get("/users", requireAdmin, async (_req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        studentClass: user.studentClass,
+        subjects: user.subjects,
+        mentorClassName: user.mentorClassName,
+        mentorSchoolYear: user.mentorSchoolYear,
         createdAt: user.createdAt,
       })
       .from(user);
@@ -31,7 +35,16 @@ router.get("/users", requireAdmin, async (_req, res) => {
 
 router.post("/users", requireAdmin, async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      studentClass,
+      subjects,
+      mentorClassName,
+      mentorSchoolYear,
+    } = req.body;
 
     if (!name || !email || !password || !role) {
       return res.status(400).json({
@@ -47,18 +60,28 @@ router.post("/users", requireAdmin, async (req, res) => {
       },
     });
 
+    const updateValues =
+      role === "student"
+        ? { role, studentClass: studentClass ?? null }
+        : role === "teacher"
+        ? {
+            role,
+            subjects: Array.isArray(subjects) ? subjects : null,
+            mentorClassName: mentorClassName ?? null,
+            mentorSchoolYear: mentorSchoolYear ?? null,
+          }
+        : { role };
+
     await db
       .update(user)
-      .set({
-        role,
-      })
+      .set(updateValues)
       .where(sql`${user.id} = ${newUser.user.id}`);
 
     res.status(201).json({
       message: "User created successfully",
       user: {
         ...newUser.user,
-        role,
+        ...updateValues,
       },
     });
   } catch (error) {
@@ -113,7 +136,23 @@ router.put("/users/:id", requireAdmin, async (req, res) => {
       name,
       email,
       role,
+      studentClass,
+      subjects,
+      mentorClassName,
+      mentorSchoolYear,
     } = req.body;
+
+    const roleSpecificValues =
+      role === "student"
+        ? { studentClass: studentClass ?? null, subjects: null, mentorClassName: null, mentorSchoolYear: null }
+        : role === "teacher"
+        ? {
+            studentClass: null,
+            subjects: Array.isArray(subjects) ? subjects : null,
+            mentorClassName: mentorClassName ?? null,
+            mentorSchoolYear: mentorSchoolYear ?? null,
+          }
+        : { studentClass: null, subjects: null, mentorClassName: null, mentorSchoolYear: null };
 
     const updatedUser = await db
       .update(user)
@@ -121,6 +160,7 @@ router.put("/users/:id", requireAdmin, async (req, res) => {
         name,
         email,
         role,
+        ...roleSpecificValues,
       })
 .where(sql`${user.id} = ${id}`)
       .returning();

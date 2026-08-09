@@ -118,7 +118,7 @@ if (
 }
   if (user.role === "admin") {
     await navigate({
-      to: "/admin/admin",
+      to: "/admin/statistieken",
     });
   } else if (user.role === "teacher") {
     await navigate({
