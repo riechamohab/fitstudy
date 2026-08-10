@@ -1,11 +1,16 @@
 import { sql } from "drizzle-orm";
 import { Router } from "express";
+
 import { auth } from "../auth.js";
 import { user } from "../db/auth-schema.js";
 import { db } from "../db/index.js";
 import { requireAdmin } from "../lib/auth-session.js";
 
 const router = Router();
+
+/* =========================================================
+   GET ALL USERS
+   ========================================================= */
 
 router.get("/users", requireAdmin, async (_req, res) => {
   try {
@@ -15,11 +20,24 @@ router.get("/users", requireAdmin, async (_req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+
+        // Studentgegevens
+        studentId: user.studentId,
+        school: user.school,
+        study: user.study,
+        phoneNumber: user.phoneNumber,
         studentClass: user.studentClass,
+        schoolYear: user.schoolYear,
+        studyHistory: user.studyHistory,
+
+        // Docentgegevens
+        teacherId: user.teacherId,
         subjects: user.subjects,
         mentorClassName: user.mentorClassName,
         mentorSchoolYear: user.mentorSchoolYear,
+
         createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       })
       .from(user);
 
@@ -33,6 +51,10 @@ router.get("/users", requireAdmin, async (_req, res) => {
   }
 });
 
+/* =========================================================
+   CREATE USER
+   ========================================================= */
+
 router.post("/users", requireAdmin, async (req, res) => {
   try {
     const {
@@ -40,7 +62,19 @@ router.post("/users", requireAdmin, async (req, res) => {
       email,
       password,
       role,
+
+      // Algemeen
+      phoneNumber,
+
+      // Studentgegevens
+      studentId,
+      school,
+      study,
       studentClass,
+      schoolYear,
+      studyHistory,
+
+      // Docentgegevens
       subjects,
       mentorClassName,
       mentorSchoolYear,
@@ -62,20 +96,60 @@ router.post("/users", requireAdmin, async (req, res) => {
 
     const updateValues =
       role === "student"
-        ? { role, studentClass: studentClass ?? null }
-        : role === "teacher"
         ? {
             role,
-            subjects: Array.isArray(subjects) ? subjects : null,
-            mentorClassName: mentorClassName ?? null,
-            mentorSchoolYear: mentorSchoolYear ?? null,
+
+            studentId: studentId ?? null,
+            school: school ?? null,
+            study: study ?? null,
+            phoneNumber: phoneNumber ?? null,
+            studentClass: studentClass ?? null,
+            schoolYear: schoolYear ?? null,
+            studyHistory: studyHistory ?? null,
+
+            // Niet van toepassing op studenten
+            teacherId: null,
+            subjects: null,
+            mentorClassName: null,
+            mentorSchoolYear: null,
           }
-        : { role };
+        : role === "teacher"
+          ? {
+              role,
+
+              phoneNumber: phoneNumber ?? null,
+
+              teacherId: null,
+
+              subjects: Array.isArray(subjects)
+                ? subjects
+                : null,
+
+              mentorClassName:
+                mentorClassName ?? null,
+
+              mentorSchoolYear:
+                mentorSchoolYear ?? null,
+
+              // Niet van toepassing op docenten
+              studentId: null,
+              school: null,
+              study: null,
+              studentClass: null,
+              schoolYear: null,
+              studyHistory: null,
+            }
+          : {
+              role,
+              phoneNumber: phoneNumber ?? null,
+            };
 
     await db
       .update(user)
       .set(updateValues)
-      .where(sql`${user.id} = ${newUser.user.id}`);
+      .where(
+        sql`${user.id} = ${newUser.user.id}`
+      );
 
     res.status(201).json({
       message: "User created successfully",
@@ -93,34 +167,9 @@ router.post("/users", requireAdmin, async (req, res) => {
   }
 });
 
-
-router.delete("/users/:id", requireAdmin, async (req, res) => {
-  try {
-    const id = req.params.id;
-
-    if (!id) {
-      return res.status(400).json({
-        error: "User id is required",
-      });
-    }
-
-  await db
-  .delete(user)
-  .where(sql`${user.id} = ${id}`);
-
-    res.json({
-      message: "User deleted successfully",
-    });
-
-  } catch (error) {
-    console.error("Delete user error:", error);
-
-    res.status(500).json({
-      error: "Could not delete user",
-    });
-  }
-});
-
+/* =========================================================
+   UPDATE USER
+   ========================================================= */
 
 router.put("/users/:id", requireAdmin, async (req, res) => {
   try {
@@ -136,40 +185,160 @@ router.put("/users/:id", requireAdmin, async (req, res) => {
       name,
       email,
       role,
+
+      // Algemeen
+      phoneNumber,
+
+      // Studentgegevens
+      studentId,
+      school,
+      study,
       studentClass,
+      schoolYear,
+      studyHistory,
+
+      // Docentgegevens
       subjects,
       mentorClassName,
       mentorSchoolYear,
     } = req.body;
 
-    const roleSpecificValues =
-      role === "student"
-        ? { studentClass: studentClass ?? null, subjects: null, mentorClassName: null, mentorSchoolYear: null }
-        : role === "teacher"
-        ? {
-            studentClass: null,
-            subjects: Array.isArray(subjects) ? subjects : null,
-            mentorClassName: mentorClassName ?? null,
-            mentorSchoolYear: mentorSchoolYear ?? null,
-          }
-        : { studentClass: null, subjects: null, mentorClassName: null, mentorSchoolYear: null };
+    if (!name || !email || !role) {
+      return res.status(400).json({
+        error: "Name, email and role are required",
+      });
+    }
 
-    const updatedUser = await db
+    /*
+     * STUDENT
+     */
+    if (role === "student") {
+      const updatedUsers = await db
+        .update(user)
+        .set({
+          name: name.trim(),
+          email: email.trim(),
+          role,
+
+          studentId: studentId ?? null,
+          school: school ?? null,
+          study: study ?? null,
+          phoneNumber: phoneNumber ?? null,
+          studentClass: studentClass ?? null,
+          schoolYear: schoolYear ?? null,
+          studyHistory: studyHistory ?? null,
+
+          // Docentvelden leegmaken
+          teacherId: null,
+          subjects: null,
+          mentorClassName: null,
+          mentorSchoolYear: null,
+
+          updatedAt: new Date(),
+        })
+        .where(sql`${user.id} = ${id}`)
+        .returning();
+
+      if (updatedUsers.length === 0) {
+        return res.status(404).json({
+          error: "User not found",
+        });
+      }
+
+      return res.json({
+        message: "User updated successfully",
+        user: updatedUsers[0],
+      });
+    }
+
+    /*
+     * TEACHER
+     */
+    if (role === "teacher") {
+      const updatedUsers = await db
+        .update(user)
+        .set({
+          name: name.trim(),
+          email: email.trim(),
+          role,
+
+          // Telefoonnummer opslaan
+          phoneNumber: phoneNumber ?? null,
+
+          // Vakken opslaan als array
+          subjects: Array.isArray(subjects)
+            ? subjects
+            : null,
+
+          mentorClassName:
+            mentorClassName ?? null,
+
+          mentorSchoolYear:
+            mentorSchoolYear ?? null,
+
+          // Studentvelden leegmaken
+          studentId: null,
+          school: null,
+          study: null,
+          studentClass: null,
+          schoolYear: null,
+          studyHistory: null,
+
+          updatedAt: new Date(),
+        })
+        .where(sql`${user.id} = ${id}`)
+        .returning();
+
+      if (updatedUsers.length === 0) {
+        return res.status(404).json({
+          error: "User not found",
+        });
+      }
+
+      return res.json({
+        message: "User updated successfully",
+        user: updatedUsers[0],
+      });
+    }
+
+    /*
+     * ANDERE ROL
+     */
+    const updatedUsers = await db
       .update(user)
       .set({
-        name,
-        email,
+        name: name.trim(),
+        email: email.trim(),
         role,
-        ...roleSpecificValues,
+        phoneNumber: phoneNumber ?? null,
+
+        studentId: null,
+        school: null,
+        study: null,
+        studentClass: null,
+        schoolYear: null,
+        studyHistory: null,
+
+        teacherId: null,
+        subjects: null,
+        mentorClassName: null,
+        mentorSchoolYear: null,
+
+        updatedAt: new Date(),
       })
-.where(sql`${user.id} = ${id}`)
+      .where(sql`${user.id} = ${id}`)
       .returning();
 
-    res.json({
-      message: "User updated successfully",
-      user: updatedUser[0],
-    });
+    if (updatedUsers.length === 0) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
 
+    return res.json({
+      message: "User updated successfully",
+      user: updatedUsers[0],
+    });
   } catch (error) {
     console.error("Update user error:", error);
 
@@ -179,5 +348,43 @@ router.put("/users/:id", requireAdmin, async (req, res) => {
   }
 });
 
+/* =========================================================
+   DELETE USER
+   ========================================================= */
+
+router.delete("/users/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({
+        error: "User id is required",
+      });
+    }
+
+    const deletedUsers = await db
+      .delete(user)
+      .where(sql`${user.id} = ${id}`)
+      .returning({
+        id: user.id,
+      });
+
+    if (deletedUsers.length === 0) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    res.json({
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete user error:", error);
+
+    res.status(500).json({
+      error: "Could not delete user",
+    });
+  }
+});
 
 export default router;

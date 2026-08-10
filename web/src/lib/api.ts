@@ -1,4 +1,4 @@
-export const API_BASE_URL = 
+export const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 async function apiRequest<T>(
@@ -39,11 +39,13 @@ async function apiRequest<T>(
     });
 
     throw new Error(
-      `${response.status}: ${backendMessage || "Something went wrong. Please try again."}`
+      `${response.status}: ${
+        backendMessage || "Something went wrong. Please try again."
+      }`
     );
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 export type UserProfile = {
@@ -84,7 +86,7 @@ export async function changePassword(
         currentPassword,
         newPassword,
       }),
-    },
+    }
   );
 }
 
@@ -120,7 +122,7 @@ export type UpdateProfileInput = {
 };
 
 export async function updateProfile(data: UpdateProfileInput) {
-  return apiRequest<UserProfile>("/api/users/profile", {
+  return apiRequest("/api/users/profile", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -141,8 +143,12 @@ export async function uploadProfilePicture(file: File) {
     throw new Error(errorData?.error || "Failed to upload image");
   }
 
-  return response.json() as Promise<UserProfile>;
+  return response.json();
 }
+
+/* =========================================================
+   TASKS
+========================================================= */
 
 export type Task = {
   id: string;
@@ -156,6 +162,43 @@ export type Task = {
   createdAt: string;
   updatedAt: string;
 };
+
+export async function getTasks() {
+  return apiRequest<Task[]>("/api/tasks");
+}
+
+export type CreateTaskInput = {
+  courseId: string;
+  lessonIds?: string[];
+  deadline?: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH";
+};
+
+export async function createTask(data: CreateTaskInput) {
+  return apiRequest("/api/tasks", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export type UpdateTaskInput = {
+  title?: string;
+  description?: string;
+  deadline?: string;
+  status?: "ONGOING" | "COMPLETED" | "CANCELED" | "INCOMPLETE";
+  priority?: "LOW" | "MEDIUM" | "HIGH";
+};
+
+export async function updateTask(id: string, data: UpdateTaskInput) {
+  return apiRequest(`/api/tasks/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/* =========================================================
+   PLANNER / SCHEDULE
+========================================================= */
 
 export type Schedule = {
   id: string;
@@ -188,40 +231,54 @@ export type PlannerResponse = {
   days: PlannerDay[];
 };
 
-export async function getPlanner(view: "day" | "week" | "month", date: string) {
+export async function getPlanner(
+  view: "day" | "week" | "month",
+  date: string
+) {
   return apiRequest<PlannerResponse>(
     `/api/calendar/planner?view=${view}&date=${date}`
   );
 }
 
-export type CreateTaskInput = {
-  courseId: string;
-  lessonIds?: string[];
-  deadline?: string;
-  priority?: "LOW" | "MEDIUM" | "HIGH";
-};
+export async function getClassSchedule() {
+  return apiRequest("/api/calendar/schedule");
+}
 
-export async function createTask(data: CreateTaskInput) {
-  return apiRequest<Task>("/api/tasks", {
+export async function getCalendar() {
+  return apiRequest("/api/calendar");
+}
+
+export async function getSchedules() {
+  return apiRequest<Schedule[]>("/api/schedule");
+}
+
+export async function createSchedule(data: {
+  title: string;
+  role?: string;
+  day: string;
+  date?: string;
+  startTime: string;
+  endTime: string;
+  location?: string;
+  subject: string;
+  className: string;
+  teacherId: string;
+}) {
+  return apiRequest<{ message: string; schedule: Schedule }>("/api/schedule", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export type UpdateTaskInput = {
-  title?: string;
-  description?: string;
-  deadline?: string;
-  status?: "ONGOING" | "COMPLETED" | "CANCELED" | "INCOMPLETE";
-  priority?: "LOW" | "MEDIUM" | "HIGH";
-};
-
-export async function updateTask(id: string, data: UpdateTaskInput) {
-  return apiRequest<Task>(`/api/tasks/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
+export async function deleteSchedule(id: string) {
+  return apiRequest<{ message: string }>(`/api/schedule/${id}`, {
+    method: "DELETE",
   });
 }
+
+/* =========================================================
+   COURSES / LESSONS
+========================================================= */
 
 export type LessonStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 
@@ -268,8 +325,11 @@ export async function getCourses() {
   return apiRequest<Course[]>("/api/courses");
 }
 
-export async function createCourse(data: { title: string; description?: string }) {
-  return apiRequest<Course>("/api/courses", {
+export async function createCourse(data: {
+  title: string;
+  description?: string;
+}) {
+  return apiRequest("/api/courses", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -281,30 +341,28 @@ export async function addLesson(
   chapterId?: string,
   order?: number
 ) {
-  return apiRequest<Lesson>(`/api/courses/${courseId}/lessons`, {
+  return apiRequest(`/api/courses/${courseId}/lessons`, {
     method: "POST",
     body: JSON.stringify({ title, chapterId, order }),
   });
 }
 
-export async function addChapter(courseId: string, title: string, order?: number) {
-  return apiRequest<Chapter>(`/api/courses/${courseId}/chapters`, {
+export async function addChapter(
+  courseId: string,
+  title: string,
+  order?: number
+) {
+  return apiRequest(`/api/courses/${courseId}/chapters`, {
     method: "POST",
     body: JSON.stringify({ title, order }),
   });
 }
 
-export type ClassScheduleResponse = {
-  className: string | null;
-  entries: Schedule[];
-};
-
-export async function getClassSchedule() {
-  return apiRequest<ClassScheduleResponse>("/api/calendar/schedule");
-}
-
-export async function toggleLessonItem(itemId: string, completed: boolean) {
-  return apiRequest<LessonItem>(`/api/courses/items/${itemId}/progress`, {
+export async function toggleLessonItem(
+  itemId: string,
+  completed: boolean
+) {
+  return apiRequest(`/api/courses/items/${itemId}/progress`, {
     method: "PUT",
     body: JSON.stringify({ completed }),
   });
@@ -312,7 +370,10 @@ export async function toggleLessonItem(itemId: string, completed: boolean) {
 
 export async function updateLessonProgress(
   lessonId: string,
-  data: { status?: LessonStatus; progressPercent?: number }
+  data: {
+    status?: LessonStatus;
+    progressPercent?: number;
+  }
 ) {
   return apiRequest<{
     status: LessonStatus;
@@ -322,6 +383,10 @@ export async function updateLessonProgress(
     body: JSON.stringify(data),
   });
 }
+
+/* =========================================================
+   CHECKLIST
+========================================================= */
 
 export type ChecklistItem = {
   id: string;
@@ -335,8 +400,11 @@ export async function getChecklist(taskId: string) {
   return apiRequest<ChecklistItem[]>(`/api/tasks/${taskId}/checklist`);
 }
 
-export async function addChecklistItem(taskId: string, title: string) {
-  return apiRequest<ChecklistItem>(`/api/tasks/${taskId}/checklist`, {
+export async function addChecklistItem(
+  taskId: string,
+  title: string
+) {
+  return apiRequest(`/api/tasks/${taskId}/checklist`, {
     method: "POST",
     body: JSON.stringify({ title }),
   });
@@ -344,13 +412,20 @@ export async function addChecklistItem(taskId: string, title: string) {
 
 export async function updateChecklistItem(
   itemId: string,
-  data: { title?: string; completed?: boolean }
+  data: {
+    title?: string;
+    completed?: boolean;
+  }
 ) {
-  return apiRequest<ChecklistItem>(`/api/tasks/checklist/${itemId}`, {
+  return apiRequest(`/api/tasks/checklist/${itemId}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
+
+/* =========================================================
+   FOCUS SESSIONS
+========================================================= */
 
 export type BreakType = "SHORT" | "LONG";
 
@@ -364,19 +439,32 @@ export type FocusSession = {
   completedAt: string | null;
 };
 
-export async function startFocusSession(taskId: string, durationMinutes = 25) {
-  return apiRequest<FocusSession>("/api/focus-sessions", {
+export async function startFocusSession(
+  taskId: string,
+  durationMinutes = 25
+) {
+  return apiRequest("/api/focus-sessions", {
     method: "POST",
-    body: JSON.stringify({ taskId, durationMinutes }),
+    body: JSON.stringify({
+      taskId,
+      durationMinutes,
+    }),
   });
 }
 
-export async function completeFocusSession(id: string, breakType?: BreakType) {
-  return apiRequest<FocusSession>(`/api/focus-sessions/${id}/complete`, {
+export async function completeFocusSession(
+  id: string,
+  breakType?: BreakType
+) {
+  return apiRequest(`/api/focus-sessions/${id}/complete`, {
     method: "PUT",
     body: JSON.stringify({ breakType }),
   });
 }
+
+/* =========================================================
+   PROGRESS / GRADES
+========================================================= */
 
 export type MonthlyProgress = {
   month: string;
@@ -419,7 +507,19 @@ export function getProgressExportUrl() {
   return `${API_BASE_URL}/api/progress/export`;
 }
 
-export type StreakStatus = "active" | "frozen" | "broken" | "none";
+export async function getProgress() {
+  return apiRequest("/api/progress");
+}
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+export type StreakStatus =
+  | "active"
+  | "frozen"
+  | "broken"
+  | "none";
 
 export type DashboardWeek = {
   studyHours: {
@@ -447,6 +547,10 @@ export async function getDashboardWeek() {
   return apiRequest<DashboardWeek>("/api/progress/dashboard-week");
 }
 
+/* =========================================================
+   NOTES / NOTIFICATIONS
+========================================================= */
+
 export type TeacherNote = {
   id: string;
   studentId: string;
@@ -461,7 +565,7 @@ export async function getNotes() {
 }
 
 export async function markNoteRead(id: string) {
-  return apiRequest<TeacherNote>(`/api/notes/${id}/read`, {
+  return apiRequest(`/api/notes/${id}/read`, {
     method: "PUT",
   });
 }
@@ -478,24 +582,36 @@ export type AppNotification = {
 
 export async function getNotifications(unreadOnly?: boolean) {
   const query = unreadOnly ? "?unread=true" : "";
-  return apiRequest<AppNotification[]>(`/api/notifications${query}`);
+  return apiRequest<AppNotification[]>(
+    `/api/notifications${query}`
+  );
 }
 
 export async function getNotificationCount() {
-  return apiRequest<{ total: number; unread: number }>("/api/notifications/count");
+  return apiRequest<{
+    total: number;
+    unread: number;
+  }>("/api/notifications/count");
 }
 
 export async function markNotificationRead(id: string) {
-  return apiRequest<AppNotification>(`/api/notifications/${id}/read`, {
+  return apiRequest(`/api/notifications/${id}/read`, {
     method: "PUT",
   });
 }
 
 export async function markAllNotificationsRead() {
-  return apiRequest<{ message: string }>("/api/notifications/read-all", {
-    method: "PUT",
-  });
+  return apiRequest<{ message: string }>(
+    "/api/notifications/read-all",
+    {
+      method: "PUT",
+    }
+  );
 }
+
+/* =========================================================
+   WELLBEING
+========================================================= */
 
 export type StressEntry = {
   id: string;
@@ -513,14 +629,16 @@ export async function createStressEntry(data: {
   sleepHours?: number;
   notes?: string;
 }) {
-  return apiRequest<StressEntry>("/api/stress-levels", {
+  return apiRequest("/api/stress-levels", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function getStressLevels(days = 7) {
-  return apiRequest<StressEntry[]>(`/api/stress-levels?days=${days}`);
+  return apiRequest<StressEntry[]>(
+    `/api/stress-levels?days=${days}`
+  );
 }
 
 export type WellbeingStatus = {
@@ -531,7 +649,9 @@ export type WellbeingStatus = {
 };
 
 export async function getWellbeingStatus() {
-  return apiRequest<WellbeingStatus>("/api/stress-levels/wellbeing-status");
+  return apiRequest<WellbeingStatus>(
+    "/api/stress-levels/wellbeing-status"
+  );
 }
 
 export type ExerciseType = {
@@ -553,15 +673,21 @@ export type Exercise = {
   createdAt: string;
 };
 
-export async function startExercise(type: string, duration: number) {
-  return apiRequest<Exercise>("/api/exercises/start", {
+export async function startExercise(
+  type: string,
+  duration: number
+) {
+  return apiRequest("/api/exercises/start", {
     method: "POST",
-    body: JSON.stringify({ type, duration }),
+    body: JSON.stringify({
+      type,
+      duration,
+    }),
   });
 }
 
 export async function completeExercise(id: string) {
-  return apiRequest<Exercise>(`/api/exercises/${id}/complete`, {
+  return apiRequest(`/api/exercises/${id}/complete`, {
     method: "PUT",
   });
 }
@@ -573,14 +699,19 @@ export type WellnessSummary = {
 };
 
 export async function getWellnessSummary(): Promise<WellnessSummary> {
-  return apiRequest<WellnessSummary>("/api/wellness/summary").catch(() => ({
-    avgSleepHours: 7,
-    completedExercisesCount: 0,
-    currentStreak: 0,
-  }));
+  return apiRequest<WellnessSummary>("/api/wellness/summary").catch(
+    () => ({
+      avgSleepHours: 7,
+      completedExercisesCount: 0,
+      currentStreak: 0,
+    })
+  );
 }
 
-export async function logMood(data: { mood: number; note?: string }) {
+export async function logMood(data: {
+  mood: number;
+  note?: string;
+}) {
   return apiRequest("/api/stress-levels", {
     method: "POST",
     body: JSON.stringify({
@@ -591,7 +722,10 @@ export async function logMood(data: { mood: number; note?: string }) {
   });
 }
 
-export async function logSleep(data: { hours: number; quality: string }) {
+export async function logSleep(data: {
+  hours: number;
+  quality: string;
+}) {
   return apiRequest("/api/stress-levels", {
     method: "POST",
     body: JSON.stringify({
@@ -603,11 +737,34 @@ export async function logSleep(data: { hours: number; quality: string }) {
   });
 }
 
-export function formatClock(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+/* =========================================================
+   WATER
+========================================================= */
+
+export type WaterIntake = {
+  todayMl: number;
+  goalMl: number;
+  totalMl: number;
+  todayLogCount: number;
+};
+
+export async function getWaterIntake() {
+  return apiRequest<WaterIntake>("/api/water");
 }
+
+export async function logWaterIntake(amountMl: number) {
+  return apiRequest<{ id: string; amountMl: number }>(
+    "/api/water",
+    {
+      method: "POST",
+      body: JSON.stringify({ amountMl }),
+    }
+  );
+}
+
+/* =========================================================
+   MOTIVATION / ACHIEVEMENTS
+========================================================= */
 
 export type MotivationMessage = {
   id: string;
@@ -616,20 +773,9 @@ export type MotivationMessage = {
 };
 
 export async function getMotivation() {
-  return apiRequest<MotivationMessage>("/api/progress/motivation");
-}
-
-export type EnrollmentEntry = {
-  id: string;
-  studentId: string;
-  schoolYear: string;
-  className: string;
-  status: "CURRENT" | "COMPLETED";
-  createdAt: string;
-};
-  
-export async function getEnrollmentHistory() {
-  return apiRequest<EnrollmentEntry[]>("/api/users/enrollment-history");
+  return apiRequest<MotivationMessage>(
+    "/api/progress/motivation"
+  );
 }
 
 export type AchievementKey =
@@ -665,52 +811,47 @@ export type AchievementKey =
   | "NIGHT_OWL_10"
   | "ACHIEVEMENTS_25"
   | "ACHIEVEMENTS_ALL";
-  
+
 export type Achievement = {
   key: AchievementKey;
   unlocked: boolean;
   unlockedAt: string | null;
 };
-  
+
 export async function getAchievements() {
   return apiRequest<Achievement[]>("/api/achievements");
 }
-  
-export type WaterIntake = {
-  todayMl: number;
-  goalMl: number;
-  totalMl: number;
-  todayLogCount: number;
+
+/* =========================================================
+   ENROLLMENT
+========================================================= */
+
+export type EnrollmentEntry = {
+  id: string;
+  studentId: string;
+  schoolYear: string;
+  className: string;
+  status: "CURRENT" | "COMPLETED";
+  createdAt: string;
 };
 
-export async function getWaterIntake() {
-  return apiRequest<WaterIntake>("/api/water");
+export async function getEnrollmentHistory() {
+  return apiRequest<EnrollmentEntry[]>(
+    "/api/users/enrollment-history"
+  );
 }
 
-export async function logWaterIntake(amountMl: number) {
-  return apiRequest<{ id: string; amountMl: number }>("/api/water", {
-    method: "POST",
-    body: JSON.stringify({ amountMl }),
-  });
-}
-
-export async function getTasks() {
-  return apiRequest<Task[]>("/api/tasks");
-}
-
-export async function getProgress() {
-  return apiRequest("/api/progress");
-}
-
-export async function getCalendar() {
-  return apiRequest("/api/calendar");
-}
+/* =========================================================
+   ADMIN USERS
+========================================================= */
 
 export type AdminUser = {
   id: string;
   name: string;
   email: string;
   role: "admin" | "student" | "teacher";
+
+  // Studentgegevens
   studentClass: string | null;
   studentId: string | null;
   school: string | null;
@@ -718,9 +859,12 @@ export type AdminUser = {
   phoneNumber: string | null;
   schoolYear: string | null;
   studyHistory: string | null;
+
+  // Teachergegevens
   subjects: string[] | null;
   mentorClassName: string | null;
   mentorSchoolYear: string | null;
+
   createdAt: string;
 };
 
@@ -733,6 +877,7 @@ export type CreateAdminUserInput = {
   email: string;
   password: string;
   role: "student" | "teacher" | "admin";
+
   studentClass?: string;
   studentId?: string;
   school?: string;
@@ -740,13 +885,19 @@ export type CreateAdminUserInput = {
   phoneNumber?: string;
   schoolYear?: string;
   studyHistory?: string;
+
   subjects?: string[];
   mentorClassName?: string;
   mentorSchoolYear?: string;
 };
 
-export async function createAdminUser(data: CreateAdminUserInput) {
-  return apiRequest("/api/admin/users", {
+export async function createAdminUser(
+  data: CreateAdminUserInput
+) {
+  return apiRequest<{
+    message: string;
+    user: AdminUser;
+  }>("/api/admin/users", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -756,6 +907,7 @@ export type UpdateAdminUserInput = {
   name?: string;
   email?: string;
   role?: "student" | "teacher" | "admin";
+
   studentClass?: string;
   studentId?: string;
   school?: string;
@@ -763,71 +915,121 @@ export type UpdateAdminUserInput = {
   phoneNumber?: string;
   schoolYear?: string;
   studyHistory?: string;
+
   subjects?: string[];
   mentorClassName?: string;
   mentorSchoolYear?: string;
 };
 
-export async function updateAdminUser(id: string, data: UpdateAdminUserInput) {
-  return apiRequest<{ message: string; user: AdminUser }>(`/api/admin/users/${id}`, {
+export async function updateAdminUser(
+  id: string,
+  data: UpdateAdminUserInput
+) {
+  return apiRequest<{
+    message: string;
+    user: AdminUser;
+  }>(`/api/admin/users/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
 export async function deleteAdminUser(id: string) {
-  return apiRequest(`/api/admin/users/${id}`, {
-    method: "DELETE",
-  });
+  return apiRequest<{ message: string }>(
+    `/api/admin/users/${id}`,
+    {
+      method: "DELETE",
+    }
+  );
 }
 
+/* =========================================================
+   ADMIN MEDEDELINGEN
+========================================================= */
+
+/**
+ * Naar wie de mededeling gestuurd wordt.
+ *
+ * students = alleen studenten
+ * teachers = alleen docenten
+ * both     = studenten én docenten
+ */
+export type MededelingTarget =
+  | "students"
+  | "teachers"
+  | "both";
+
+/**
+ * Prioriteit van een mededeling.
+ */
+export type MededelingPriority =
+  | "low"
+  | "normal"
+  | "high"
+  | "urgent";
+
+/**
+ * Payload die vanuit de adminpagina naar de API wordt gestuurd.
+ */
 export type CreateMededelingPayload = {
   title: string;
   message: string;
-  target: "teachers" | "students" | "both";
-  priority: "low" | "normal" | "high" | "urgent";
+  target: MededelingTarget;
+  priority: MededelingPriority;
 };
 
-export async function createMededeling(payload: CreateMededelingPayload) {
-  return apiRequest<{ success: boolean; message: string }>("/api/mededelingen", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+/**
+ * Response van de backend na het versturen
+ * van een mededeling.
+ */
+export type CreateMededelingResponse = {
+  success: boolean;
+  message: string;
+};
+
+/**
+ * Verstuur een algemene mededeling.
+ *
+ * De backend bepaalt op basis van `target`
+ * welke gebruikers de notificatie ontvangen:
+ *
+ * "students" -> alle studenten
+ * "teachers" -> alle docenten
+ * "both"     -> alle studenten + alle docenten
+ */
+export async function createMededeling(
+  payload: CreateMededelingPayload
+) {
+  return apiRequest<CreateMededelingResponse>(
+    "/api/mededelingen",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        title: payload.title.trim(),
+        message: payload.message.trim(),
+        target: payload.target,
+        priority: payload.priority,
+      }),
+    }
+  );
 }
 
-export async function getSchedules() {
-  return apiRequest<Schedule[]>("/api/schedule");
-}
+/* =========================================================
+   TEACHER
+========================================================= */
 
-export async function createSchedule(data: {
-  title: string;
-  role?: string;
-  day: string;
-  date?: string;
-  startTime: string;
-  endTime: string;
-  location?: string;
-  subject: string;
-  className: string;
-  teacherId: string;
-}) {
-  return apiRequest<{ message: string; schedule: Schedule }>("/api/schedule", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
+export type TeacherOption = {
+  id: string;
+  name: string;
+};
 
-export async function deleteSchedule(id: string) {
-  return apiRequest<{ message: string }>(`/api/schedule/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export type TeacherOption = { id: string; name: string };
-
-export async function getTeachersBySubject(subject: string) {
+export async function getTeachersBySubject(
+  subject: string
+) {
   return apiRequest<TeacherOption[]>(
-    `/api/schedule/teachers/by-subject?subject=${encodeURIComponent(subject)}`
+    `/api/schedule/teachers/by-subject?subject=${encodeURIComponent(
+      subject
+    )}`
   );
 }
 
@@ -841,41 +1043,23 @@ export type WeekScheduleEntry = {
   title?: string;
 };
 
-export async function createWeekSchedule(className: string, entries: WeekScheduleEntry[]) {
-  return apiRequest<{ message: string; count: number; schedules: Schedule[] }>(
-    "/api/schedule/bulk",
-    {
-      method: "POST",
-      body: JSON.stringify({ className, entries }),
-    }
-  );
-}
-
-export type QuizResponse = {
-  id: string;
-  userId: string;
-  answers: { question: string; answer: string }[];
-  createdAt: string;
-};
-
-export async function submitQuizResponse(answers: { question: string; answer: string }[]) {
-  return apiRequest<QuizResponse>("/api/wellbeing-quiz", {
+export async function createWeekSchedule(
+  className: string,
+  entries: WeekScheduleEntry[]
+) {
+  return apiRequest<{
+    message: string;
+    count: number;
+    schedules: Schedule[];
+  }>("/api/schedule/bulk", {
     method: "POST",
-    body: JSON.stringify({ answers }),
+    body: JSON.stringify({
+      className,
+      entries,
+    }),
   });
 }
 
-export async function getQuizHistory() {
-  return apiRequest<QuizResponse[]>("/api/wellbeing-quiz");
-}
-
-export interface StudentDetailGrade {
-  id: string;
-  subject: string;
-  score: number;
-  gradedAt: string;
-}
-  
 export interface StudentDetails {
   student: {
     id: string;
@@ -884,20 +1068,44 @@ export interface StudentDetails {
     className: string | null;
     createdAt: string;
   };
-  taskStats: { total: number; completed: number; inProgress: number; overdue: number };
-  exerciseStats: { total: number; completed: number; totalMinutes: number };
-  stressStats: { avgLevel: number; avgFocus: number; entries: number };
+  taskStats: {
+    total: number;
+    completed: number;
+    inProgress: number;
+    overdue: number;
+  };
+  exerciseStats: {
+    total: number;
+    completed: number;
+    totalMinutes: number;
+  };
+  stressStats: {
+    avgLevel: number;
+    avgFocus: number;
+    entries: number;
+  };
   grades: StudentDetailGrade[];
 }
-  
-export async function getTeacherStudentDetails(studentId: string) {
-  return apiRequest<StudentDetails>(`/api/teacher/students/${studentId}/details`);
+
+export interface StudentDetailGrade {
+  id: string;
+  subject: string;
+  score: number;
+  gradedAt: string;
 }
-  
+
+export async function getTeacherStudentDetails(
+  studentId: string
+) {
+  return apiRequest<StudentDetails>(
+    `/api/teacher/students/${studentId}/details`
+  );
+}
+
 export async function getTeacherSchedule() {
   return apiRequest<Schedule[]>("/api/teacher/schedule");
 }
-  
+
 export interface TeacherTask {
   id: string;
   title: string;
@@ -916,14 +1124,20 @@ export type TeacherCourse = {
 export async function getTeacherCourses() {
   return apiRequest<TeacherCourse[]>("/api/teacher/courses");
 }
-  
-export async function getTeacherTasks(className?: string) {
-  const url = className && className !== "ALL"
-    ? `/api/teacher/tasks?className=${encodeURIComponent(className)}`
-    : "/api/teacher/tasks";
+
+export async function getTeacherTasks(
+  className?: string
+) {
+  const url =
+    className && className !== "ALL"
+      ? `/api/teacher/tasks?className=${encodeURIComponent(
+          className
+        )}`
+      : "/api/teacher/tasks";
+
   return apiRequest<TeacherTask[]>(url);
 }
-  
+
 export type CreateAssignmentInput = {
   className: string;
   title: string;
@@ -931,44 +1145,53 @@ export type CreateAssignmentInput = {
   deadline?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH";
 };
-  
-export async function createAssignment(data: CreateAssignmentInput) {
-  return apiRequest<{ assignmentGroupId: string; studentsAssigned: number }>(
-    "/api/teacher/assignments",
-    {
-      method: "POST",
-      body: JSON.stringify(data),
-    }
-  );
+
+export async function createAssignment(
+  data: CreateAssignmentInput
+) {
+  return apiRequest<{
+    assignmentGroupId: string;
+    studentsAssigned: number;
+  }>("/api/teacher/assignments", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
-  
+
 export interface StudentProgress {
   id: string;
   name: string;
   className: string | null;
 }
-  
+
 export async function getTeacherStudents() {
-  return apiRequest<StudentProgress[]>("/api/teacher/students");
+  return apiRequest<StudentProgress[]>(
+    "/api/teacher/students"
+  );
 }
-  
+
 export interface GradeTrend {
   period: string;
   value: number;
 }
-  
-export async function getTeacherGrades(filterId?: string) {
-  const url = filterId ? `/api/teacher/grades?student=${filterId}` : "/api/teacher/grades";
+
+export async function getTeacherGrades(
+  filterId?: string
+) {
+  const url = filterId
+    ? `/api/teacher/grades?student=${filterId}`
+    : "/api/teacher/grades";
+
   return apiRequest<GradeTrend[]>(url);
 }
-  
+
 export type AddGradeInput = {
   studentId: string;
   subject: string;
   score: number;
   gradedAt?: string;
 };
-  
+
 export async function addGrade(data: AddGradeInput) {
   return apiRequest("/api/teacher/grades", {
     method: "POST",
@@ -976,15 +1199,25 @@ export async function addGrade(data: AddGradeInput) {
   });
 }
 
-export async function sendNote(studentId: string, message: string) {
+export async function sendNote(
+  studentId: string,
+  message: string
+) {
   return apiRequest("/api/teacher/notes", {
     method: "POST",
-    body: JSON.stringify({ studentId, message }),
+    body: JSON.stringify({
+      studentId,
+      message,
+    }),
   });
 }
-  
-export type AnnouncementType = "CLASS_CANCELED" | "CLASS_MOVED" | "TEST_ANNOUNCEMENT" | "GENERAL";
-  
+
+export type AnnouncementType =
+  | "CLASS_CANCELED"
+  | "CLASS_MOVED"
+  | "TEST_ANNOUNCEMENT"
+  | "GENERAL";
+
 export async function sendAnnouncement(data: {
   className: string;
   title: string;
@@ -1007,7 +1240,9 @@ export interface GradePageItem {
 }
 
 export async function getTeacherGradesPage() {
-  return apiRequest<GradePageItem[]>("/api/teacher/grades-page");
+  return apiRequest<GradePageItem[]>(
+    "/api/teacher/grades-page"
+  );
 }
 
 export type AddGradePageInput = {
@@ -1017,15 +1252,65 @@ export type AddGradePageInput = {
   assessmentName: string;
 };
 
-export async function addGradePage(data: AddGradePageInput) {
-  return apiRequest<GradePageItem>("/api/teacher/grades", {
+export async function addGradePage(
+  data: AddGradePageInput
+) {
+  return apiRequest("/api/teacher/grades", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function deleteTeacherGrade(gradeId: string) {
-  return apiRequest<{ message: string }>(`/api/teacher/grades/${gradeId}`, {
-    method: "DELETE",
+export async function deleteTeacherGrade(
+  gradeId: string
+) {
+  return apiRequest<{ message: string }>(
+    `/api/teacher/grades/${gradeId}`,
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+/* =========================================================
+   QUIZ
+========================================================= */
+
+export type QuizResponse = {
+  id: string;
+  userId: string;
+  answers: {
+    question: string;
+    answer: string;
+  }[];
+  createdAt: string;
+};
+
+export async function submitQuizResponse(
+  answers: {
+    question: string;
+    answer: string;
+  }[]
+) {
+  return apiRequest("/api/wellbeing-quiz", {
+    method: "POST",
+    body: JSON.stringify({ answers }),
   });
+}
+
+export async function getQuizHistory() {
+  return apiRequest<QuizResponse[]>(
+    "/api/wellbeing-quiz"
+  );
+}
+
+/* =========================================================
+   UTILITY
+========================================================= */
+
+export function formatClock(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+
+  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 }
