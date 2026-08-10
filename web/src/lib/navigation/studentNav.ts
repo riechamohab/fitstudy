@@ -1,12 +1,12 @@
 import {
-  DashboardIcon,
-  PlannerIcon,
+  AchievementsIcon,
   CoursesIcon,
+  DashboardIcon,
   FocusTimerIcon,
   NotesIcon,
+  PlannerIcon,
   ProgressIcon,
   WellbeingIcon,
-  AchievementsIcon,
 } from "../../components/ui/icons";
 
 export interface NavItem {
