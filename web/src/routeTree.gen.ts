@@ -36,6 +36,7 @@ import { Route as AdminStudentenlijstRouteImport } from './routes/admin/studente
 import { Route as AdminStudentScheduleRouteImport } from './routes/admin/student-schedule'
 import { Route as AdminStatistiekenRouteImport } from './routes/admin/statistieken'
 import { Route as AdminRoosterlijstenRouteImport } from './routes/admin/roosterlijsten'
+import { Route as AdminMededelingenRouteImport } from './routes/admin/mededelingen'
 import { Route as AdminDocentenlijstRouteImport } from './routes/admin/docentenlijst'
 
 const LoginRoute = LoginRouteImport.update({
@@ -173,6 +174,11 @@ const AdminRoosterlijstenRoute = AdminRoosterlijstenRouteImport.update({
   path: '/roosterlijsten',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminMededelingenRoute = AdminMededelingenRouteImport.update({
+  id: '/mededelingen',
+  path: '/mededelingen',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminDocentenlijstRoute = AdminDocentenlijstRouteImport.update({
   id: '/docentenlijst',
   path: '/docentenlijst',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/admin/docentenlijst': typeof AdminDocentenlijstRoute
+  '/admin/mededelingen': typeof AdminMededelingenRoute
   '/admin/roosterlijsten': typeof AdminRoosterlijstenRoute
   '/admin/statistieken': typeof AdminStatistiekenRoute
   '/admin/student-schedule': typeof AdminStudentScheduleRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/admin/docentenlijst': typeof AdminDocentenlijstRoute
+  '/admin/mededelingen': typeof AdminMededelingenRoute
   '/admin/roosterlijsten': typeof AdminRoosterlijstenRoute
   '/admin/statistieken': typeof AdminStatistiekenRoute
   '/admin/student-schedule': typeof AdminStudentScheduleRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/admin/docentenlijst': typeof AdminDocentenlijstRoute
+  '/admin/mededelingen': typeof AdminMededelingenRoute
   '/admin/roosterlijsten': typeof AdminRoosterlijstenRoute
   '/admin/statistieken': typeof AdminStatistiekenRoute
   '/admin/student-schedule': typeof AdminStudentScheduleRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/login'
     | '/admin/docentenlijst'
+    | '/admin/mededelingen'
     | '/admin/roosterlijsten'
     | '/admin/statistieken'
     | '/admin/student-schedule'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/login'
     | '/admin/docentenlijst'
+    | '/admin/mededelingen'
     | '/admin/roosterlijsten'
     | '/admin/statistieken'
     | '/admin/student-schedule'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/login'
     | '/admin/docentenlijst'
+    | '/admin/mededelingen'
     | '/admin/roosterlijsten'
     | '/admin/statistieken'
     | '/admin/student-schedule'
@@ -563,6 +575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRoosterlijstenRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/mededelingen': {
+      id: '/admin/mededelingen'
+      path: '/mededelingen'
+      fullPath: '/admin/mededelingen'
+      preLoaderRoute: typeof AdminMededelingenRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/docentenlijst': {
       id: '/admin/docentenlijst'
       path: '/docentenlijst'
@@ -575,6 +594,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminDocentenlijstRoute: typeof AdminDocentenlijstRoute
+  AdminMededelingenRoute: typeof AdminMededelingenRoute
   AdminRoosterlijstenRoute: typeof AdminRoosterlijstenRoute
   AdminStatistiekenRoute: typeof AdminStatistiekenRoute
   AdminStudentScheduleRoute: typeof AdminStudentScheduleRoute
@@ -583,6 +603,7 @@ interface AdminRouteRouteChildren {
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminDocentenlijstRoute: AdminDocentenlijstRoute,
+  AdminMededelingenRoute: AdminMededelingenRoute,
   AdminRoosterlijstenRoute: AdminRoosterlijstenRoute,
   AdminStatistiekenRoute: AdminStatistiekenRoute,
   AdminStudentScheduleRoute: AdminStudentScheduleRoute,

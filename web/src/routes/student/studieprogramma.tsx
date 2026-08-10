@@ -5,7 +5,7 @@ import {
   getClassSchedule,
   getCourses,
   toggleLessonItem,
-  type ClassScheduleOverview,
+  type ClassScheduleResponse,
   type Course,
   type Lesson,
 } from "../../lib/api";
@@ -14,12 +14,32 @@ export const Route = createFileRoute("/student/studieprogramma")({
   component: CoursesPage,
 });
 
-const DAY_NAMES = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+const DAYS: { value: string; label: string }[] = [
+  { value: "monday", label: "Maandag" },
+  { value: "tuesday", label: "Dinsdag" },
+  { value: "wednesday", label: "Woensdag" },
+  { value: "thursday", label: "Donderdag" },
+  { value: "friday", label: "Vrijdag" },
+];
 
-function formatTime(time: string) {
-  const [h, m] = time.split(":").map(Number);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
+type TimeBlock = {
+  id: number;
+  label: string;
+  start: string;
+  end: string;
+  locked: boolean;
+};
+
+const TIME_BLOCKS: TimeBlock[] = [
+  { id: 1, label: "Blok 1", start: "07:00", end: "07:45", locked: false },
+  { id: 2, label: "Blok 2", start: "07:46", end: "08:30", locked: false },
+  { id: 3, label: "Blok 3", start: "08:31", end: "09:15", locked: false },
+  { id: 4, label: "Blok 4", start: "09:16", end: "10:00", locked: false },
+  { id: 5, label: "Pauze", start: "10:01", end: "10:15", locked: true },
+  { id: 6, label: "Blok 6", start: "10:16", end: "11:00", locked: false },
+  { id: 7, label: "Blok 7", start: "11:01", end: "11:45", locked: false },
+  { id: 9, label: "Blok 9", start: "11:46", end: "12:30", locked: false },
+];
 
 function getSchoolYearLabel(date: Date) {
   const year = date.getFullYear();
@@ -212,9 +232,84 @@ function CourseDetail({
   );
 }
 
+function ScheduleGrid({ schedule }: { schedule: ClassScheduleResponse }) {
+  return (
+    <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            <th className="w-28 border-b border-slate-200 p-2 text-left font-medium text-slate-500">
+              Tijdsblok
+            </th>
+            {DAYS.map((day) => (
+              <th
+                key={day.value}
+                className="border-b border-slate-200 p-2 text-left font-medium text-slate-500"
+              >
+                {day.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {TIME_BLOCKS.map((block) => {
+            if (block.locked) {
+              return (
+                <tr key={block.id} className="bg-slate-50">
+                  <td
+                    colSpan={DAYS.length + 1}
+                    className="p-2 text-center text-xs font-medium text-slate-400"
+                  >
+                    {block.label} ({block.start} - {block.end})
+                  </td>
+                </tr>
+              );
+            }
+
+            return (
+              <tr key={block.id} className="align-top">
+                <td className="border-b border-slate-100 p-2 text-xs text-slate-500">
+                  {block.label}
+                  <br />
+                  {block.start} - {block.end}
+                </td>
+                {DAYS.map((day) => {
+                  const entry = schedule.entries.find((e) => {
+                    if (e.day.toLowerCase() !== day.value) return false;
+                    const entryStart = e.startTime.trim().substring(0, 5);
+                    return entryStart === block.start;
+                  });
+
+                  return (
+                    <td key={`${day.value}-${block.id}`} className="border-b border-slate-100 p-2">
+                      {entry ? (
+                        <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                          <p className="font-semibold text-slate-900">{entry.subject}</p>
+                          {entry.teacherName && (
+                            <p className="mt-0.5 text-xs text-slate-500">{entry.teacherName}</p>
+                          )}
+                          {entry.location && (
+                            <p className="mt-0.5 text-xs text-slate-400">{entry.location}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [schedule, setSchedule] = useState<ClassScheduleOverview | null>(null);
+  const [schedule, setSchedule] = useState<ClassScheduleResponse | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -286,12 +381,7 @@ function CoursesPage() {
   }
 
   const schoolYear = getSchoolYearLabel(new Date());
-  const entriesByDay = schedule
-    ? Array.from({ length: 7 }, (_, dayOfWeek) => ({
-        dayOfWeek,
-        entries: schedule.entries.filter((e) => e.dayOfWeek === dayOfWeek),
-      })).filter((d) => d.entries.length > 0)
-    : [];
+  const hasScheduleEntries = (schedule?.entries.length ?? 0) > 0;
 
   return (
     <main className="p-8">
@@ -308,34 +398,12 @@ function CoursesPage() {
             <p className="mt-3 text-sm text-slate-400">
               Er is nog geen klas aan je account gekoppeld.
             </p>
-          ) : entriesByDay.length === 0 ? (
+          ) : !hasScheduleEntries ? (
             <p className="mt-3 text-sm text-slate-400">
               De administratie heeft nog geen lesrooster geplaatst voor jouw klas.
             </p>
           ) : (
-            <div className="mt-4 space-y-3">
-              {entriesByDay.map(({ dayOfWeek, entries }) => (
-                <div key={dayOfWeek} className="rounded-xl border border-slate-200 bg-white p-4">
-                  <p className="mb-2 text-sm font-semibold text-slate-900">
-                    {DAY_NAMES[dayOfWeek]}
-                  </p>
-                  <div className="space-y-2">
-                    {entries.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
-                      >
-                        <span className="font-medium text-slate-700">{entry.subject}</span>
-                        <span className="text-slate-500">
-                          {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
-                          {entry.room ? ` · ${entry.room}` : ""}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ScheduleGrid schedule={schedule} />
           )}
         </div>
 
@@ -408,4 +476,3 @@ function CoursesPage() {
     </main>
   );
 }
-

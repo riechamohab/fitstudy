@@ -9,14 +9,24 @@ import { checkAndUnlockAchievements } from "./achievements.js";
 
 const router = Router();
 
+const DAILY_GOAL_ML = 2500;
+
 router.post("/", async (req, res) => {
   try {
     const currentUser = await requireUser(req, res);
     if (!currentUser) return;
 
+    const { amountMl } = req.body;
+
+    const parsedAmount = Number(amountMl);
+
+    if (!parsedAmount || parsedAmount <= 0) {
+      return res.status(400).json({ error: "amountMl must be a positive number" });
+    }
+
     const inserted = await db
       .insert(waterLogs)
-      .values({ id: nanoid(), userId: currentUser.id })
+      .values({ id: nanoid(), userId: currentUser.id, amountMl: parsedAmount })
       .returning();
 
     res.status(201).json(inserted[0]);
@@ -41,9 +51,17 @@ router.get("/", async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayCount = allLogs.filter((log) => new Date(log.createdAt) >= today).length;
+    const todayLogs = allLogs.filter((log) => new Date(log.createdAt) >= today);
 
-    res.json({ todayCount, totalCount: allLogs.length });
+    const todayMl = todayLogs.reduce((sum, log) => sum + log.amountMl, 0);
+    const totalMl = allLogs.reduce((sum, log) => sum + log.amountMl, 0);
+
+    res.json({
+      todayMl,
+      goalMl: DAILY_GOAL_ML,
+      totalMl,
+      todayLogCount: todayLogs.length,
+    });
   } catch (error) {
     console.error("Get water intake error:", error);
     res.status(500).json({ error: "Internal server error" });

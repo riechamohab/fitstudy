@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import { db } from "../db/index.js";
@@ -8,6 +8,12 @@ import { requireUser } from "../lib/auth-session.js";
 import { checkAndUnlockAchievements } from "./achievements.js";
 
 const router = Router();
+
+function startOfToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
 
 router.post("/", async (req, res) => {
   try {
@@ -47,6 +53,22 @@ router.post("/", async (req, res) => {
       if (Number.isNaN(sleepHoursValue) || sleepHoursValue < 0 || sleepHoursValue > 24) {
         return res.status(400).json({ error: "sleepHours must be between 0 and 24" });
       }
+    }
+
+    const existingToday = await db
+      .select()
+      .from(stressLevels)
+      .where(
+        and(
+          eq(stressLevels.userId, userId),
+          gte(stressLevels.createdAt, startOfToday())
+        )
+      );
+
+    if (existingToday.length > 0) {
+      return res.status(409).json({
+        error: "Je hebt vandaag al een registratie ingevuld. Morgen kun je opnieuw registreren.",
+      });
     }
 
     const insertedStressLevels = await db

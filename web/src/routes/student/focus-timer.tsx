@@ -20,7 +20,64 @@ export const Route = createFileRoute("/student/focus-timer")({
 
 type Phase = "select" | "focus" | "checklist" | "choose-break" | "break" | "done";
 
-const FOCUS_SECONDS = 25 * 60;
+interface TimerTypeConfig {
+  id: string;
+  title: string;
+  description: string;
+  duration: number; // in minuten
+  badge: string;
+  badgeColor: string;
+  requiresTask: boolean;
+}
+
+const TIMER_TYPES: TimerTypeConfig[] = [
+  {
+    id: "pomodoro",
+    title: "Pomodoro Focus",
+    description: "Klassieke focussessie van 25 minuten",
+    duration: 25,
+    badge: "EASY",
+    badgeColor: "bg-emerald-100 text-emerald-700",
+    requiresTask: true,
+  },
+  {
+    id: "quick-sprint",
+    title: "Quick Sprint",
+    description: "Intense productiviteitsboost van 15 minuten",
+    duration: 15,
+    badge: "EASY",
+    badgeColor: "bg-emerald-100 text-emerald-700",
+    requiresTask: true,
+  },
+  {
+    id: "power-focus",
+    title: "Power Focus",
+    description: "Uitdagende diepe concentratie van 35 minuten",
+    duration: 35,
+    badge: "HARD",
+    badgeColor: "bg-red-100 text-red-700",
+    requiresTask: true,
+  },
+  {
+    id: "deep-work",
+    title: "Deep Work",
+    description: "Verlengde concentratiesessie van 50 minuten",
+    duration: 50,
+    badge: "MEDIUM",
+    badgeColor: "bg-amber-100 text-amber-700",
+    requiresTask: true,
+  },
+  {
+    id: "creative-flow",
+    title: "Creative Flow",
+    description: "Creatieve denkssessie van 45 minuten",
+    duration: 45,
+    badge: "MEDIUM",
+    badgeColor: "bg-amber-100 text-amber-700",
+    requiresTask: false,
+  },
+];
+
 const SHORT_BREAK_SECONDS = 5 * 60;
 const LONG_BREAK_SECONDS = 15 * 60;
 
@@ -30,15 +87,6 @@ function formatClock(totalSeconds: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-function PlayIcon() {
-  return (
-    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M8 5v14l11-7z" />
-    </svg>
-  );
-}
-
-// Original peeking-dog mascot (paws + head resting on the top edge of the card).
 function PeekingDog() {
   return (
     <svg
@@ -59,7 +107,6 @@ function PeekingDog() {
   );
 }
 
-// Original sleeping-dog mascot for break screens.
 function SleepingDog() {
   return (
     <svg
@@ -79,8 +126,6 @@ function SleepingDog() {
   );
 }
 
-// Subtle repeating background pattern (book, pencil, star, circle) — a texture,
-// not individual decorations, so it reads as a pattern rather than clutter.
 const PATTERN_TILE = `
 <svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'>
   <g fill-opacity='0.16'>
@@ -114,17 +159,25 @@ function FocusTimerPage() {
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [error, setError] = useState("");
 
+  const [selectedTimerConfig, setSelectedTimerConfig] = useState<TimerTypeConfig | null>(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+
   const [session, setSession] = useState<FocusSession | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(FOCUS_SECONDS);
+  const [secondsLeft, setSecondsLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
+  const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [newItemTitle, setNewItemTitle] = useState("");
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Initialiseer het audiobestand uit de public map
+    audioRef.current = new Audio("/audio/alarm.mp3");
+    audioRef.current.loop = true; // Blijft afgaan totdat de gebruiker het stopt
+
     async function loadTasks() {
       try {
         const allTasks = await getTasks();
@@ -136,37 +189,31 @@ function FocusTimerPage() {
       }
     }
     loadTasks();
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
   }, []);
 
-  function getAudioContext() {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
+  function playAlarmAudio() {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {
+        // Browser autoplay-restricties opvangen indien nodig
+      });
+      setIsAlarmPlaying(true);
     }
-    return audioContextRef.current;
   }
 
-  function playAlarm() {
-    try {
-      const ctx = getAudioContext();
-      const now = ctx.currentTime;
-
-      // Three short beeps.
-      [0, 0.35, 0.7].forEach((offset) => {
-        const oscillator = ctx.createOscillator();
-        const gain = ctx.createGain();
-        oscillator.type = "sine";
-        oscillator.frequency.value = 880;
-        gain.gain.setValueAtTime(0.001, now + offset);
-        gain.gain.exponentialRampToValueAtTime(0.3, now + offset + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.25);
-        oscillator.connect(gain);
-        gain.connect(ctx.destination);
-        oscillator.start(now + offset);
-        oscillator.stop(now + offset + 0.25);
-      });
-    } catch {
-      // Audio isn't critical — fail silently if the browser blocks it.
+  function stopAlarmAudio() {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
+    setIsAlarmPlaying(false);
   }
 
   useEffect(() => {
@@ -177,7 +224,8 @@ function FocusTimerPage() {
         if (prev <= 1) {
           clearInterval(intervalRef.current!);
           setIsRunning(false);
-          playAlarm();
+          playAlarmAudio(); // Start de audio uit /public/alarm.mp3
+
           if (phase === "focus") {
             handleFocusEnd();
           } else if (phase === "break") {
@@ -193,9 +241,13 @@ function FocusTimerPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRunning]);
+  }, [isRunning, phase]);
 
   async function handleFocusEnd() {
+    if (!selectedTaskId) {
+      setPhase("choose-break");
+      return;
+    }
     try {
       const items = await getChecklist(selectedTaskId);
       setChecklist(items);
@@ -205,20 +257,33 @@ function FocusTimerPage() {
     setPhase("checklist");
   }
 
+  function handleSelectTimerType(config: TimerTypeConfig) {
+    setSelectedTimerConfig(config);
+    setShowTaskModal(true);
+    setSelectedTaskId("");
+    setError("");
+  }
+
   async function handleStartFocus() {
-    if (!selectedTaskId) return;
+    if (selectedTimerConfig?.requiresTask && !selectedTaskId) return;
 
     setError("");
-    getAudioContext(); // create/unlock audio context on this user gesture
+    stopAlarmAudio();
 
     try {
-      const newSession = await startFocusSession(selectedTaskId, 25);
+      const durationMin = selectedTimerConfig ? selectedTimerConfig.duration : 25;
+      const newSession = await startFocusSession(selectedTaskId || "general", durationMin);
       setSession(newSession);
 
-      const items = await getChecklist(selectedTaskId);
-      setChecklist(items);
+      if (selectedTaskId) {
+        const items = await getChecklist(selectedTaskId);
+        setChecklist(items);
+      } else {
+        setChecklist([]);
+      }
 
-      setSecondsLeft(FOCUS_SECONDS);
+      setSecondsLeft(durationMin * 60);
+      setShowTaskModal(false);
       setPhase("focus");
       setIsRunning(true);
     } catch (error) {
@@ -228,7 +293,7 @@ function FocusTimerPage() {
 
   async function handleAddChecklistItem(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!newItemTitle.trim()) return;
+    if (!newItemTitle.trim() || !selectedTaskId) return;
 
     try {
       const item = await addChecklistItem(selectedTaskId, newItemTitle.trim());
@@ -251,15 +316,17 @@ function FocusTimerPage() {
   }
 
   function goToChooseBreak() {
+    stopAlarmAudio();
     setPhase("choose-break");
   }
 
   async function handleChooseBreak(breakType: BreakType) {
+    stopAlarmAudio();
     if (session) {
       try {
         await completeFocusSession(session.id, breakType);
       } catch {
-        // non-fatal — the break still starts locally either way
+        // non-fatal
       }
     }
     setSecondsLeft(breakType === "SHORT" ? SHORT_BREAK_SECONDS : LONG_BREAK_SECONDS);
@@ -268,11 +335,13 @@ function FocusTimerPage() {
   }
 
   function handleRestart() {
+    stopAlarmAudio();
     setPhase("select");
     setSession(null);
     setChecklist([]);
-    setSecondsLeft(FOCUS_SECONDS);
+    setSecondsLeft(25 * 60);
     setSelectedTaskId("");
+    setSelectedTimerConfig(null);
   }
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId);
@@ -286,7 +355,7 @@ function FocusTimerPage() {
         style={{ backgroundImage: PATTERN_BACKGROUND, backgroundRepeat: "repeat" }}
       />
 
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-2xl">
         {phase === "focus" && <PeekingDog />}
         {phase === "break" && <SleepingDog />}
 
@@ -295,64 +364,133 @@ function FocusTimerPage() {
             <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
           )}
 
-          {phase === "select" && (
-            <>
-              <h1 className="mb-1 text-2xl font-bold text-slate-900">Focustimer</h1>
-              <p className="mb-6 text-sm text-slate-500">
-                Kies een taak om de komende 25 minuten aan te werken.
-              </p>
-
-              {isLoadingTasks ? (
-                <p className="text-sm text-slate-500">Taken laden...</p>
-              ) : tasks.length === 0 ? (
-                <p className="text-sm text-slate-400">
-                  Nog geen lopende taken. Voeg er eerst een toe in je planner.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {tasks.map((task) => (
-                    <button
-                      key={task.id}
-                      type="button"
-                      onClick={() => setSelectedTaskId(task.id)}
-                      className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition ${
-                        selectedTaskId === task.id
-                          ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : "border-slate-200 text-slate-700 hover:border-slate-300"
-                      }`}
-                    >
-                      {task.title}
-                    </button>
-                  ))}
-                </div>
-              )}
-
+          {/* Alarm Banner / Stop knop als de audio afgaat */}
+          {isAlarmPlaying && (
+            <div className="mb-6 flex items-center justify-between rounded-xl bg-amber-500 p-4 text-white shadow-lg animate-bounce">
+              <div>
+                <p className="font-bold">Tijd is om!</p>
+                <p className="text-xs text-amber-100">Het alarm gaat af.</p>
+              </div>
               <button
                 type="button"
-                onClick={handleStartFocus}
-                disabled={!selectedTaskId}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40"
+                onClick={stopAlarmAudio}
+                className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-amber-700 hover:bg-amber-50"
               >
-                <PlayIcon />
-                Start focussessie
+                Stop alarm
               </button>
+            </div>
+          )}
+
+          {/* 1. Overzichtsscherm: Keuze uit verschillende Focus Timers */}
+          {phase === "select" && (
+            <>
+              <h1 className="mb-1 text-2xl font-bold text-slate-900">Focus Exercises</h1>
+              <p className="mb-6 text-sm text-slate-500">
+                Kies een type focussessie om te starten.
+              </p>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {TIMER_TYPES.map((timer) => (
+                  <div
+                    key={timer.id}
+                    onClick={() => handleSelectTimerType(timer)}
+                    className="group relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-blue-400 hover:shadow-md flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-bold text-slate-900 text-lg">{timer.title}</h3>
+                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${timer.badgeColor}`}>
+                          {timer.badge}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-500">{timer.description}</p>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-between pt-3 border-t border-slate-100">
+                      <span className="text-xs font-medium text-slate-400">⏱ {timer.duration} min</span>
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
+                        ▶
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </>
           )}
 
+          {/* Modal voor taakkoppeling */}
+          {showTaskModal && selectedTimerConfig && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <h3 className="text-lg font-bold text-slate-900 mb-1">Focustimer</h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  Kies een taak om de komende {selectedTimerConfig.duration} minuten aan te werken.
+                  {!selectedTimerConfig.requiresTask && (
+                    <span className="block text-xs text-blue-600 mt-0.5">(Optioneel voor deze sessie)</span>
+                  )}
+                </p>
+
+                {isLoadingTasks ? (
+                  <p className="text-sm text-slate-500 mb-4">Taken laden...</p>
+                ) : (
+                  <div className="mb-6 space-y-2">
+                    <select
+                      value={selectedTaskId}
+                      onChange={(e) => setSelectedTaskId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
+                    >
+                      <option value="">-- Selecteer een taak of opdracht --</option>
+                      {tasks.map((task) => (
+                        <option key={task.id} value={task.id}>
+                          {task.title}
+                        </option>
+                      ))}
+                    </select>
+                    {tasks.length === 0 && (
+                      <p className="text-xs text-slate-400">Nog geen lopende taken. Voeg er eerst een toe in je planner.</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowTaskModal(false)}
+                    className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedTimerConfig.requiresTask && !selectedTaskId}
+                    onClick={handleStartFocus}
+                    className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Start focussessie
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 2. Actieve Focussessie */}
           {phase === "focus" && (
             <div className="text-center">
               <p className="mb-2 text-sm font-medium uppercase tracking-wide text-blue-600">
-                Bezig met
+                Bezig met: {selectedTimerConfig?.title}
               </p>
               <h2 className="mb-6 text-lg font-bold text-slate-900">
-                {selectedTask?.title}
+                {selectedTask ? selectedTask.title : "Creatieve Focussessie"}
               </h2>
               <p className="mb-6 text-6xl font-bold tabular-nums text-slate-900">
                 {formatClock(secondsLeft)}
               </p>
               <button
                 type="button"
-                onClick={handleFocusEnd}
+                onClick={() => {
+                  stopAlarmAudio();
+                  handleFocusEnd();
+                }}
                 className="text-sm font-medium text-slate-500 hover:text-blue-600"
               >
                 Sessie vroegtijdig beëindigen
@@ -360,11 +498,12 @@ function FocusTimerPage() {
             </div>
           )}
 
+          {/* 3. Checklist Scherm */}
           {phase === "checklist" && (
             <>
               <h2 className="mb-1 text-xl font-bold text-slate-900">Goed gedaan!</h2>
               <p className="mb-4 text-sm text-slate-500">
-                Vink af wat je hebt behandeld bij "{selectedTask?.title}" voor je pauze.
+                Vink af wat je hebt behandeld bij &quot;{selectedTask?.title}&quot; voor je pauze.
               </p>
 
               {checklist.length === 0 ? (
@@ -399,7 +538,7 @@ function FocusTimerPage() {
                   className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   value={newItemTitle}
                   onChange={(event) => setNewItemTitle(event.target.value)}
-                  placeholder="bijv. Optellen"
+                  placeholder="bijv. Onderwerp doorgenomen"
                 />
                 <button
                   type="submit"
@@ -423,6 +562,7 @@ function FocusTimerPage() {
             </>
           )}
 
+          {/* 4. Kies Pauze */}
           {phase === "choose-break" && (
             <div className="text-center">
               <h2 className="mb-1 text-xl font-bold text-slate-900">Neem een pauze</h2>
@@ -449,6 +589,7 @@ function FocusTimerPage() {
             </div>
           )}
 
+          {/* 5. Pauze Timer */}
           {phase === "break" && (
             <div className="text-center">
               <p className="mb-2 text-sm font-medium uppercase tracking-wide text-green-600">
@@ -459,7 +600,10 @@ function FocusTimerPage() {
               </p>
               <button
                 type="button"
-                onClick={() => setPhase("done")}
+                onClick={() => {
+                  stopAlarmAudio();
+                  setPhase("done");
+                }}
                 className="text-sm font-medium text-slate-500 hover:text-blue-600"
               >
                 Pauze overslaan
@@ -467,11 +611,15 @@ function FocusTimerPage() {
             </div>
           )}
 
+          {/* 6. Klaar / Notificatie Scherm */}
           {phase === "done" && (
             <div className="text-center">
-              <h2 className="mb-2 text-xl font-bold text-slate-900">Pauze voorbij</h2>
+              <div className="mb-4 flex items-center justify-center">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 font-bold text-xl">✓</span>
+              </div>
+              <h2 className="mb-2 text-xl font-bold text-slate-900">Geweldig gedaan!</h2>
               <p className="mb-6 text-sm text-slate-500">
-                Klaar voor nog een focussessie?
+                Je focussessie is succesvol afgerond. Klaar voor nog een sessie?
               </p>
               <button
                 type="button"
@@ -487,5 +635,3 @@ function FocusTimerPage() {
     </main>
   );
 }
-
-
