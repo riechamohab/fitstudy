@@ -27,10 +27,16 @@ const emptyCreateForm: CreateFormState = {
   studentClass: "",
 };
 
-type EditFormState = {
+type ManageFormState = {
   name: string;
   email: string;
+  phone: string;
+  studentNumber: string;
+  school: string;
+  study: string;
+  schoolYear: string;
   studentClass: string;
+  studyHistory: string;
 };
 
 function AdminStudentenPage() {
@@ -42,14 +48,21 @@ function AdminStudentenPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditFormState>({
+  // State voor de "Beheren" modal
+  const [managingStudent, setManagingStudent] = useState<AdminUser | null>(null);
+  const [manageForm, setManageForm] = useState<ManageFormState>({
     name: "",
     email: "",
+    phone: "",
+    studentNumber: "",
+    school: "",
+    study: "",
+    schoolYear: "",
     studentClass: "",
+    studyHistory: "",
   });
-  const [editError, setEditError] = useState<string | null>(null);
-  const [savingEdit, setSavingEdit] = useState(false);
+  const [manageError, setManageError] = useState<string | null>(null);
+  const [savingManage, setSavingManage] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -98,48 +111,79 @@ function AdminStudentenPage() {
     }
   }
 
-  function startEdit(student: AdminUser) {
-    setEditingId(student.id);
-    setEditError(null);
-    setEditForm({
-      name: student.name,
-      email: student.email,
-      studentClass: student.studentClass ?? "",
+  function startManage(student: AdminUser & { phone?: string; studentNumber?: string; school?: string; study?: string; schoolYear?: string; studyHistory?: string }) {
+    setManagingStudent(student);
+    setManageError(null);
+    setManageForm({
+      name: student.name || "",
+      email: student.email || "",
+      phone: student.phone || "",
+      studentNumber: student.studentNumber || "",
+      school: student.school || "",
+      study: student.study || "",
+      schoolYear: student.schoolYear || "2025-2026",
+      studentClass: student.studentClass || "",
+      studyHistory: student.studyHistory || "",
     });
   }
 
-  function cancelEdit() {
-    setEditingId(null);
-    setEditError(null);
+  function closeManage() {
+    setManagingStudent(null);
+    setManageError(null);
   }
 
-  async function handleSaveEdit(id: string) {
-    setEditError(null);
+  async function handleSaveManage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!managingStudent) return;
 
-    if (!editForm.name.trim() || !editForm.email.trim()) {
-      setEditError("Naam en e-mail zijn verplicht.");
+    setManageError(null);
+
+    if (!manageForm.name.trim() || !manageForm.email.trim()) {
+      setManageError("Naam en e-mail zijn verplicht.");
       return;
     }
 
-    setSavingEdit(true);
-    try {
-      await updateAdminUser(id, {
-        name: editForm.name.trim(),
-        email: editForm.email.trim(),
-        role: "student",
-        studentClass: editForm.studentClass.trim() || undefined,
-      });
+    // Controleer of het studentnummer al bestaat bij een andere student
+    const trimmedStudentNumber = manageForm.studentNumber.trim();
+    if (trimmedStudentNumber) {
+      const isDuplicate = students.some(
+        (s) => 
+          s.id !== managingStudent.id && 
+          (s as any).studentNumber?.toLowerCase() === trimmedStudentNumber.toLowerCase()
+      );
 
-      setEditingId(null);
+      if (isDuplicate) {
+        setManageError("Dit studentnummer is al in gebruik door een andere student.");
+        return;
+      }
+    }
+
+    setSavingManage(true);
+    try {
+      await updateAdminUser(managingStudent.id, {
+        name: manageForm.name.trim(),
+        email: manageForm.email.trim(),
+        role: "student",
+        studentClass: manageForm.studentClass.trim() || undefined,
+        phone: manageForm.phone.trim() || undefined,
+        studentNumber: trimmedStudentNumber || undefined,
+        school: manageForm.school.trim() || undefined,
+        study: manageForm.study.trim() || undefined,
+        schoolYear: manageForm.schoolYear.trim() || undefined,
+        studyHistory: manageForm.studyHistory.trim() || undefined,
+      } as any);
+
+      setManagingStudent(null);
       await loadUsers();
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : "Kon student niet bijwerken.");
+      setManageError(err instanceof Error ? err.message : "Kon student niet bijwerken.");
     } finally {
-      setSavingEdit(false);
+      setSavingManage(false);
     }
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("Weet je zeker dat je deze student wilt verwijderen?")) return;
     try {
       await deleteAdminUser(id);
       setUsers((prev) => prev.filter((u) => u.id !== id));
@@ -152,9 +196,10 @@ function AdminStudentenPage() {
     <main className="p-8">
       <h1 className="text-2xl font-bold text-slate-900">Studenten</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Beheer studentprofielen: aanmaken, bekijken en klas wijzigen.
+        Beheer studentprofielen: aanmaken, bekijken en gegevens wijzigen of verwijderen.
       </p>
 
+      {/* Formulier om een nieuwe student aan te maken */}
       <form
         onSubmit={handleCreate}
         className="mt-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2"
@@ -231,87 +276,184 @@ function AdminStudentenPage() {
         </div>
       )}
 
+      {/* Overzicht van studenten */}
       <div className="mt-4 grid gap-3">
         {students.map((student) => (
           <div
             key={student.id}
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between"
           >
-            {editingId === student.id ? (
-              <div className="grid gap-3 sm:grid-cols-3">
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  placeholder="Naam"
-                />
-                <input
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  placeholder="E-mail"
-                />
-                <input
-                  type="text"
-                  value={editForm.studentClass}
-                  onChange={(e) =>
-                    setEditForm((f) => ({ ...f, studentClass: e.target.value }))
-                  }
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  placeholder="Klas"
-                />
-
-                {editError && (
-                  <p className="sm:col-span-3 text-sm text-red-600">{editError}</p>
-                )}
-
-                <div className="sm:col-span-3 flex gap-2">
-                  <button
-                    onClick={() => handleSaveEdit(student.id)}
-                    disabled={savingEdit}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {savingEdit ? "Opslaan..." : "Opslaan"}
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                  >
-                    Annuleren
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-900">{student.name}</p>
-                  <p className="text-sm text-slate-500">
-                    {student.email}
-                    {student.studentClass ? ` · Klas ${student.studentClass}` : " · Geen klas"}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEdit(student)}
-                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                  >
-                    Bewerken
-                  </button>
-                  <button
-                    onClick={() => handleDelete(student.id)}
-                    className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Verwijderen
-                  </button>
-                </div>
-              </div>
-            )}
+            <div>
+              <p className="font-semibold text-slate-900">{student.name}</p>
+              <p className="text-sm text-slate-500">
+                {student.email}
+                {student.studentClass ? ` · Klas ${student.studentClass}` : " · Geen klas"}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => startManage(student)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Beheren
+              </button>
+              <button
+                onClick={() => handleDelete(student.id)}
+                className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Verwijderen
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* UITGEBREIDE MODAL VOOR BEHEREN */}
+      {managingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-4 mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Student Beheren</h3>
+                <p className="text-xs text-slate-500">ID: {managingStudent.id}</p>
+              </div>
+              <button onClick={closeManage} className="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+            </div>
+
+            <form onSubmit={handleSaveManage} className="space-y-6">
+              
+              {/* Persoonlijke gegevens */}
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Persoonlijke gegevens</h4>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Naam</label>
+                    <input
+                      type="text"
+                      value={manageForm.name}
+                      onChange={(e) => setManageForm({ ...manageForm, name: e.target.value })}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">School e-mailadres</label>
+                    <input
+                      type="email"
+                      value={manageForm.email}
+                      onChange={(e) => setManageForm({ ...manageForm, email: e.target.value })}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Telefoonnummer</label>
+                    <input
+                      type="text"
+                      value={manageForm.phone}
+                      onChange={(e) => setManageForm({ ...manageForm, phone: e.target.value })}
+                      placeholder="Bijv. +597..."
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Studentnummer</label>
+                    <input
+                      type="text"
+                      value={manageForm.studentNumber}
+                      onChange={(e) => setManageForm({ ...manageForm, studentNumber: e.target.value })}
+                      placeholder="Bijv. STU12345"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Studiegegevens */}
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Studiegegevens</h4>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">School</label>
+                    <input
+                      type="text"
+                      value={manageForm.school}
+                      onChange={(e) => setManageForm({ ...manageForm, school: e.target.value })}
+                      placeholder="Bijv. UNASAT"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Opleiding</label>
+                    <input
+                      type="text"
+                      value={manageForm.study}
+                      onChange={(e) => setManageForm({ ...manageForm, study: e.target.value })}
+                      placeholder="Bijv. Software Engineering"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Huidig schooljaar</label>
+                    <input
+                      type="text"
+                      value={manageForm.schoolYear}
+                      onChange={(e) => setManageForm({ ...manageForm, schoolYear: e.target.value })}
+                      placeholder="2025-2026"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Klas</label>
+                    <input
+                      type="text"
+                      value={manageForm.studentClass}
+                      onChange={(e) => setManageForm({ ...manageForm, studentClass: e.target.value })}
+                      placeholder="Bijv. B4"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Studiegeschiedenis */}
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Studiegeschiedenis</h4>
+                <div>
+                  <textarea
+                    value={manageForm.studyHistory}
+                    onChange={(e) => setManageForm({ ...manageForm, studyHistory: e.target.value })}
+                    rows={3}
+                    placeholder="Voer eventuele eerdere opleidingen of studiegeschiedenis in..."
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              {manageError && (
+                <p className="text-sm text-red-600">{manageError}</p>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={closeManage}
+                  className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Sluiten
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingManage}
+                  className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {savingManage ? "Opslaan..." : "Gegevens opslaan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
-

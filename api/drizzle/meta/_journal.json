@@ -71,6 +71,20 @@
       "when": 1786254980739,
       "tag": "0009_panoramic_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786334105063,
+      "tag": "0010_icy_shinko_yamashiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786336444920,
+      "tag": "0011_minor_red_hulk",
+      "breakpoints": true
     }
   ]
 }

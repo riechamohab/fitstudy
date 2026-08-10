@@ -18,8 +18,8 @@ import scheduleRouter from "./routes/schedule.js";
 import stressLevelsRouter from "./routes/stress-levels.js";
 import tasksRouter from "./routes/tasks.js";
 import usersRouter from "./routes/users.js";
+import wellbeingQuizRouter from "./routes/wellbeing-quiz.js";
 import waterRouter from "./routes/water.js";
-
 import teacherRouter from "./routes/teacher.js";
 
 import { startDeadlineChecker } from "./services/deadline-checker.js";
@@ -56,6 +56,7 @@ app.use("/api/focus-sessions", focusSessionsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/achievements", achievementsRouter);
 app.use("/api/water", waterRouter);
+app.use("/api/wellbeing-quiz", wellbeingQuizRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/admin", adminRouter);
 

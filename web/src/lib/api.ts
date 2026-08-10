@@ -1,5 +1,6 @@
 export const API_BASE_URL = 
   import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {}
@@ -28,18 +29,18 @@ async function apiRequest<T>(
       );
     }
 
-if (response.status === 401) {
-  throw new Error("Invalid email or password.");
-}
+    if (response.status === 401) {
+      throw new Error("Invalid email or password.");
+    }
 
-console.error("API ERROR", {
-  status: response.status,
-  backendMessage,
-});
+    console.error("API ERROR", {
+      status: response.status,
+      backendMessage,
+    });
 
-throw new Error(
-  `${response.status}: ${backendMessage || "Something went wrong. Please try again."}`
-);
+    throw new Error(
+      `${response.status}: ${backendMessage || "Something went wrong. Please try again."}`
+    );
   }
 
   return response.json();
@@ -58,6 +59,8 @@ export type UserProfile = {
   study: string | null;
   phoneNumber: string | null;
   studentClass: string | null;
+  schoolYear: string | null;
+  studyHistory: string | null;
   mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;
@@ -84,6 +87,7 @@ export async function changePassword(
     },
   );
 }
+
 export async function signIn(email: string, password: string) {
   return apiRequest("/api/auth/sign-in/email", {
     method: "POST",
@@ -93,6 +97,7 @@ export async function signIn(email: string, password: string) {
     }),
   });
 }
+
 export async function signOut() {
   return apiRequest("/api/auth/sign-out", {
     method: "POST",
@@ -109,6 +114,9 @@ export type UpdateProfileInput = {
   study?: string;
   phoneNumber?: string;
   studentClass?: string;
+  studentId?: string;
+  schoolYear?: string;
+  studyHistory?: string;
 };
 
 export async function updateProfile(data: UpdateProfileInput) {
@@ -253,7 +261,7 @@ export type Course = {
   description: string | null;
   isOwner: boolean;
   chapters: Chapter[];
-  lessons: Lesson[]; // lessons not assigned to any chapter
+  lessons: Lesson[];
 };
 
 export async function getCourses() {
@@ -558,6 +566,49 @@ export async function completeExercise(id: string) {
   });
 }
 
+export type WellnessSummary = {
+  avgSleepHours: number;
+  completedExercisesCount: number;
+  currentStreak: number;
+};
+
+export async function getWellnessSummary(): Promise<WellnessSummary> {
+  return apiRequest<WellnessSummary>("/api/wellness/summary").catch(() => ({
+    avgSleepHours: 7,
+    completedExercisesCount: 0,
+    currentStreak: 0,
+  }));
+}
+
+export async function logMood(data: { mood: number; note?: string }) {
+  return apiRequest("/api/stress-levels", {
+    method: "POST",
+    body: JSON.stringify({
+      level: data.mood,
+      focus: 3,
+      notes: data.note,
+    }),
+  });
+}
+
+export async function logSleep(data: { hours: number; quality: string }) {
+  return apiRequest("/api/stress-levels", {
+    method: "POST",
+    body: JSON.stringify({
+      level: 3,
+      focus: 3,
+      sleepHours: data.hours,
+      notes: `Kwaliteit: ${data.quality}`,
+    }),
+  });
+}
+
+export function formatClock(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+}
+
 export type MotivationMessage = {
   id: string;
   message: string;
@@ -576,7 +627,7 @@ export type EnrollmentEntry = {
   status: "CURRENT" | "COMPLETED";
   createdAt: string;
 };
- 
+  
 export async function getEnrollmentHistory() {
   return apiRequest<EnrollmentEntry[]>("/api/users/enrollment-history");
 }
@@ -614,29 +665,32 @@ export type AchievementKey =
   | "NIGHT_OWL_10"
   | "ACHIEVEMENTS_25"
   | "ACHIEVEMENTS_ALL";
- 
+  
 export type Achievement = {
   key: AchievementKey;
   unlocked: boolean;
   unlockedAt: string | null;
 };
- 
+  
 export async function getAchievements() {
   return apiRequest<Achievement[]>("/api/achievements");
 }
- 
+  
 export type WaterIntake = {
-  todayCount: number;
-  totalCount: number;
+  todayMl: number;
+  goalMl: number;
+  totalMl: number;
+  todayLogCount: number;
 };
- 
+
 export async function getWaterIntake() {
   return apiRequest<WaterIntake>("/api/water");
 }
- 
-export async function logWaterIntake() {
-  return apiRequest<{ id: string }>("/api/water", {
+
+export async function logWaterIntake(amountMl: number) {
+  return apiRequest<{ id: string; amountMl: number }>("/api/water", {
     method: "POST",
+    body: JSON.stringify({ amountMl }),
   });
 }
 
@@ -658,6 +712,12 @@ export type AdminUser = {
   email: string;
   role: "admin" | "student" | "teacher";
   studentClass: string | null;
+  studentId: string | null;
+  school: string | null;
+  study: string | null;
+  phoneNumber: string | null;
+  schoolYear: string | null;
+  studyHistory: string | null;
   subjects: string[] | null;
   mentorClassName: string | null;
   mentorSchoolYear: string | null;
@@ -674,6 +734,12 @@ export type CreateAdminUserInput = {
   password: string;
   role: "student" | "teacher" | "admin";
   studentClass?: string;
+  studentId?: string;
+  school?: string;
+  study?: string;
+  phoneNumber?: string;
+  schoolYear?: string;
+  studyHistory?: string;
   subjects?: string[];
   mentorClassName?: string;
   mentorSchoolYear?: string;
@@ -691,6 +757,12 @@ export type UpdateAdminUserInput = {
   email?: string;
   role?: "student" | "teacher" | "admin";
   studentClass?: string;
+  studentId?: string;
+  school?: string;
+  study?: string;
+  phoneNumber?: string;
+  schoolYear?: string;
+  studyHistory?: string;
   subjects?: string[];
   mentorClassName?: string;
   mentorSchoolYear?: string;
@@ -706,6 +778,20 @@ export async function updateAdminUser(id: string, data: UpdateAdminUserInput) {
 export async function deleteAdminUser(id: string) {
   return apiRequest(`/api/admin/users/${id}`, {
     method: "DELETE",
+  });
+}
+
+export type CreateMededelingPayload = {
+  title: string;
+  message: string;
+  target: "teachers" | "students" | "both";
+  priority: "low" | "normal" | "high" | "urgent";
+};
+
+export async function createMededeling(payload: CreateMededelingPayload) {
+  return apiRequest<{ success: boolean; message: string }>("/api/mededelingen", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 
@@ -765,15 +851,31 @@ export async function createWeekSchedule(className: string, entries: WeekSchedul
   );
 }
 
-//docent api's hieronder
- 
+export type QuizResponse = {
+  id: string;
+  userId: string;
+  answers: { question: string; answer: string }[];
+  createdAt: string;
+};
+
+export async function submitQuizResponse(answers: { question: string; answer: string }[]) {
+  return apiRequest<QuizResponse>("/api/wellbeing-quiz", {
+    method: "POST",
+    body: JSON.stringify({ answers }),
+  });
+}
+
+export async function getQuizHistory() {
+  return apiRequest<QuizResponse[]>("/api/wellbeing-quiz");
+}
+
 export interface StudentDetailGrade {
   id: string;
   subject: string;
   score: number;
   gradedAt: string;
 }
- 
+  
 export interface StudentDetails {
   student: {
     id: string;
@@ -787,15 +889,15 @@ export interface StudentDetails {
   stressStats: { avgLevel: number; avgFocus: number; entries: number };
   grades: StudentDetailGrade[];
 }
- 
+  
 export async function getTeacherStudentDetails(studentId: string) {
   return apiRequest<StudentDetails>(`/api/teacher/students/${studentId}/details`);
 }
- 
+  
 export async function getTeacherSchedule() {
   return apiRequest<Schedule[]>("/api/teacher/schedule");
 }
- 
+  
 export interface TeacherTask {
   id: string;
   title: string;
@@ -804,14 +906,24 @@ export interface TeacherTask {
   submittedCount: number;
   totalCount: number;
 }
- 
+
+export type TeacherCourse = {
+  id: string;
+  title: string;
+  description?: string;
+};
+
+export async function getTeacherCourses() {
+  return apiRequest<TeacherCourse[]>("/api/teacher/courses");
+}
+  
 export async function getTeacherTasks(className?: string) {
   const url = className && className !== "ALL"
     ? `/api/teacher/tasks?className=${encodeURIComponent(className)}`
     : "/api/teacher/tasks";
   return apiRequest<TeacherTask[]>(url);
 }
- 
+  
 export type CreateAssignmentInput = {
   className: string;
   title: string;
@@ -819,7 +931,7 @@ export type CreateAssignmentInput = {
   deadline?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH";
 };
- 
+  
 export async function createAssignment(data: CreateAssignmentInput) {
   return apiRequest<{ assignmentGroupId: string; studentsAssigned: number }>(
     "/api/teacher/assignments",
@@ -829,34 +941,34 @@ export async function createAssignment(data: CreateAssignmentInput) {
     }
   );
 }
- 
+  
 export interface StudentProgress {
   id: string;
   name: string;
   className: string | null;
 }
- 
+  
 export async function getTeacherStudents() {
   return apiRequest<StudentProgress[]>("/api/teacher/students");
 }
- 
+  
 export interface GradeTrend {
   period: string;
   value: number;
 }
- 
+  
 export async function getTeacherGrades(filterId?: string) {
   const url = filterId ? `/api/teacher/grades?student=${filterId}` : "/api/teacher/grades";
   return apiRequest<GradeTrend[]>(url);
 }
- 
+  
 export type AddGradeInput = {
   studentId: string;
   subject: string;
   score: number;
   gradedAt?: string;
 };
- 
+  
 export async function addGrade(data: AddGradeInput) {
   return apiRequest("/api/teacher/grades", {
     method: "POST",
@@ -870,9 +982,9 @@ export async function sendNote(studentId: string, message: string) {
     body: JSON.stringify({ studentId, message }),
   });
 }
- 
+  
 export type AnnouncementType = "CLASS_CANCELED" | "CLASS_MOVED" | "TEST_ANNOUNCEMENT" | "GENERAL";
- 
+  
 export async function sendAnnouncement(data: {
   className: string;
   title: string;
@@ -894,12 +1006,10 @@ export interface GradePageItem {
   gradedAt: string;
 }
 
-// Haalt alle ingevoerde cijfers op voor de beoordelingenpagina
 export async function getTeacherGradesPage() {
   return apiRequest<GradePageItem[]>("/api/teacher/grades-page");
 }
 
-// Uitbreiding voor addGrade om ook assessmentName mee te kunnen sturen
 export type AddGradePageInput = {
   studentId: string;
   subject: string;
@@ -914,7 +1024,6 @@ export async function addGradePage(data: AddGradePageInput) {
   });
 }
 
-// Verwijdert een cijfer op basis van ID
 export async function deleteTeacherGrade(gradeId: string) {
   return apiRequest<{ message: string }>(`/api/teacher/grades/${gradeId}`, {
     method: "DELETE",

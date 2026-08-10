@@ -6,14 +6,17 @@ import {
   createStressEntry,
   getExerciseTypes,
   getMotivation,
+  getQuizHistory,
   getStressLevels,
   getWaterIntake,
   getWellbeingStatus,
   logWaterIntake,
   startExercise,
+  submitQuizResponse,
   type Exercise,
   type ExerciseType,
   type MotivationMessage,
+  type QuizResponse,
   type StressEntry,
   type WaterIntake,
   type WellbeingStatus,
@@ -54,12 +57,60 @@ function StatusBadge({ status }: { status: WellbeingStatus | null }) {
   );
 }
 
+// --- Text-to-speech helper (browser-native, geen backend nodig) ---
+function speak(text: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "nl-NL";
+  utterance.rate = 0.95;
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+function isToday(dateString: string) {
+  const date = new Date(dateString);
+  const today = new Date();
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+}
+
+const BREATH_SPEECH: Record<string, string> = {
+  "Diep inademen": "Diep inademen",
+  "Vastthouden": "Vasthouden",
+  "Langzaam uitblazen": "Langzaam uitblazen",
+};
+
+const EYE_SPEECH: Record<string, string> = {
+  "Sluit je ogen": "Sluit je ogen",
+  "Kijk naar rechts": "Kijk naar rechts",
+  "Kijk naar links": "Kijk naar links",
+  "Focus in de verte": "Focus in de verte",
+};
+
 function RelaxationTab() {
   const [types, setTypes] = useState<ExerciseType[]>([]);
   const [active, setActive] = useState<{ exercise: Exercise; secondsLeft: number } | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState("");
+  
+  // Extra states voor dynamische oefening-visualizers
+  const [breathPhase, setBreathPhase] = useState<"Diep inademen" | "Vastthouden" | "Langzaam uitblazen">("Diep inademen");
+  const [walkStep, setWalkStep] = useState<"Rustig vertrekken" | "Normaal tempo" | "Stevig doorstappen" | "Afkoelen">("Rustig vertrekken");
+  const [stretchPose, setStretchPose] = useState<"Armen omhoog strekken" | "Schouders losdraaien" | "Nek voorzichtig kantelen" | "Diep ontspannen">("Armen omhoog strekken");
+  const [eyePhase, setEyePhase] = useState<"Sluit je ogen" | "Kijk naar rechts" | "Kijk naar links" | "Focus in de verte">("Sluit je ogen");
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const subIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     getExerciseTypes()
@@ -75,6 +126,12 @@ function RelaxationTab() {
         if (!prev) return prev;
         if (prev.secondsLeft <= 1) {
           clearInterval(intervalRef.current!);
+          if (subIntervalRef.current) clearInterval(subIntervalRef.current);
+          stopSpeaking();
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+          }
           completeExercise(prev.exercise.id)
             .then(() => setDone(prev.exercise.type))
             .catch(() => {});
@@ -86,8 +143,112 @@ function RelaxationTab() {
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (subIntervalRef.current) clearInterval(subIntervalRef.current);
     };
   }, [active?.exercise.id]);
+
+  // Cyclus voor Ademhaling (met text-to-speech)
+  useEffect(() => {
+    if (!active || active.exercise.type.toLowerCase() !== "breathing exercise") return;
+    let elapsed = 0;
+
+    speak(BREATH_SPEECH["Diep inademen"]);
+
+    subIntervalRef.current = setInterval(() => {
+      elapsed = (elapsed + 1) % 12;
+      if (elapsed === 0) {
+        setBreathPhase("Diep inademen");
+        speak(BREATH_SPEECH["Diep inademen"]);
+      } else if (elapsed === 4) {
+        setBreathPhase("Vastthouden");
+        speak(BREATH_SPEECH["Vastthouden"]);
+      } else if (elapsed === 8) {
+        setBreathPhase("Langzaam uitblazen");
+        speak(BREATH_SPEECH["Langzaam uitblazen"]);
+      }
+    }, 1000);
+
+    return () => {
+      if (subIntervalRef.current) clearInterval(subIntervalRef.current);
+      stopSpeaking();
+    };
+  }, [active?.exercise.type]);
+
+  // Cyclus voor Quick Walk
+  useEffect(() => {
+    if (!active || active.exercise.type.toLowerCase() !== "quick walk") return;
+    let elapsed = 0;
+    const total = active.secondsLeft;
+    subIntervalRef.current = setInterval(() => {
+      elapsed += 1;
+      const p = elapsed / total;
+      if (p < 0.25) setWalkStep("Rustig vertrekken");
+      else if (p < 0.6) setWalkStep("Normaal tempo");
+      else if (p < 0.85) setWalkStep("Stevig doorstappen");
+      else setWalkStep("Afkoelen");
+    }, 1000);
+    return () => { if (subIntervalRef.current) clearInterval(subIntervalRef.current); };
+  }, [active?.exercise.type]);
+
+  // Cyclus voor Stretching
+  useEffect(() => {
+    if (!active || active.exercise.type.toLowerCase() !== "stretching") return;
+    let elapsed = 0;
+    subIntervalRef.current = setInterval(() => {
+      elapsed = (elapsed + 1) % 16;
+      if (elapsed < 4) setStretchPose("Armen omhoog strekken");
+      else if (elapsed < 8) setStretchPose("Schouders losdraaien");
+      else if (elapsed < 12) setStretchPose("Nek voorzichtig kantelen");
+      else setStretchPose("Diep ontspannen");
+    }, 1000);
+    return () => { if (subIntervalRef.current) clearInterval(subIntervalRef.current); };
+  }, [active?.exercise.type]);
+
+  // Cyclus voor Eye Rest (met text-to-speech)
+  useEffect(() => {
+    if (!active || !active.exercise.type.toLowerCase().includes("eye rest")) return;
+    let elapsed = 0;
+
+    speak(EYE_SPEECH["Sluit je ogen"]);
+
+    subIntervalRef.current = setInterval(() => {
+      elapsed = (elapsed + 1) % 12;
+      if (elapsed === 0) {
+        setEyePhase("Sluit je ogen");
+        speak(EYE_SPEECH["Sluit je ogen"]);
+      } else if (elapsed === 3) {
+        setEyePhase("Kijk naar rechts");
+        speak(EYE_SPEECH["Kijk naar rechts"]);
+      } else if (elapsed === 6) {
+        setEyePhase("Kijk naar links");
+        speak(EYE_SPEECH["Kijk naar links"]);
+      } else if (elapsed === 9) {
+        setEyePhase("Focus in de verte");
+        speak(EYE_SPEECH["Focus in de verte"]);
+      }
+    }, 1000);
+
+    return () => {
+      if (subIntervalRef.current) clearInterval(subIntervalRef.current);
+      stopSpeaking();
+    };
+  }, [active?.exercise.type]);
+
+  // Meditatie-audio: speelt calming.mp3 vanaf start tot einde van de oefening
+  useEffect(() => {
+    if (!active || !active.exercise.type.toLowerCase().includes("meditation")) return;
+
+    const audio = new Audio("/audio/calming.mp3");
+    audio.loop = true;
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      audioRef.current = null;
+    };
+  }, [active?.exercise.type]);
 
   async function handleStart(exerciseType: ExerciseType) {
     setError("");
@@ -100,26 +261,84 @@ function RelaxationTab() {
     }
   }
 
+  function handleStopEarly() {
+    if (!active) return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (subIntervalRef.current) clearInterval(subIntervalRef.current);
+    stopSpeaking();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    completeExercise(active.exercise.id)
+      .then(() => setDone(active.exercise.type))
+      .catch(() => {});
+    setActive(null);
+  }
+
   if (active) {
+    const typeLower = active.exercise.type.toLowerCase();
+    const isMeditation = typeLower.includes("meditation");
+    const isQuickWalk = typeLower.includes("quick walk");
+    const isStretching = typeLower.includes("stretching");
+    const isEyeRest = typeLower.includes("eye rest");
+
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
-        <p className="mb-2 text-sm font-medium uppercase tracking-wide text-blue-600">
-          Bezig met
-        </p>
-        <h3 className="mb-6 text-lg font-bold text-slate-900">{active.exercise.type}</h3>
-        <p className="mb-6 text-6xl font-bold tabular-nums text-slate-900">
-          {formatClock(active.secondsLeft)}
-        </p>
+      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 p-8 text-center text-white shadow-xl flex flex-col items-center justify-between min-h-[420px]">
+        <div className="w-full flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-widest text-indigo-400">
+            {active.exercise.type}
+          </span>
+          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold tabular-nums text-indigo-200">
+            {formatClock(active.secondsLeft)}
+          </span>
+        </div>
+
+        {/* Unieke Visualizers */}
+        {isMeditation ? (
+          <div className="relative my-6 flex items-center justify-center h-48 w-48">
+            <div className="absolute h-44 w-44 rounded-full bg-teal-400/20 blur-xl animate-ping" />
+            <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-teal-600 to-indigo-600 text-white shadow-2xl border border-white/20">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-teal-100">Rust</span>
+            </div>
+          </div>
+        ) : isQuickWalk ? (
+          <div className="relative my-6 flex flex-col items-center justify-center h-48 w-48">
+            <div className="absolute h-44 w-44 rounded-full bg-amber-500/10 blur-xl animate-pulse" />
+            <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 to-orange-500 text-white shadow-lg border border-white/20">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-100">Tempo</span>
+              <span className="text-xs font-extrabold px-2 text-center leading-tight mt-1">{walkStep}</span>
+            </div>
+          </div>
+        ) : isStretching ? (
+          <div className="relative my-6 flex flex-col items-center justify-center h-48 w-48">
+            <div className="absolute h-44 w-44 rounded-full bg-purple-500/20 blur-xl animate-pulse" />
+            <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-pink-600 text-white shadow-lg border border-white/20 animate-bounce">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-100">Stretch</span>
+              <span className="text-xs font-extrabold px-2 text-center leading-tight mt-1">{stretchPose}</span>
+            </div>
+          </div>
+        ) : isEyeRest ? (
+          <div className="relative my-6 flex flex-col items-center justify-center h-48 w-48">
+            <div className="absolute h-44 w-44 rounded-full bg-sky-500/20 blur-xl animate-pulse" />
+            <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-sky-600 to-blue-700 text-white shadow-lg border border-white/20">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-sky-100">Ogen</span>
+              <span className="text-xs font-extrabold px-2 text-center leading-tight mt-1">{eyePhase}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="relative my-6 flex items-center justify-center h-48 w-48">
+            <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white shadow-lg">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-100">Adem</span>
+              <span className="text-xs font-extrabold px-2 text-center leading-tight mt-1">{breathPhase}</span>
+            </div>
+          </div>
+        )}
+
         <button
           type="button"
-          onClick={() => {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-            completeExercise(active.exercise.id)
-              .then(() => setDone(active.exercise.type))
-              .catch(() => {});
-            setActive(null);
-          }}
-          className="text-sm font-medium text-slate-500 hover:text-blue-600"
+          onClick={handleStopEarly}
+          className="rounded-xl bg-white/10 px-6 py-2.5 text-xs font-semibold text-indigo-200 transition hover:bg-white/25"
         >
           Eerder afronden
         </button>
@@ -243,10 +462,47 @@ function TrackingTab({ onNewEntry }: { onNewEntry: () => void }) {
   }
 
   const chartEntries = [...entries].reverse();
-  const maxSleep = 10;
+  const alreadyRegisteredToday = entries.some((entry) => isToday(entry.createdAt));
+
+  // Coördinaten berekenen voor SVG lijngrafieken
+  const maxStress = 10;
+  const maxSleep = 12;
+  const svgWidth = 500;
+  const svgHeight = 160;
+  const paddingX = 30;
+  const paddingY = 20;
+
+  const pointsCount = chartEntries.length;
+  const stepX = pointsCount > 1 ? (svgWidth - paddingX * 2) / (pointsCount - 1) : 0;
+
+  const stressPoints = chartEntries.map((entry, index) => {
+    const x = paddingX + index * stepX;
+    const y = svgHeight - paddingY - ((entry.level / maxStress) * (svgHeight - paddingY * 2));
+    return { x, y, value: entry.level, date: new Date(entry.createdAt).toLocaleDateString("nl-NL", { day: "numeric", month: "short" }) };
+  });
+
+  const sleepPoints = chartEntries.map((entry, index) => {
+    const x = paddingX + index * stepX;
+    const sleepVal = entry.sleepHours ?? 0;
+    const y = svgHeight - paddingY - ((sleepVal / maxSleep) * (svgHeight - paddingY * 2));
+    return { x, y, value: sleepVal };
+  });
+
+  const stressLinePath = stressPoints.length > 0 ? stressPoints.reduce((acc, p, idx) => idx === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "") : "";
+  const sleepLinePath = sleepPoints.length > 0 ? sleepPoints.reduce((acc, p, idx) => idx === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "") : "";
 
   return (
     <div className="space-y-6">
+      {alreadyRegisteredToday ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-center">
+          <p className="text-sm font-semibold text-slate-700">
+            Je hebt vandaag al een registratie ingevuld.
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            Morgen kun je opnieuw je stress, focus en slaap registreren.
+          </p>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-5">
         <p className="mb-4 text-sm font-semibold text-slate-900">Vandaag registreren</p>
 
@@ -314,44 +570,51 @@ function TrackingTab({ onNewEntry }: { onNewEntry: () => void }) {
           {isSaving ? "Opslaan..." : "Registreren"}
         </button>
       </form>
+      )}
 
+      {/* Vernieuwde Lijngrafiek voor Slaap- en Stresspatroon */}
       <div className="rounded-xl border border-slate-200 bg-white p-5">
-        <p className="mb-4 text-sm font-semibold text-slate-900">Laatste 7 dagen</p>
+        <p className="mb-4 text-sm font-semibold text-slate-900">Slaap- en stresspatroon (Laatste 7 dagen)</p>
 
         {chartEntries.length === 0 ? (
           <p className="text-sm text-slate-400">Nog geen registraties.</p>
         ) : (
-          <div className="flex items-end gap-2" style={{ height: 140 }}>
-            {chartEntries.map((entry) => (
-              <div key={entry.id} className="flex flex-1 flex-col items-center gap-1">
-                <div className="flex h-full w-full items-end gap-0.5">
-                  <div
-                    className="flex-1 rounded-t bg-red-400"
-                    style={{ height: `${(entry.level / 10) * 100}%` }}
-                    title={`Stress: ${entry.level}/10`}
-                  />
-                  {entry.sleepHours !== null && (
-                    <div
-                      className="flex-1 rounded-t bg-purple-400"
-                      style={{ height: `${(entry.sleepHours / maxSleep) * 100}%` }}
-                      title={`Slaap: ${entry.sleepHours}u`}
-                    />
-                  )}
-                </div>
-                <span className="text-[10px] text-slate-400">
-                  {new Date(entry.createdAt).toLocaleDateString("nl-NL", { day: "numeric" })}
-                </span>
-              </div>
-            ))}
+          <div className="relative w-full overflow-x-auto">
+            <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-44 overflow-visible">
+              {/* Rasterlijnen */}
+              <line x1={paddingX} y1={paddingY} x2={svgWidth - paddingX} y2={paddingY} stroke="#f1f5f9" strokeWidth="1" />
+              <line x1={paddingX} y1={svgHeight / 2} x2={svgWidth - paddingX} y2={svgHeight / 2} stroke="#f1f5f9" strokeWidth="1" />
+              <line x1={paddingX} y1={svgHeight - paddingY} x2={svgWidth - paddingX} y2={svgHeight - paddingY} stroke="#e2e8f0" strokeWidth="1" />
+
+              {/* Stress Lijn */}
+              {stressLinePath && <path d={stressLinePath} fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+              
+              {/* Slaap Lijn */}
+              {sleepLinePath && <path d={sleepLinePath} fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+
+              {/* Datapunten & Tooltips */}
+              {stressPoints.map((p, i) => (
+                <g key={`stress-${i}`}>
+                  <circle cx={p.x} cy={p.y} r="4" className="fill-red-500 transition-all hover:scale-125" />
+                  <text x={p.x} y={svgHeight - 4} textAnchor="middle" className="text-[10px] fill-slate-400 font-medium">
+                    {p.date}
+                  </text>
+                </g>
+              ))}
+
+              {sleepPoints.map((p, i) => (
+                <circle key={`sleep-${i}`} cx={p.x} cy={p.y} r="4" className="fill-purple-500 transition-all hover:scale-125" />
+              ))}
+            </svg>
           </div>
         )}
 
-        <div className="mt-3 flex gap-4 text-xs text-slate-500">
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-red-400" /> Stress
+        <div className="mt-4 flex gap-6 text-xs font-medium text-slate-600">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-500" /> Stressniveau (1-10)
           </span>
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-purple-400" /> Slaap
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Slaapuren (0-12u)
           </span>
         </div>
       </div>
@@ -359,12 +622,13 @@ function TrackingTab({ onNewEntry }: { onNewEntry: () => void }) {
   );
 }
 
-const DAILY_GOAL = 8;
+const WATER_PRESETS_ML = [150, 250, 500];
 
 function WaterTab() {
   const [intake, setIntake] = useState<WaterIntake | null>(null);
   const [error, setError] = useState("");
   const [isLogging, setIsLogging] = useState(false);
+  const [customAmount, setCustomAmount] = useState("");
 
   async function loadIntake() {
     try {
@@ -379,12 +643,13 @@ function WaterTab() {
     loadIntake();
   }, []);
 
-  async function handleLog() {
+  async function handleLog(amountMl: number) {
     setIsLogging(true);
     setError("");
     try {
-      await logWaterIntake();
+      await logWaterIntake(amountMl);
       await loadIntake();
+      setCustomAmount("");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Kon waterinname niet loggen");
     } finally {
@@ -392,8 +657,19 @@ function WaterTab() {
     }
   }
 
-  const todayCount = intake?.todayCount ?? 0;
-  const percent = Math.min(100, Math.round((todayCount / DAILY_GOAL) * 100));
+  function handleCustomSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const amount = Number(customAmount);
+    if (!amount || amount <= 0) {
+      setError("Vul een geldig aantal ml in.");
+      return;
+    }
+    handleLog(amount);
+  }
+
+  const todayMl = intake?.todayMl ?? 0;
+  const goalMl = intake?.goalMl ?? 2500;
+  const percent = Math.min(100, Math.round((todayMl / goalMl) * 100));
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
@@ -403,8 +679,8 @@ function WaterTab() {
         Vandaag
       </p>
       <p className="mb-4 text-5xl font-bold text-slate-900">
-        {todayCount}
-        <span className="text-lg font-medium text-slate-400">/{DAILY_GOAL} glazen</span>
+        {todayMl}
+        <span className="text-lg font-medium text-slate-400"> / {goalMl} ml</span>
       </p>
 
       <div className="mx-auto mb-6 h-2 w-full max-w-xs overflow-hidden rounded-full bg-slate-100">
@@ -414,18 +690,41 @@ function WaterTab() {
         />
       </div>
 
-      <button
-        type="button"
-        onClick={handleLog}
-        disabled={isLogging}
-        className="rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-      >
-        {isLogging ? "Bezig..." : "+ Glas water"}
-      </button>
+      <div className="mb-4 flex justify-center gap-2">
+        {WATER_PRESETS_ML.map((amount) => (
+          <button
+            key={amount}
+            type="button"
+            onClick={() => handleLog(amount)}
+            disabled={isLogging}
+            className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            +{amount} ml
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={handleCustomSubmit} className="mx-auto flex max-w-xs gap-2">
+        <input
+          type="number"
+          min={1}
+          value={customAmount}
+          onChange={(event) => setCustomAmount(event.target.value)}
+          placeholder="Aangepast aantal ml"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={isLogging}
+          className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+        >
+          Loggen
+        </button>
+      </form>
 
       {intake && (
         <p className="mt-4 text-xs text-slate-400">
-          In totaal {intake.totalCount} keer gelogd
+          In totaal {intake.totalMl} ml gelogd ({intake.todayLogCount} keer vandaag)
         </p>
       )}
     </div>
@@ -451,21 +750,69 @@ function QuizTab() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [finished, setFinished] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
-  function handleAnswer(option: string) {
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [todaysResponse, setTodaysResponse] = useState<QuizResponse | null>(null);
+
+  useEffect(() => {
+    getQuizHistory()
+      .then((history) => {
+        const todays = history.find((r) => isToday(r.createdAt));
+        setTodaysResponse(todays ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingHistory(false));
+  }, []);
+
+  async function handleAnswer(option: string) {
     const next = [...answers, option];
     setAnswers(next);
+
     if (step + 1 < QUIZ_QUESTIONS.length) {
       setStep(step + 1);
     } else {
       setFinished(true);
+      try {
+        const saved = await submitQuizResponse(
+          QUIZ_QUESTIONS.map((q, i) => ({ question: q.question, answer: next[i] }))
+        );
+        setTodaysResponse(saved);
+      } catch (error) {
+        setSaveError(
+          error instanceof Error ? error.message : "Kon je antwoorden niet opslaan."
+        );
+      }
     }
   }
 
-  function reset() {
-    setStep(0);
-    setAnswers([]);
-    setFinished(false);
+  if (loadingHistory) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+        <p className="text-sm text-slate-500">Laden...</p>
+      </div>
+    );
+  }
+
+  if (todaysResponse) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+        <h3 className="mb-2 text-lg font-bold text-slate-900">
+          Je hebt de quiz vandaag al ingevuld
+        </h3>
+        <p className="mb-6 text-sm text-slate-500">
+          Morgen kun je opnieuw meedoen. Hier zijn je antwoorden van vandaag:
+        </p>
+        <div className="space-y-2 text-left">
+          {todaysResponse.answers.map((a) => (
+            <div key={a.question} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
+              <p className="font-medium text-slate-700">{a.question}</p>
+              <p className="text-slate-500">{a.answer}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (finished) {
@@ -473,9 +820,12 @@ function QuizTab() {
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
         <h3 className="mb-2 text-lg font-bold text-slate-900">Bedankt voor je reflectie</h3>
         <p className="mb-6 text-sm text-slate-500">
-          Even stilstaan bij hoe je je voelt is al een goede stap.
+          Even stilstaan bij hoe je je voelt is al een goede stap. Morgen kun je opnieuw meedoen.
         </p>
-        <div className="mb-6 space-y-2 text-left">
+        {saveError && (
+          <p className="mb-4 text-sm text-red-600">{saveError}</p>
+        )}
+        <div className="space-y-2 text-left">
           {QUIZ_QUESTIONS.map((q, i) => (
             <div key={q.question} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
               <p className="font-medium text-slate-700">{q.question}</p>
@@ -483,13 +833,6 @@ function QuizTab() {
             </div>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={reset}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          Opnieuw
-        </button>
       </div>
     );
   }
@@ -527,6 +870,7 @@ function WellbeingPage() {
       const data = await getWellbeingStatus();
       setStatus(data);
     } catch {
+      // Stil falen toestaan indien niet beschikbaar
     }
   }
 

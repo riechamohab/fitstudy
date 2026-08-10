@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -12,7 +13,7 @@ export const user = pgTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   role: text("role").default("student").notNull(),
-  studentId: text("student_id"),
+  studentId: text("student_id").unique(), // Aangepast naar .unique() tegen duplicaten
   teacherId: text("teacher_id"),
   school: text("school"),
   study: text("study"),
@@ -21,16 +22,16 @@ export const user = pgTable("user", {
   subjects: text("subjects").array(),
   mentorClassName: text("mentor_class_name"),
   mentorSchoolYear: text("mentor_school_year"),
-
+  
+  // Voeg deze ontbrekende velden toe die de modal nodig heeft:
+  schoolYear: text("school_year"),
+  studyHistory: text("study_history"),
+  
     mustChangePassword: boolean("must_change_password")
     .default(true)
     .notNull(),
-    
-  banned: boolean("banned").default(false),
-  banReason: text("ban_reason"),
-  banExpires: timestamp("ban_expires"),
 });
-
+    
 export const session = pgTable(
   "session",
   {

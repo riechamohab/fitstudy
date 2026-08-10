@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp, uniqueIndex, date, time } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, uniqueIndex, date, time } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
 
 export const TASK_STATUSES = [
@@ -355,7 +355,21 @@ export const waterLogs = pgTable("water_logs", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+
+  amountMl: integer("amount_ml").notNull().default(250),
  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const wellbeingQuizResponses = pgTable("wellbeing_quiz_responses", {
+  id: text("id").primaryKey(),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  answers: jsonb("answers").notNull().$type<{ question: string; answer: string }[]>(),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

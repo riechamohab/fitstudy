@@ -17,6 +17,7 @@ type CreateFormState = {
   name: string;
   email: string;
   password: string;
+  phoneNumber: string;
   subjects: string;
   isMentor: boolean;
   mentorClassName: string;
@@ -27,6 +28,7 @@ const emptyCreateForm: CreateFormState = {
   name: "",
   email: "",
   password: "",
+  phoneNumber: "",
   subjects: "",
   isMentor: false,
   mentorClassName: "",
@@ -36,6 +38,7 @@ const emptyCreateForm: CreateFormState = {
 type EditFormState = {
   name: string;
   email: string;
+  phoneNumber: string;
   subjects: string;
   isMentor: boolean;
   mentorClassName: string;
@@ -66,6 +69,7 @@ function AdminDocentenPage() {
   const [editForm, setEditForm] = useState<EditFormState>({
     name: "",
     email: "",
+    phoneNumber: "",
     subjects: "",
     isMentor: false,
     mentorClassName: "",
@@ -113,6 +117,7 @@ function AdminDocentenPage() {
         name: createForm.name.trim(),
         email: createForm.email.trim(),
         password: createForm.password,
+        phoneNumber: createForm.phoneNumber.trim() || undefined,
         role: "teacher",
         subjects: subjectsToArray(createForm.subjects),
         mentorClassName: createForm.isMentor ? createForm.mentorClassName.trim() : undefined,
@@ -134,6 +139,7 @@ function AdminDocentenPage() {
     setEditForm({
       name: teacher.name,
       email: teacher.email,
+      phoneNumber: teacher.phoneNumber ?? "",
       subjects: subjectsToString(teacher.subjects),
       isMentor: Boolean(teacher.mentorClassName && teacher.mentorSchoolYear),
       mentorClassName: teacher.mentorClassName ?? "",
@@ -164,6 +170,7 @@ function AdminDocentenPage() {
       await updateAdminUser(id, {
         name: editForm.name.trim(),
         email: editForm.email.trim(),
+        phoneNumber: editForm.phoneNumber.trim() || undefined,
         role: "teacher",
         subjects: subjectsToArray(editForm.subjects),
         mentorClassName: editForm.isMentor ? editForm.mentorClassName.trim() : undefined,
@@ -192,7 +199,7 @@ function AdminDocentenPage() {
     <main className="p-8">
       <h1 className="text-2xl font-bold text-slate-900">Docenten</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Beheer docentprofielen: vakken, mentorschap en accountgegevens.
+        Beheer docentprofielen: vakken, telefoonnummer, mentorschap en accountgegevens.
       </p>
 
       <form
@@ -230,6 +237,17 @@ function AdminDocentenPage() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-slate-700">Telefoonnummer</label>
+          <input
+            type="text"
+            value={createForm.phoneNumber}
+            onChange={(e) => setCreateForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+            placeholder="Bijv. +597 8123456"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-slate-700">
             Vakken <span className="font-normal text-slate-400">(komma-gescheiden)</span>
           </label>
@@ -336,9 +354,16 @@ function AdminDocentenPage() {
                 />
                 <input
                   type="text"
+                  value={editForm.phoneNumber}
+                  onChange={(e) => setEditForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="Telefoonnummer"
+                />
+                <input
+                  type="text"
                   value={editForm.subjects}
                   onChange={(e) => setEditForm((f) => ({ ...f, subjects: e.target.value }))}
-                  className="sm:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   placeholder="Vakken (komma-gescheiden)"
                 />
 
@@ -403,6 +428,9 @@ function AdminDocentenPage() {
                 <div>
                   <p className="font-semibold text-slate-900">{teacher.name}</p>
                   <p className="text-sm text-slate-500">{teacher.email}</p>
+                  {teacher.phoneNumber && (
+                    <p className="text-sm text-slate-500">Tel: {teacher.phoneNumber}</p>
+                  )}
                   <p className="mt-1 text-sm text-slate-500">
                     {teacher.subjects && teacher.subjects.length > 0
                       ? teacher.subjects.join(", ")
@@ -419,7 +447,7 @@ function AdminDocentenPage() {
                     onClick={() => startEdit(teacher)}
                     className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
                   >
-                    Bewerken
+                    Beheren
                   </button>
                   <button
                     onClick={() => handleDelete(teacher.id)}
@@ -436,4 +464,3 @@ function AdminDocentenPage() {
     </main>
   );
 }
-

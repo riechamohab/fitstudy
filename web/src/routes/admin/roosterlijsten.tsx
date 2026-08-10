@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   createWeekSchedule,
@@ -67,6 +67,8 @@ function cellKey(day: string, blockId: number) {
 }
 
 function AdminRoosterPage() {
+  const formRef = useRef<HTMLFormElement>(null);
+
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,6 @@ function AdminRoosterPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-  // State voor het bekijken van bestaande roosters per klas
   const [selectedViewClass, setSelectedViewClass] = useState<string>("");
 
   useEffect(() => {
@@ -119,19 +120,24 @@ function AdminRoosterPage() {
     }));
   }
 
-  async function handleSubjectBlur(day: string, blockId: number) {
-    const subject = grid[day][blockId].subject.trim();
-    if (!subject || teacherOptions[subject] || loadingSubjects[subject]) return;
+  async function fetchAndCacheTeachers(subjectName: string) {
+    const trimmed = subjectName.trim();
+    if (!trimmed || teacherOptions[trimmed] || loadingSubjects[trimmed]) return;
 
-    setLoadingSubjects((s) => ({ ...s, [subject]: true }));
+    setLoadingSubjects((s) => ({ ...s, [trimmed]: true }));
     try {
-      const teachers = await getTeachersBySubject(subject);
-      setTeacherOptions((t) => ({ ...t, [subject]: teachers }));
+      const teachers = await getTeachersBySubject(trimmed);
+      setTeacherOptions((t) => ({ ...t, [trimmed]: teachers }));
     } catch {
-      setTeacherOptions((t) => ({ ...t, [subject]: [] }));
+      setTeacherOptions((t) => ({ ...t, [trimmed]: [] }));
     } finally {
-      setLoadingSubjects((s) => ({ ...s, [subject]: false }));
+      setLoadingSubjects((s) => ({ ...s, [trimmed]: false }));
     }
+  }
+
+  async function handleSubjectBlur(day: string, blockId: number) {
+    const subject = grid[day][blockId].subject;
+    await fetchAndCacheTeachers(subject);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -174,6 +180,13 @@ function AdminRoosterPage() {
 
     setSubmitting(true);
     try {
+      const existingForClass = schedules.filter(
+        (s) => s.className.toLowerCase() === className.trim().toLowerCase()
+      );
+      for (const item of existingForClass) {
+        await deleteSchedule(item.id);
+      }
+
       const result = await createWeekSchedule(className.trim(), entries);
       setFormSuccess(`Weekrooster opgeslagen (${result.count} lessen).`);
       setClassName("");
@@ -201,20 +214,61 @@ function AdminRoosterPage() {
     }
   }
 
-  // Unieke klassen afleiden uit de opgehaalde schedules
-  const availableClasses = Array.from(new Set(schedules.map((s) => s.className))).filter(Boolean);
+  async function handleManageClassSchedule(targetClassName: string) {
+    const classEntries = schedules.filter((s) => s.className === targetClassName);
+    const newGrid = emptyGrid();
+    const newTeacherOptions: Record<string, TeacherOption[]> = { ...teacherOptions };
 
-  // Filter schedules voor de geselecteerde klas om in de tabel te tonen
+    const uniqueSubjects = Array.from(
+      new Set(classEntries.map((e) => e.subject).filter(Boolean))
+    );
+
+    for (const subj of uniqueSubjects) {
+      if (!newTeacherOptions[subj]) {
+        try {
+          const teachers = await getTeachersBySubject(subj);
+          newTeacherOptions[subj] = teachers;
+        } catch {
+          newTeacherOptions[subj] = [];
+        }
+      }
+    }
+
+    for (const entry of classEntries) {
+      const dayVal = entry.day.toLowerCase();
+      const entryTime = entry.startTime.trim().substring(0, 5);
+      const block = EDITABLE_BLOCKS.find((b) => b.start.trim().substring(0, 5) === entryTime);
+
+      if (dayVal && block) {
+        newGrid[dayVal][block.id] = {
+          subject: entry.subject,
+          teacherId: entry.teacherId ?? "",
+        };
+      }
+    }
+
+    setClassName(targetClassName);
+    setGrid(newGrid);
+    setTeacherOptions(newTeacherOptions);
+    setFormError(null);
+    setFormSuccess(null);
+
+    // Scroll automatisch soepel naar het formulier bovenaan
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const availableClasses = Array.from(new Set(schedules.map((s) => s.className))).filter(Boolean);
   const selectedClassSchedules = schedules.filter((s) => s.className === selectedViewClass);
 
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold text-slate-900">Roosterbeheer</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Vul het weekrooster van een klas in met vaste tijdsblokken.
+        Vul het weekrooster van een klas in of beheer een bestaand rooster.
       </p>
 
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
         className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
       >
@@ -341,7 +395,6 @@ function AdminRoosterPage() {
         </div>
       )}
 
-      {/* Klas selecteren om bestaand rooster in tabelvorm te bekijken */}
       {!loading && !error && availableClasses.length > 0 && (
         <div className="mt-4">
           <div className="max-w-xs mb-4">
@@ -364,12 +417,20 @@ function AdminRoosterPage() {
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-slate-900">Rooster voor klas {selectedViewClass}</h3>
-                <button
-                  onClick={() => handleDeleteClassSchedule(selectedViewClass)}
-                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
-                >
-                  Rooster Verwijderen
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleManageClassSchedule(selectedViewClass)}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Beheren
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClassSchedule(selectedViewClass)}
+                    className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Verwijderen
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto">

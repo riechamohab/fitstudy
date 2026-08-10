@@ -67,7 +67,6 @@ function ArrowDownIcon() {
   );
 }
 
-// Generic donut chart. Pass any short string (a % or an "x/y" count) as centerLabel.
 function DonutChart({
   percent,
   color,
@@ -125,10 +124,10 @@ function DonutChart({
 }
 
 function fireColor(count: number) {
-  if (count <= 7) return "#fde047"; // light yellow
-  if (count <= 14) return "#fca5a5"; // light red
-  if (count <= 31) return "#f97316"; // orange
-  return "url(#fireGradient)"; // 32+: red-orange gradient
+  if (count <= 7) return "#fde047";
+  if (count <= 14) return "#fca5a5";
+  if (count <= 31) return "#f97316";
+  return "url(#fireGradient)";
 }
 
 function StreakBadge({ count, status }: { count: number; status: StreakStatus }) {
@@ -182,6 +181,7 @@ function StudentDashboardPage() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [dashboard, setDashboard] = useState<DashboardWeek | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [error, setError] = useState("");
   const [now, setNow] = useState(new Date());
 
@@ -213,12 +213,14 @@ function StudentDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [profileData, dashboardData] = await Promise.all([
+        const [profileData, dashboardData, coursesData] = await Promise.all([
           getProfile(),
           getDashboardWeek(),
+          getCourses(),
         ]);
         setProfile(profileData);
         setDashboard(dashboardData);
+        setCourses(coursesData);
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "Kon dashboard niet laden"
@@ -254,7 +256,7 @@ function StudentDashboardPage() {
         isFirstNotifPollRef.current = false;
         setNotifications(filtered);
       } catch {
-        // non-fatal — the bell just won't update this cycle
+        // non-fatal
       }
     }
 
@@ -315,7 +317,7 @@ function StudentDashboardPage() {
       try {
         await markNotificationRead(notif.id);
       } catch {
-        // ignore — next poll will resync
+        // ignore
       }
     }
   }
@@ -325,7 +327,7 @@ function StudentDashboardPage() {
     try {
       await markAllNotificationsRead();
     } catch {
-      // ignore — next poll will resync
+      // ignore
     }
   }
 
@@ -339,6 +341,11 @@ function StudentDashboardPage() {
       : 0;
 
   const changePercent = dashboard?.weeklyComparison.changePercent ?? null;
+
+  const todaysSchedule = (dashboard as any)?.todaysSchedule ?? [];
+  const limitedSchedule = todaysSchedule.slice(0, 3);
+
+  const upcomingAssignments = (dashboard as any)?.upcomingAssignments ?? [];
 
   return (
     <main className="p-8">
@@ -528,6 +535,7 @@ function StudentDashboardPage() {
         <p className="mb-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
       )}
 
+      {/* Statistieken / Donut kaarten */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-col items-center rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <DonutChart
@@ -591,26 +599,119 @@ function StudentDashboardPage() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-        <p className="text-sm font-semibold text-slate-800">Nog niets om verder te gaan</p>
-        <p className="mt-1 text-sm text-slate-500">
-          Start een vak om verder te gaan waar je gebleven was.
+      {/* Focuscard (Geïntegreerd i.p.v. de oude blauwe banner) */}
+      <div className="mb-6 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-400 p-6 text-white shadow-md">
+        <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
+          Klaar om te focussen
+        </span>
+        <h2 className="mt-3 text-xl font-bold">Doorgaan: Data Structures</h2>
+        <p className="mt-1 text-sm text-blue-100">
+          Je bent 65% door Hoofdstuk 4. Een snelle sessie van 25 minuten helpt je om binaire bomen af te ronden.
         </p>
+        <div className="mt-4 flex gap-3">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/student/focus-timer" })}
+            className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-600 shadow transition hover:bg-blue-50"
+          >
+            Start focussessie
+          </button>
+          <button
+            type="button"
+            className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+          >
+            Onderwerp wijzigen
+          </button>
+        </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <div className="mb-4">
-          <p className="text-sm font-semibold text-slate-900">Voortgang per vak</p>
-          <p className="text-xs text-slate-500">Je actieve vakken dit semester</p>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Hoofdgedeelte */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Schema voor vandaag */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900">Schema voor vandaag</h2>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/student/planning" })}
+                className="text-xs font-semibold text-blue-600 hover:underline"
+              >
+                Alles bekijken
+              </button>
+            </div>
+
+            {limitedSchedule.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 py-8 text-center">
+                <p className="text-sm text-slate-500">Er is niets te weergeven voor vandaag.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {limitedSchedule.map((item: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-4">
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{item.title}</p>
+                      <p className="text-xs text-slate-500">{item.time || "Vandaag"} • {item.duration || ""}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Voortgang per vak */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4">
+              <h2 className="text-base font-bold text-slate-900">Voortgang per vak</h2>
+              <p className="text-xs text-slate-500">Je actieve vakken dit semester</p>
+            </div>
+
+            {courses.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 py-10 text-center">
+                <p className="text-sm text-slate-500">
+                  Er is niets te weergeven. Voeg een vak toe om voortgang bij te houden.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {courses.map((course) => (
+                  <div key={course.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-bold text-slate-800">{course.title}</p>
+                      <span className="text-xs font-medium text-slate-500">Actief</span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-600 rounded-full" style={{ width: "0%" }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="rounded-lg border border-dashed border-slate-200 py-10 text-center">
-          <p className="text-sm text-slate-500">
-            Nog geen vakken. Voeg er een toe om voortgang bij te houden.
-          </p>
+        {/* Rechterkolom: Opkomend */}
+        <div>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-base font-bold text-slate-900">Opkomend</h2>
+            
+            {upcomingAssignments.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 py-6 text-center">
+                <p className="text-sm text-slate-500">Er is niets te weergeven.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingAssignments.map((assignment: any, index: number) => (
+                  <div key={index} className="rounded-lg bg-red-500 p-4 text-white shadow-sm">
+                    <p className="text-sm font-bold">{assignment.title}</p>
+                    <p className="mt-1 text-xs text-red-100">{assignment.dueDate || "Binnenkort"}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </main>
   );
 }
-
