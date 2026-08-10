@@ -110,10 +110,28 @@ function DocentPortaalPage() {
   }, []);
 
   useEffect(() => {
-    getNotifications()
-      .then(setNotifications)
-      .catch(() => {});
-  }, []);
+  let cancelled = false;
+
+  async function loadNotifications() {
+    try {
+      const data = await getNotifications();
+
+      if (!cancelled) {
+        setNotifications(data);
+      }
+    } catch {
+    }
+  }
+
+  loadNotifications();
+
+  const interval = setInterval(loadNotifications, 30_000);
+
+  return () => {
+    cancelled = true;
+    clearInterval(interval);
+  };
+}, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

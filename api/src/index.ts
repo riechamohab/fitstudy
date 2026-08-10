@@ -21,6 +21,7 @@ import usersRouter from "./routes/users.js";
 import wellbeingQuizRouter from "./routes/wellbeing-quiz.js";
 import waterRouter from "./routes/water.js";
 import teacherRouter from "./routes/teacher.js";
+import mededelingenRouter from "./routes/mededelingen.js";
 
 import { startDeadlineChecker } from "./services/deadline-checker.js";
 
@@ -59,6 +60,7 @@ app.use("/api/water", waterRouter);
 app.use("/api/wellbeing-quiz", wellbeingQuizRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/mededelingen", mededelingenRouter);
 
 app.use("/api/teacher", teacherRouter);
 
