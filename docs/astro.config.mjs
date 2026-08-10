@@ -6,20 +6,32 @@ import starlight from '@astrojs/starlight';
 export default defineConfig({
 	integrations: [
 		starlight({
-			title: 'My Docs',
+			title: 'FitStudy Documentatie',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
 			sidebar: [
-				{
-					label: 'Guides',
-					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
-					],
-				},
-				{
-					label: 'Reference',
-					items: [{ autogenerate: { directory: 'reference' } }],
-				},
+			{
+				label: 'Introductie',
+				slug: 'index',
+			},
+			{
+				label: 'Gebruikershandleiding',
+				items: [
+				{ label: 'Inlogscherm', slug: 'gebruikershandleiding/inlogscherm' },
+				{ label: 'Student Dashboard', slug: 'gebruikershandleiding/student-dashboard' },
+				{ label: 'Docent Dashboard', slug: 'gebruikershandleiding/docent-dashboard' },
+				{ label: 'Admin Dashboard', slug: 'gebruikershandleiding/admin-dashboard' },
+				],
+			},
+			{
+				label: 'Aanvullende informatie',
+				items: [
+				{ label: 'Controle en afsluiting', slug: 'aanvullende-informatie/controle-afsluiting' },
+				{ label: 'Troubleshooting', slug: 'aanvullende-informatie/troubleshooting' },
+				{ label: 'Bekende beperkingen', slug: 'aanvullende-informatie/bekende-beperkingen' },
+				{ label: 'Versiebeheer', slug: 'aanvullende-informatie/versiebeheer' },
+				{ label: 'Begrippenlijst', slug: 'aanvullende-informatie/begrippenlijst' },
+				],
+			},
 			],
 		}),
 	],
