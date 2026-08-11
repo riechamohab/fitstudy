@@ -28,6 +28,7 @@ import { Route as DocentWelzijnRouteImport } from './routes/docent/welzijn'
 import { Route as DocentTeacherRouteImport } from './routes/docent/teacher'
 import { Route as DocentRoosterRouteImport } from './routes/docent/rooster'
 import { Route as DocentProgrammaRouteImport } from './routes/docent/programma'
+import { Route as DocentProfielSettingsRouteImport } from './routes/docent/profiel-settings'
 import { Route as DocentPortaalRouteImport } from './routes/docent/portaal'
 import { Route as DocentOpdrachtenRouteImport } from './routes/docent/opdrachten'
 import { Route as DocentFeedbackRouteImport } from './routes/docent/feedback'
@@ -134,6 +135,11 @@ const DocentProgrammaRoute = DocentProgrammaRouteImport.update({
   path: '/programma',
   getParentRoute: () => DocentRouteRoute,
 } as any)
+const DocentProfielSettingsRoute = DocentProfielSettingsRouteImport.update({
+  id: '/profiel-settings',
+  path: '/profiel-settings',
+  getParentRoute: () => DocentRouteRoute,
+} as any)
 const DocentPortaalRoute = DocentPortaalRouteImport.update({
   id: '/portaal',
   path: '/portaal',
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/docent/feedback': typeof DocentFeedbackRoute
   '/docent/opdrachten': typeof DocentOpdrachtenRoute
   '/docent/portaal': typeof DocentPortaalRoute
+  '/docent/profiel-settings': typeof DocentProfielSettingsRoute
   '/docent/programma': typeof DocentProgrammaRoute
   '/docent/rooster': typeof DocentRoosterRoute
   '/docent/teacher': typeof DocentTeacherRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/docent/feedback': typeof DocentFeedbackRoute
   '/docent/opdrachten': typeof DocentOpdrachtenRoute
   '/docent/portaal': typeof DocentPortaalRoute
+  '/docent/profiel-settings': typeof DocentProfielSettingsRoute
   '/docent/programma': typeof DocentProgrammaRoute
   '/docent/rooster': typeof DocentRoosterRoute
   '/docent/teacher': typeof DocentTeacherRoute
@@ -265,6 +273,7 @@ export interface FileRoutesById {
   '/docent/feedback': typeof DocentFeedbackRoute
   '/docent/opdrachten': typeof DocentOpdrachtenRoute
   '/docent/portaal': typeof DocentPortaalRoute
+  '/docent/profiel-settings': typeof DocentProfielSettingsRoute
   '/docent/programma': typeof DocentProgrammaRoute
   '/docent/rooster': typeof DocentRoosterRoute
   '/docent/teacher': typeof DocentTeacherRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/docent/feedback'
     | '/docent/opdrachten'
     | '/docent/portaal'
+    | '/docent/profiel-settings'
     | '/docent/programma'
     | '/docent/rooster'
     | '/docent/teacher'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/docent/feedback'
     | '/docent/opdrachten'
     | '/docent/portaal'
+    | '/docent/profiel-settings'
     | '/docent/programma'
     | '/docent/rooster'
     | '/docent/teacher'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/docent/feedback'
     | '/docent/opdrachten'
     | '/docent/portaal'
+    | '/docent/profiel-settings'
     | '/docent/programma'
     | '/docent/rooster'
     | '/docent/teacher'
@@ -519,6 +531,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocentProgrammaRouteImport
       parentRoute: typeof DocentRouteRoute
     }
+    '/docent/profiel-settings': {
+      id: '/docent/profiel-settings'
+      path: '/profiel-settings'
+      fullPath: '/docent/profiel-settings'
+      preLoaderRoute: typeof DocentProfielSettingsRouteImport
+      parentRoute: typeof DocentRouteRoute
+    }
     '/docent/portaal': {
       id: '/docent/portaal'
       path: '/portaal'
@@ -619,6 +638,7 @@ interface DocentRouteRouteChildren {
   DocentFeedbackRoute: typeof DocentFeedbackRoute
   DocentOpdrachtenRoute: typeof DocentOpdrachtenRoute
   DocentPortaalRoute: typeof DocentPortaalRoute
+  DocentProfielSettingsRoute: typeof DocentProfielSettingsRoute
   DocentProgrammaRoute: typeof DocentProgrammaRoute
   DocentRoosterRoute: typeof DocentRoosterRoute
   DocentTeacherRoute: typeof DocentTeacherRoute
@@ -630,6 +650,7 @@ const DocentRouteRouteChildren: DocentRouteRouteChildren = {
   DocentFeedbackRoute: DocentFeedbackRoute,
   DocentOpdrachtenRoute: DocentOpdrachtenRoute,
   DocentPortaalRoute: DocentPortaalRoute,
+  DocentProfielSettingsRoute: DocentProfielSettingsRoute,
   DocentProgrammaRoute: DocentProgrammaRoute,
   DocentRoosterRoute: DocentRoosterRoute,
   DocentTeacherRoute: DocentTeacherRoute,

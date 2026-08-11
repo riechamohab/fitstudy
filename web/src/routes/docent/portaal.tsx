@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getProfile, getImageUrl, type UserProfile } from "../../lib/api";
@@ -73,6 +73,7 @@ function HealthBadge({ avgLevel }: { avgLevel: number | null }) {
 }
 
 function DocentPortaalPage() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [now] = useState(new Date());
 
@@ -277,20 +278,19 @@ function DocentPortaalPage() {
               </div>
             )}
           </div>
-
-          <div className="flex items-center gap-2">
+          
+          <button type="button"
+          onClick={() => navigate({ to: "/docent/profiel-settings" })}
+          className="flex items-center gap-2 rounded-lg px-2 py-1 text-left transition hover:bg-slate-100">
             <div className="text-right">
               <p className="text-sm font-bold text-slate-900">{firstName || "..."}</p>
-              <p className="text-xs text-slate-400">Docent</p>
+              <p className="text-xs text-slate-400">{(profile as unknown as { subject?: string })?.subject || "Docent"}</p>
             </div>
             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-              {imageUrl ? (
-                <img src={imageUrl} alt="Profiel" className="h-full w-full object-cover" />
-              ) : (
-                firstName ? firstName[0].toUpperCase() : ""
-              )}
+              {imageUrl ? (<img src={imageUrl} alt="Profiel" className="h-full w-full object-cover" />
+              ) : (firstName ? firstName[0].toUpperCase() : "")}
             </div>
-          </div>
+          </button>
         </div>
       </header>
 
