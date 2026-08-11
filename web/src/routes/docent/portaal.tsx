@@ -110,28 +110,28 @@ function DocentPortaalPage() {
   }, []);
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  async function loadNotifications() {
-    try {
-      const data = await getNotifications();
+    async function loadNotifications() {
+      try {
+        const data = await getNotifications();
 
-      if (!cancelled) {
-        setNotifications(data);
+        if (!cancelled) {
+          setNotifications(data);
+        }
+      } catch {
       }
-    } catch {
     }
-  }
 
-  loadNotifications();
+    loadNotifications();
 
-  const interval = setInterval(loadNotifications, 30_000);
+    const interval = setInterval(loadNotifications, 30_000);
 
-  return () => {
-    cancelled = true;
-    clearInterval(interval);
-  };
-}, []);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -155,18 +155,45 @@ function DocentPortaalPage() {
       .finally(() => setDetailsLoading(false));
   }, [selectedStudentId]);
 
+  // Type cast toegepast op profile om TS-foutmeldingen op te lossen als assignedClasses ontbreekt in het UserProfile type
+  const teacherClasses = useMemo(
+    () => (profile as unknown as { assignedClasses?: string[] })?.assignedClasses ?? ["B4"],
+    [profile]
+  );
+
   const availableClasses = useMemo(
-    () => Array.from(new Set(students.map((s) => s.className).filter(Boolean))) as string[],
-    [students]
+    () =>
+      Array.from(
+        new Set(
+          students
+            .map((s) => s.className)
+           .filter((c): c is string => Boolean(c) && c !== "—" && (teacherClasses as string[]).includes(c as string))
+        )
+      ),
+    [students, teacherClasses]
   );
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
-      const matchesName = student.name.toLowerCase().includes(searchQuery.toLowerCase());
+      // 1. Sluit studenten uit zonder klas of met ongeldige klas ("—")
+      if (!student.className || student.className === "—" || student.className.trim() === "") {
+        return false;
+      }
+
+      // 2. Sluit studenten uit die niet in de klassen van de docent zitten
+      if (!teacherClasses.includes(student.className)) {
+        return false;
+      }
+
+      // 3. Filter op geselecteerde optie in de dropdown
       const matchesClass = selectedClass === "ALL" || student.className === selectedClass;
-      return matchesName && matchesClass;
+
+      // 4. Filter op zoeknaam
+      const matchesName = student.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesClass && matchesName;
     });
-  }, [students, searchQuery, selectedClass]);
+  }, [students, searchQuery, selectedClass, teacherClasses]);
 
   const unreadNotifCount = notifications.filter((n) => !n.read).length;
   const firstName = profile?.name?.split(" ")[0] ?? "";

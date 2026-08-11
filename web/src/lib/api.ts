@@ -146,10 +146,6 @@ export async function uploadProfilePicture(file: File) {
   return response.json();
 }
 
-/* =========================================================
-   TASKS
-========================================================= */
-
 export type Task = {
   id: string;
   userId: string;
@@ -195,10 +191,6 @@ export async function updateTask(id: string, data: UpdateTaskInput) {
     body: JSON.stringify(data),
   });
 }
-
-/* =========================================================
-   PLANNER / SCHEDULE
-========================================================= */
 
 export type Schedule = {
   id: string;
@@ -275,10 +267,6 @@ export async function deleteSchedule(id: string) {
     method: "DELETE",
   });
 }
-
-/* =========================================================
-   COURSES / LESSONS
-========================================================= */
 
 export type LessonStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 
@@ -384,10 +372,6 @@ export async function updateLessonProgress(
   });
 }
 
-/* =========================================================
-   CHECKLIST
-========================================================= */
-
 export type ChecklistItem = {
   id: string;
   taskId: string;
@@ -423,10 +407,6 @@ export async function updateChecklistItem(
   });
 }
 
-/* =========================================================
-   FOCUS SESSIONS
-========================================================= */
-
 export type BreakType = "SHORT" | "LONG";
 
 export type FocusSession = {
@@ -461,10 +441,6 @@ export async function completeFocusSession(
     body: JSON.stringify({ breakType }),
   });
 }
-
-/* =========================================================
-   PROGRESS / GRADES
-========================================================= */
 
 export type MonthlyProgress = {
   month: string;
@@ -511,10 +487,6 @@ export async function getProgress() {
   return apiRequest("/api/progress");
 }
 
-/* =========================================================
-   DASHBOARD
-========================================================= */
-
 export type StreakStatus =
   | "active"
   | "frozen"
@@ -546,10 +518,6 @@ export type DashboardWeek = {
 export async function getDashboardWeek() {
   return apiRequest<DashboardWeek>("/api/progress/dashboard-week");
 }
-
-/* =========================================================
-   NOTES / NOTIFICATIONS
-========================================================= */
 
 export type TeacherNote = {
   id: string;
@@ -608,10 +576,6 @@ export async function markAllNotificationsRead() {
     }
   );
 }
-
-/* =========================================================
-   WELLBEING
-========================================================= */
 
 export type StressEntry = {
   id: string;
@@ -737,10 +701,6 @@ export async function logSleep(data: {
   });
 }
 
-/* =========================================================
-   WATER
-========================================================= */
-
 export type WaterIntake = {
   todayMl: number;
   goalMl: number;
@@ -761,10 +721,6 @@ export async function logWaterIntake(amountMl: number) {
     }
   );
 }
-
-/* =========================================================
-   MOTIVATION / ACHIEVEMENTS
-========================================================= */
 
 export type MotivationMessage = {
   id: string;
@@ -822,10 +778,6 @@ export async function getAchievements() {
   return apiRequest<Achievement[]>("/api/achievements");
 }
 
-/* =========================================================
-   ENROLLMENT
-========================================================= */
-
 export type EnrollmentEntry = {
   id: string;
   studentId: string;
@@ -840,10 +792,6 @@ export async function getEnrollmentHistory() {
     "/api/users/enrollment-history"
   );
 }
-
-/* =========================================================
-   ADMIN USERS
-========================================================= */
 
 export type AdminUser = {
   id: string;
@@ -943,34 +891,17 @@ export async function deleteAdminUser(id: string) {
   );
 }
 
-/* =========================================================
-   ADMIN MEDEDELINGEN
-========================================================= */
-
-/**
- * Naar wie de mededeling gestuurd wordt.
- *
- * students = alleen studenten
- * teachers = alleen docenten
- * both     = studenten én docenten
- */
 export type MededelingTarget =
   | "students"
   | "teachers"
   | "both";
 
-/**
- * Prioriteit van een mededeling.
- */
 export type MededelingPriority =
   | "low"
   | "normal"
   | "high"
   | "urgent";
 
-/**
- * Payload die vanuit de adminpagina naar de API wordt gestuurd.
- */
 export type CreateMededelingPayload = {
   title: string;
   message: string;
@@ -978,25 +909,11 @@ export type CreateMededelingPayload = {
   priority: MededelingPriority;
 };
 
-/**
- * Response van de backend na het versturen
- * van een mededeling.
- */
 export type CreateMededelingResponse = {
   success: boolean;
   message: string;
 };
 
-/**
- * Verstuur een algemene mededeling.
- *
- * De backend bepaalt op basis van `target`
- * welke gebruikers de notificatie ontvangen:
- *
- * "students" -> alle studenten
- * "teachers" -> alle docenten
- * "both"     -> alle studenten + alle docenten
- */
 export async function createMededeling(
   payload: CreateMededelingPayload
 ) {
@@ -1013,10 +930,6 @@ export async function createMededeling(
     }
   );
 }
-
-/* =========================================================
-   TEACHER
-========================================================= */
 
 export type TeacherOption = {
   id: string;
@@ -1162,12 +1075,16 @@ export interface StudentProgress {
   id: string;
   name: string;
   className: string | null;
+  teacherId?: string | null;
 }
 
-export async function getTeacherStudents() {
-  return apiRequest<StudentProgress[]>(
-    "/api/teacher/students"
-  );
+export async function getTeacherStudents(className?: string) {
+  const url =
+    className && className !== "ALL"
+      ? `/api/teacher/students?className=${encodeURIComponent(className)}`
+      : "/api/teacher/students";
+
+  return apiRequest<StudentProgress[]>(url);
 }
 
 export interface GradeTrend {
@@ -1272,10 +1189,6 @@ export async function deleteTeacherGrade(
   );
 }
 
-/* =========================================================
-   QUIZ
-========================================================= */
-
 export type QuizResponse = {
   id: string;
   userId: string;
@@ -1303,10 +1216,6 @@ export async function getQuizHistory() {
     "/api/wellbeing-quiz"
   );
 }
-
-/* =========================================================
-   UTILITY
-========================================================= */
 
 export function formatClock(seconds: number): string {
   const mins = Math.floor(seconds / 60);
