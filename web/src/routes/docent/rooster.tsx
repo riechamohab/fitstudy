@@ -75,7 +75,7 @@ function TeacherSchedulePage() {
   return (
     <div className="mx-auto max-w-6xl p-6">
       <div className="mb-6 flex items-center gap-3">
-        <div className="text-green-600">
+        <div className="text-blue-600">
           <PlannerIcon />
         </div>
         <h1 className="text-2xl font-bold text-gray-800">Mijn Rooster</h1>

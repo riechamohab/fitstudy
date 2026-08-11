@@ -675,6 +675,25 @@ router.get("/subjects", checkTeacherRole, async (req: any, res) => {
   }
 });
 
+// GET /api/teacher/classes -> Geeft de klassen terug waar de docent lesgeeft (uit het rooster)
+router.get("/classes", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+
+    const rows = await db
+      .selectDistinct({ className: schedule.className })
+      .from(schedule)
+      .where(eq(schedule.teacherId, teacherId));
+
+    const classes = rows.map((r) => r.className).filter(Boolean).sort();
+
+    res.json({ classes });
+  } catch (error) {
+    console.error("Get teacher classes error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/programs", checkTeacherRole, async (req: any, res) => {
   try {
     const teacherId = req.currentUser.id;
@@ -695,10 +714,10 @@ router.get("/programs", checkTeacherRole, async (req: any, res) => {
 router.post("/programs", checkTeacherRole, async (req: any, res) => {
   try {
     const teacherId = req.currentUser.id;
-    const { subject, period, chapter, lesson, topics } = req.body;
+    const { subject, className, period, chapter, lesson, topics } = req.body;
 
-    if (!subject || !period || !chapter || !lesson) {
-      return res.status(400).json({ error: "Vak, periode, hoofdstuk en les zijn verplicht." });
+    if (!subject || !className || !period || !chapter || !lesson) {
+      return res.status(400).json({ error: "Vak, klas, periode, hoofdstuk en les zijn verplicht." });
     }
 
     const newProgram = await db
@@ -707,6 +726,7 @@ router.post("/programs", checkTeacherRole, async (req: any, res) => {
         id: nanoid(),
         teacherId,
         subject,
+        className,
         period,
         chapter,
         lesson,

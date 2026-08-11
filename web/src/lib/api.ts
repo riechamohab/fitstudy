@@ -29,6 +29,12 @@ async function apiRequest<T>(
       );
     }
 
+    if (response.status === 409) {
+      throw new Error(
+        backendMessage || "Deze actie is al uitgevoerd."
+      );
+    }
+
     if (response.status === 401) {
       throw new Error("Invalid email or password.");
     }
@@ -1187,6 +1193,48 @@ export async function deleteTeacherGrade(
       method: "DELETE",
     }
   );
+}
+
+/* =========================================================
+   TEACHER PROGRAMS (Vakprogramma / Behandelplan)
+========================================================= */
+
+export type TeacherProgram = {
+  id: string;
+  teacherId: string;
+  subject: string;
+  className: string;
+  period: string;
+  chapter: string;
+  lesson: string;
+  topics: string | null;
+  createdAt: string;
+};
+
+export async function getTeacherPrograms() {
+  return apiRequest<TeacherProgram[]>("/api/teacher/programs");
+}
+
+export type CreateTeacherProgramInput = {
+  subject: string;
+  className: string;
+  period: string;
+  chapter: string;
+  lesson: string;
+  topics?: string;
+};
+
+export async function createTeacherProgram(
+  data: CreateTeacherProgramInput
+) {
+  return apiRequest<TeacherProgram>("/api/teacher/programs", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getTeacherClasses() {
+  return apiRequest<{ classes: string[] }>("/api/teacher/classes");
 }
 
 export type QuizResponse = {
