@@ -397,6 +397,7 @@ export const teacherPrograms = pgTable("teacher_programs", {
   id: text("id").primaryKey(),
   teacherId: text("teacher_id").notNull(),
   subject: text("subject").notNull(),
+  className: text("class_name").notNull(),
   period: text("period").notNull(), // Bijv. "Kwartaal 1" of "2026 - Jaar"
   chapter: text("chapter").notNull(), // Bijv. "Hoofdstuk 4"
   lesson: text("lesson").notNull(), // Bijv. "Les 2: Krachten en Beweging"

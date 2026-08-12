@@ -1,0 +1,1 @@
+ALTER TABLE "teacher_programs" ADD COLUMN "class_name" text NOT NULL;

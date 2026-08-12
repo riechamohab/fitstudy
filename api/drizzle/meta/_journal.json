@@ -85,6 +85,13 @@
       "when": 1786336444920,
       "tag": "0011_minor_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786489549333,
+      "tag": "0012_nasty_black_widow",
+      "breakpoints": true
     }
   ]
 }
