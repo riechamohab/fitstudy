@@ -306,5 +306,3 @@ function AdminMededelingenPage() {
     </main>
   );
 }
-
-export default AdminMededelingenPage;

@@ -1,39 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FocusTimerIcon } from "../../components/ui/icons";
+import {
+  createAssignment,
+  getTeacherClasses,
+  getTeacherTasks,
+  type TeacherTask,
+} from "../../lib/api";
 
 export const Route = createFileRoute("/docent/opdrachten")({
   component: TeacherAssignmentsPage,
 });
 
-interface AssignmentGroup {
-  id: string;
-  title: string;
-  className: string;
-  deadline: string | null;
-  totalCount: number;
-  submittedCount: number;
-}
-
-interface ScheduleItem {
-  id: string;
-  className?: string;
-  subject?: string;
-  // Eventuele andere velden uit je rooster tabel
-}
-
 function TeacherAssignmentsPage() {
-  const [assignments, setAssignments] = useState<AssignmentGroup[]>([]);
+  const [assignments, setAssignments] = useState<TeacherTask[]>([]);
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
   const [className, setClassName] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [priority, setPriority] = useState("MEDIUM");
+  const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -44,39 +33,21 @@ function TeacherAssignmentsPage() {
   async function fetchData() {
     try {
       setLoading(true);
-      
-      // Haal zowel de opdrachten als het rooster van de docent op
-      const [assignmentsRes, scheduleRes] = await Promise.all([
-        fetch("/api/teacher/tasks", { credentials: "include" }),
-        fetch("/api/teacher/schedule", { credentials: "include" }),
+      setError(null);
+
+      const [assignmentsData, classesData] = await Promise.all([
+        getTeacherTasks(),
+        getTeacherClasses(),
       ]);
 
-      if (!assignmentsRes.ok || !scheduleRes.ok) {
-        throw new Error("Kon gegevens niet ophalen.");
-      }
-
-      const assignmentsData = await assignmentsRes.json();
-      const scheduleData: ScheduleItem[] = await scheduleRes.json();
-
       setAssignments(assignmentsData);
+      setAvailableClasses(classesData.classes);
 
-      // Filter unieke klassen uit het rooster van de docent
-      const classesSet = new Set<string>();
-      scheduleData.forEach((item) => {
-        if (item.className) {
-          classesSet.add(item.className);
-        }
-      });
-
-      const uniqueClasses = Array.from(classesSet);
-      setAvailableClasses(uniqueClasses);
-
-      // Selecteer standaard de eerste klas indien beschikbaar
-      if (uniqueClasses.length > 0) {
-        setClassName(uniqueClasses[0]);
+      if (classesData.classes.length > 0) {
+        setClassName(classesData.classes[0]);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kon gegevens niet ophalen.");
     } finally {
       setLoading(false);
     }
@@ -88,39 +59,33 @@ function TeacherAssignmentsPage() {
     setError(null);
     setSuccessMessage(null);
 
+    if (!className) {
+      setError("Kies een klas.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/teacher/assignments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          className,
-          title,
-          description,
-          deadline: deadline ? new Date(deadline).toISOString() : null,
-          priority,
-        }),
-        credentials: "include",
+      const result = await createAssignment({
+        className,
+        title,
+        description: description || undefined,
+        deadline: deadline ? new Date(deadline).toISOString() : undefined,
+        priority,
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Kon opdracht niet versturen.");
-      }
+      setSuccessMessage(
+        `Opdracht succesvol uitgezet voor ${result.studentsAssigned} studenten in klas ${className}!`
+      );
 
-      const result = await res.json();
-      setSuccessMessage(`Opdracht succesvol uitgezet voor ${result.studentsAssigned} studenten in klas ${className}!`);
-      
       setTitle("");
       setDescription("");
       setDeadline("");
-      
-      // Lijst verversen
-      const assignmentsRes = await fetch("/api/teacher/tasks", { credentials: "include" });
-      if (assignmentsRes.ok) {
-        setAssignments(await assignmentsRes.json());
-      }
-    } catch (err: any) {
-      setError(err.message);
+
+      const assignmentsData = await getTeacherTasks();
+      setAssignments(assignmentsData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kon opdracht niet versturen.");
     } finally {
       setSubmitting(false);
     }
@@ -129,7 +94,7 @@ function TeacherAssignmentsPage() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-green-600">
+        <div className="text-blue-600">
           <FocusTimerIcon />
         </div>
         <div>
@@ -147,12 +112,11 @@ function TeacherAssignmentsPage() {
       )}
 
       {successMessage && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm">
           {successMessage}
         </div>
       )}
 
-      {/* Formulier: Nieuwe opdracht opgeven */}
       <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Nieuwe opdracht opgeven</h2>
         <form onSubmit={handleCreateAssignment} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -162,7 +126,7 @@ function TeacherAssignmentsPage() {
               <select
                 value={className}
                 onChange={(e) => setClassName(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm bg-white"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm bg-white"
                 required
               >
                 {availableClasses.map((cls) => (
@@ -185,8 +149,8 @@ function TeacherAssignmentsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Prioriteit</label>
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm bg-white"
+              onChange={(e) => setPriority(e.target.value as "LOW" | "MEDIUM" | "HIGH")}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm bg-white"
             >
               <option value="LOW">Laag</option>
               <option value="MEDIUM">Gemiddeld</option>
@@ -202,7 +166,7 @@ function TeacherAssignmentsPage() {
               placeholder="Bijv. Maken opgave 4 t/m 8"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
             />
           </div>
 
@@ -213,7 +177,7 @@ function TeacherAssignmentsPage() {
               placeholder="Eventuele toelichting..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
             />
           </div>
 
@@ -223,7 +187,7 @@ function TeacherAssignmentsPage() {
               type="datetime-local"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm bg-white"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm bg-white"
             />
           </div>
 
@@ -231,7 +195,7 @@ function TeacherAssignmentsPage() {
             <button
               type="submit"
               disabled={submitting || availableClasses.length === 0}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2 rounded-lg text-sm transition disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg text-sm transition disabled:opacity-50"
             >
               {submitting ? "Bezig met verzenden..." : "Opdracht publiceren voor klas"}
             </button>
@@ -239,7 +203,6 @@ function TeacherAssignmentsPage() {
         </form>
       </div>
 
-      {/* Overzicht en Statistieken */}
       <h2 className="text-lg font-semibold text-gray-800 mb-4">Statistieken & Voortgang per Opdracht</h2>
       {loading ? (
         <p className="text-gray-500 animate-pulse">Opdrachten laden...</p>
@@ -250,15 +213,15 @@ function TeacherAssignmentsPage() {
       ) : (
         <div className="space-y-4">
           {assignments.map((item) => {
-            const percentage = item.totalCount > 0 
-              ? Math.round((item.submittedCount / item.totalCount) * 100) 
+            const percentage = item.totalCount > 0
+              ? Math.round((item.submittedCount / item.totalCount) * 100)
               : 0;
 
             return (
               <div key={item.id} className="bg-white p-5 rounded-xl shadow-sm border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                    <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
                       Klas: {item.className}
                     </span>
                     {item.deadline && (
@@ -276,8 +239,8 @@ function TeacherAssignmentsPage() {
                     <span>{item.submittedCount} / {item.totalCount} gedaan ({percentage}%)</span>
                   </div>
                   <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-green-600 h-2.5 rounded-full transition-all duration-500" 
+                    <div
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
