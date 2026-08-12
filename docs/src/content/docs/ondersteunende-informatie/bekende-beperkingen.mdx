@@ -1,0 +1,69 @@
+---
+title: Bekende beperkingen
+description: Overzicht van bekende aandachtspunten binnen de huidige versie van FitStudy.
+---
+
+
+Dit onderdeel beschrijft enkele bekende aandachtspunten binnen de huidige versie van FitStudy.
+
+Deze punten geven aan waar gebruikers rekening mee moeten houden tijdens het gebruik van de applicatie.
+
+## Rollen en rechten
+
+FitStudy werkt met verschillende gebruikersrollen:
+
+- student;
+- docent;
+- administrator.
+
+Niet iedere gebruiker heeft toegang tot dezelfde functies.
+
+Een student kan bijvoorbeeld zijn of haar eigen planning, voortgang en welzijnsinformatie bekijken.  
+Een docent kan studenten begeleiden en informatie bekijken die nodig is voor de begeleiding.  
+Een administrator kan gebruikers, roosters en algemene mededelingen beheren.
+
+Wanneer een functie niet zichtbaar is, kan dit betekenen dat deze functie niet beschikbaar is voor de ingelogde rol.
+
+## Gegevens zijn afhankelijk van invoer
+
+Sommige onderdelen tonen pas informatie wanneer er gegevens beschikbaar zijn.
+
+Voorbeelden hiervan zijn:
+
+- een rooster wordt pas zichtbaar nadat de admin een rooster heeft opgeslagen;
+- een studieprogramma wordt pas zichtbaar nadat een docent of admin onderdelen heeft toegevoegd;
+- voortgang wordt pas zichtbaar nadat taken, cijfers of studiesessies zijn geregistreerd;
+- welzijnsgegevens worden pas zichtbaar nadat de student gegevens heeft ingevuld.
+
+Wanneer er nog geen gegevens zijn, toont FitStudy meestal een lege status of een korte melding.
+
+## Eén actieve sessie aanbevolen
+
+Tijdens het testen is het aanbevolen om met één actieve FitStudy-sessie tegelijk te werken.
+
+Wanneer meerdere tabbladen openstaan met verschillende gebruikersrollen, kan de browser soms nog gegevens van een vorige sessie gebruiken.
+
+Dit kan vooral gebeuren bij het wisselen tussen student, docent en administrator.
+
+De beste werkwijze is om eerst uit te loggen voordat met een andere rol wordt ingelogd.
+
+## Internet en serververbinding
+
+FitStudy gebruikt een online database en een backend API.
+
+Daarom moeten de frontend, backend en database goed bereikbaar zijn om gegevens op te halen of op te slaan.
+
+Wanneer één van deze onderdelen niet bereikbaar is, kunnen sommige gegevens tijdelijk niet worden weergegeven.
+
+## Lokale testomgeving
+
+In de lokale testomgeving draaien de onderdelen apart van elkaar.
+
+De backend, frontend en documentatie moeten daarom afzonderlijk gestart worden.
+
+Dit geldt alleen voor lokaal testen en ontwikkelen.  
+Bij gebruik via de online versie hoeft de gebruiker deze onderdelen niet zelf te starten.
+
+## Samenvatting
+
+De belangrijkste aandachtspunten zijn dat functies afhankelijk zijn van de gebruikersrol, dat gegevens pas zichtbaar worden na invoer en dat tijdens het testen het beste met één actieve sessie tegelijk gewerkt kan worden.

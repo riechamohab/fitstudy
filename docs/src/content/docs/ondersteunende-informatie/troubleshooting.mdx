@@ -1,0 +1,148 @@
+---
+title: Troubleshooting
+description: Veelvoorkomende problemen en mogelijke oplossingen binnen FitStudy.
+---
+
+
+In dit onderdeel staan veelvoorkomende problemen die kunnen voorkomen bij het gebruik van FitStudy.
+
+Per probleem wordt kort uitgelegd wat de mogelijke oorzaak kan zijn en welke stappen de gebruiker kan nemen om het probleem op te lossen.
+
+## Ik kan niet inloggen
+
+Wanneer een gebruiker niet kan inloggen, kan dit komen doordat de inloggegevens niet correct zijn ingevuld.
+
+Controleer of:
+
+- het e-mailadres correct is ingevoerd;
+- het wachtwoord correct is ingevoerd;
+- er geen typefouten zijn gemaakt;
+- het account al bestaat in het systeem;
+- de gebruiker met de juiste rol is aangemaakt.
+
+Wanneer het probleem blijft bestaan, moet de gebruiker contact opnemen met de administrator.
+
+## Ik kom op het verkeerde dashboard terecht
+
+Na het inloggen opent FitStudy automatisch het dashboard dat hoort bij de rol van de gebruiker.
+
+Een student komt op het student-dashboard terecht. Een docent komt op het docent-dashboard terecht. Een administrator komt op het admin-dashboard terecht.
+
+Wanneer een gebruiker op het verkeerde dashboard terechtkomt, kan dit komen doordat de rol in het systeem niet goed is ingesteld.
+
+De administrator moet dan controleren of de gebruiker de juiste rol heeft.
+
+## Meldingen worden niet weergegeven
+
+Wanneer meldingen niet zichtbaar zijn bij het bel-icoon, kan dit komen doordat er nog geen meldingen zijn verstuurd of doordat de pagina nog niet opnieuw is geladen.
+
+De gebruiker kan het volgende proberen:
+
+- ververs de pagina;
+- log uit en log opnieuw in;
+- controleer of de melding naar de juiste gebruikersgroep is verstuurd;
+- controleer of de gebruiker met de juiste rol is ingelogd.
+
+Als het probleem blijft bestaan, moet de administrator controleren of de melding correct is opgeslagen.
+
+## Gegevens worden niet opgehaald
+
+Soms kan een pagina een melding tonen zoals **Kon gegevens niet ophalen**.
+
+Dit betekent dat de applicatie de gegevens op dat moment niet goed kan laden.
+
+Mogelijke oorzaken zijn:
+
+- de backend draait niet;
+- de databaseverbinding werkt niet;
+- de gebruiker is niet meer ingelogd;
+- de sessie is verlopen;
+- de gebruiker heeft geen toegang tot deze gegevens.
+
+De gebruiker kan eerst proberen om de pagina te verversen of opnieuw in te loggen.
+
+Wanneer het probleem blijft bestaan, moet de administrator of ontwikkelaar controleren of de backend en database goed werken.
+
+## Meerdere tabbladen open
+
+Tijdens het testen kan er een probleem ontstaan wanneer meerdere FitStudy-tabbladen tegelijk openstaan.
+
+Dit kan vooral gebeuren wanneer er in verschillende tabbladen met verschillende rollen wordt gewerkt, bijvoorbeeld admin, docent en student.
+
+Het systeem kan dan tijdelijk in de war raken over welke gebruiker actief is.
+
+De oplossing is:
+
+- log uit via **Log out**;
+- sluit de andere FitStudy-tabbladen;
+- open FitStudy opnieuw;
+- log opnieuw in met het juiste account.
+
+Gebruik tijdens het testen bij voorkeur één actieve FitStudy-sessie tegelijk.
+
+## Knoppen reageren niet
+
+Wanneer een knop niet reageert, kan dit komen doordat verplichte velden nog niet zijn ingevuld.
+
+Controleer of:
+
+- alle verplichte velden zijn ingevuld;
+- een keuze is gemaakt bij dropdowns of opties;
+- de gebruiker de juiste rechten heeft;
+- de pagina volledig is geladen.
+
+Voorbeelden van verplichte velden zijn naam, e-mailadres, wachtwoord, klas, titel of bericht.
+
+## Rooster wordt niet opgeslagen
+
+Wanneer een rooster niet wordt opgeslagen, moet de admin controleren of de klasnaam is ingevuld.
+
+Ook moet gecontroleerd worden of de vakken correct zijn ingevoerd bij de juiste dagen en tijdsblokken.
+
+Wanneer het rooster al bestaat, kan de admin het bestaande rooster beheren of verwijderen en daarna opnieuw opslaan.
+
+## Mededeling wordt niet verstuurd
+
+Wanneer een mededeling niet wordt verstuurd, moet de admin controleren of alle verplichte gegevens zijn ingevuld.
+
+Controleer of:
+
+- een ontvangersgroep is gekozen;
+- een prioriteit is gekozen;
+- een titel is ingevuld;
+- een bericht is ingevuld;
+- de gebruiker is ingelogd als administrator.
+
+Alleen administrators mogen algemene mededelingen versturen.
+
+## Afbeeldingen in de documentatie worden niet getoond
+
+Wanneer een afbeelding niet zichtbaar is in de documentatie, staat de afbeelding mogelijk niet in de juiste map of klopt het pad niet.
+
+Controleer of de afbeelding staat in de map:
+
+`docs/src/assets/`
+
+Controleer daarna of het pad in het `.mdx` bestand correct is.
+
+Voorbeeld:
+
+`![Voorbeeld afbeelding](../../../assets/voorbeeld.png)`
+
+## Pagina bestaat niet
+
+Wanneer een pagina de melding **Not Found** toont, bestaat de route mogelijk niet of is het pad verkeerd ingesteld.
+
+Controleer of:
+
+- het bestand bestaat in de juiste map;
+- de bestandsnaam correct is;
+- de slug in `astro.config.mjs` klopt;
+- de pagina is opgeslagen;
+- de documentatieserver opnieuw is geladen.
+
+## Afsluiting
+
+Wanneer een probleem niet direct opgelost kan worden, is het verstandig om eerst uit te loggen en opnieuw in te loggen.
+
+Blijft het probleem bestaan, dan moet de administrator of ontwikkelaar controleren of de backend, frontend en database correct werken.
