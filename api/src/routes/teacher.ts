@@ -63,10 +63,30 @@ router.get("/overview", checkTeacherRole, async (_req, res) => {
   }
 });
 
-router.get("/students", checkTeacherRole, async (_req, res) => {
+router.get("/students", checkTeacherRole, async (req: any, res) => {
   try {
+    const teacherId = req.currentUser.id;
+
+    // Haal de klassen op waarin deze docent lesgeeft
+    const teacherClassRows = await db
+      .selectDistinct({ className: schedule.className })
+      .from(schedule)
+      .where(eq(schedule.teacherId, teacherId));
+
+    const teacherClasses = teacherClassRows
+      .map((row) => row.className)
+      .filter(Boolean);
+
+    // Haal alleen studenten uit de klassen van deze docent
     const allUsers = await db.select().from(user);
-    const students = allUsers.filter((u) => u.role === "student");
+
+    const students = allUsers.filter(
+      (u) =>
+        u.role === "student" &&
+        u.studentClass &&
+        teacherClasses.includes(u.studentClass)
+    );
+
     const allTasks = await db.select().from(tasks);
     const allExercises = await db.select().from(exercises);
     const allStressLevels = await db.select().from(stressLevels);
@@ -118,7 +138,9 @@ router.get("/students", checkTeacherRole, async (_req, res) => {
           recentStressLevel: studentStressLevels[0]?.level ?? null,
           completionRate:
             studentTasks.length > 0
-              ? Number(((completedTasks / studentTasks.length) * 100).toFixed(1))
+              ? Number(
+                  ((completedTasks / studentTasks.length) * 100).toFixed(1)
+                )
               : 0,
         };
       })
