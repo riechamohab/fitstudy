@@ -69,6 +69,9 @@ export type UserProfile = {
   studentClass: string | null;
   schoolYear: string | null;
   studyHistory: string | null;
+  subjects: string[] | null;
+  mentorClassName: string | null;
+  mentorSchoolYear: string | null;
   mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;
