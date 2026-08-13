@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { ProgressIcon } from "../../components/ui/icons";
+import { API_BASE_URL } from "../../lib/api";
 
 export const Route = createFileRoute("/docent/beoordelingen")({
   component: TeacherGradesPage,
@@ -49,9 +50,9 @@ function TeacherGradesPage() {
     try {
       setLoading(true);
       const [gradesRes, studentsRes, subjectsRes] = await Promise.all([
-        fetch("/api/teacher/grades-page", { credentials: "include" }),
-        fetch("/api/teacher/students", { credentials: "include" }),
-        fetch("/api/teacher/subjects", { credentials: "include" }),
+        fetch(`${API_BASE_URL}/api/teacher/grades-page`, { credentials: "include" }),
+        fetch(`${API_BASE_URL}/api/teacher/students`, { credentials: "include" }),
+        fetch(`${API_BASE_URL}/api/teacher/subjects`, { credentials: "include" }),
       ]);
 
       if (!gradesRes.ok || !studentsRes.ok || !subjectsRes.ok) {
@@ -108,7 +109,7 @@ function TeacherGradesPage() {
         const scoreNumber = parseFloat(scoreVal);
         if (isNaN(scoreNumber)) return;
 
-        const res = await fetch("/api/teacher/grades", {
+        const res = await fetch(`${API_BASE_URL}/api/teacher/grades`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -129,7 +130,7 @@ function TeacherGradesPage() {
       setStudentScores({});
       setAssessmentName("");
 
-      const gradesRes = await fetch("/api/teacher/grades-page", { credentials: "include" });
+      const gradesRes = await fetch(`${API_BASE_URL}/api/teacher/grades-page`, { credentials: "include" });
       if (gradesRes.ok) setGrades(await gradesRes.json());
     } catch (err: any) {
       setError(err.message);
@@ -337,7 +338,24 @@ function TeacherGradesPage() {
       </div>
 
       {/* Matrix Overzichtstabel per klas met toetsen als kolommen */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">Overzicht Ingevoerde Cijfers per Klas</h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-800">
+          Overzicht Ingevoerde Cijfers per Klas
+        </h2>
+
+        <select
+          value={filterClass}
+          onChange={(e) => setFilterClass(e.target.value)}
+          className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm bg-white font-medium"
+        >
+          <option value="ALL">Alle klassen</option>
+          {availableClasses.map((cls) => (
+            <option key={cls} value={cls}>
+              Klas {cls}
+            </option>
+          ))}
+        </select>
+      </div>
       {loading ? (
         <p className="text-gray-500 animate-pulse">Cijfers laden...</p>
       ) : overviewStudents.length === 0 ? (

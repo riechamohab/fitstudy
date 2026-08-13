@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgTable, text, timestamp, uniqueIndex, date, time } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, date, time } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
 
 export const TASK_STATUSES = [
@@ -268,7 +268,7 @@ export const grades = pgTable("grades", {
     .references(() => user.id, { onDelete: "cascade" }),
 
   subject: text("subject").notNull(),
-  score: integer("score").notNull(),
+  score: real("score").notNull(),
   assessmentName: text("assessment_name"),
 
   gradedAt: timestamp("graded_at").defaultNow().notNull(),

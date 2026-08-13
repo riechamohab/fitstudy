@@ -849,6 +849,39 @@ router.post("/grades", checkTeacherRole, async (req: any, res) => {
   }
 });
 
+// PUT /api/teacher/grades/:id -> Cijfer wijzigen
+router.put("/grades/:id", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+    const { id } = req.params;
+    const { score, subject, assessmentName } = req.body;
+
+    if (score === undefined) {
+      return res.status(400).json({ error: "Cijfer is verplicht." });
+    }
+
+    const updatedGrade = await db
+      .update(grades)
+      .set({
+        score: Number(score),
+        subject,
+        assessmentName,
+        gradedAt: new Date(),
+      })
+      .where(and(eq(grades.id, id), eq(grades.teacherId, teacherId)))
+      .returning();
+
+    if (updatedGrade.length === 0) {
+      return res.status(404).json({ error: "Cijfer niet gevonden." });
+    }
+
+    res.json(updatedGrade[0]);
+  } catch (error) {
+    console.error("Update grade error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // DELETE /api/teacher/grades/:id -> Cijfer verwijderen
 router.delete("/grades/:id", checkTeacherRole, async (req: any, res) => {
   try {

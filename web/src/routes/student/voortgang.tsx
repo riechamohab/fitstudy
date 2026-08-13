@@ -72,7 +72,7 @@ function ProgressPage() {
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Progress</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Voortgang</h1>
             <p className="text-sm text-slate-500">
               {monthly ? monthly.month : "This month"} at a glance.
             </p>
@@ -84,7 +84,7 @@ function ProgressPage() {
             className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             <DownloadIcon />
-            Download report
+            Rapport downloaden
           </button>
         </div>
 
@@ -93,7 +93,7 @@ function ProgressPage() {
         )}
 
         {isLoading ? (
-          <p className="text-sm text-slate-500">Loading progress...</p>
+          <p className="text-sm text-slate-500">Voortgang laden...</p>
         ) : (
           <>
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -102,7 +102,7 @@ function ProgressPage() {
                   {monthly?.focusSessions.total ?? 0}
                 </p>
                 <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Focus sessions
+                  Focussessies
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -110,7 +110,7 @@ function ProgressPage() {
                   {monthly?.focusSessions.shortBreaks ?? 0}
                 </p>
                 <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Short breaks
+                  Korte pauzes
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -118,7 +118,7 @@ function ProgressPage() {
                   {monthly?.focusSessions.longBreaks ?? 0}
                 </p>
                 <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Long breaks
+                  Lange pauzes
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -126,22 +126,22 @@ function ProgressPage() {
                   {monthly?.tasks.completed ?? 0}/{monthly?.tasks.total ?? 0}
                 </p>
                 <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Tasks completed
+                  Taken voltooid
                 </p>
               </div>
             </div>
 
             <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6">
-              <p className="mb-4 text-sm font-semibold text-slate-900">Grades</p>
+              <p className="mb-4 text-sm font-semibold text-slate-900">Cijfers</p>
 
               {monthly?.grades.thisMonthAvg === null && monthly?.grades.overallAvg === null ? (
-                <p className="text-sm text-slate-400">No grades recorded yet.</p>
+                <p className="text-sm text-slate-400">Nog geen cijfers geregistreerd.</p>
               ) : (
                 <div className="flex flex-wrap items-center gap-6">
                   {monthly?.grades.thisMonthAvg !== null ? (
                     <div>
                       <p className="text-3xl font-bold text-slate-900">
-                        {monthly?.grades.thisMonthAvg}%
+                        {monthly?.grades.thisMonthAvg?.toFixed(1)}
                       </p>
                       <p className="text-xs text-slate-500">average this month</p>
                     </div>
@@ -152,7 +152,7 @@ function ProgressPage() {
                   {monthly?.grades.overallAvg !== null && (
                     <div>
                       <p className="text-3xl font-bold text-slate-900">
-                        {monthly?.grades.overallAvg}%
+                        {monthly?.grades.overallAvg?.toFixed(1)}
                       </p>
                       <p className="text-xs text-slate-500">overall average</p>
                     </div>
@@ -185,7 +185,7 @@ function ProgressPage() {
                         <span className="text-slate-500">
                           {new Date(grade.gradedAt).toLocaleDateString()}
                         </span>
-                        <span className="font-semibold text-slate-900">{grade.score}%</span>
+                        <span className="font-semibold text-slate-900">{grade.score.toFixed(1)}</span>
                       </span>
                     </div>
                   ))}
@@ -195,10 +195,10 @@ function ProgressPage() {
 
             <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6">
               <p className="mb-1 text-sm font-semibold text-slate-900">
-                School year overview
+                Overzicht schooljaar
               </p>
               <p className="mb-4 text-xs text-slate-500">
-                Every grade recorded this school year, most recent first.
+                Alle cijfers van dit schooljaar, nieuwste eerst.
               </p>
 
               {grades.length === 0 ? (
@@ -219,7 +219,7 @@ function ProgressPage() {
                             year: "numeric",
                           })}
                         </span>
-                        <span className="font-semibold text-slate-900">{grade.score}%</span>
+                        <span className="font-semibold text-slate-900">{grade.score.toFixed(1)}</span>
                       </span>
                     </div>
                   ))}
@@ -229,9 +229,9 @@ function ProgressPage() {
 
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <p className="mb-1 text-sm font-semibold text-slate-900">
-                Task completion rate
+                Taakvoltooiing
               </p>
-              <p className="mb-3 text-xs text-slate-500">This month</p>
+              <p className="mb-3 text-xs text-slate-500">Deze maand</p>
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-blue-600 transition-all"
