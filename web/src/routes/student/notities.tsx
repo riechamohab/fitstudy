@@ -161,7 +161,13 @@ function NotesPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-slate-800">{note.message}</p>
+                {note.teacherName && (
+                  <p className="mb-2 text-xs font-bold text-slate-700">
+                    Van: {note.teacherName}
+                  </p>
+                  )}
+
+                  <p className="text-sm text-slate-800">{note.message}</p>
               </button>
             ))}
           </div>

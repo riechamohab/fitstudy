@@ -395,15 +395,15 @@ export type ChecklistItem = {
   order: number;
 };
 
-export async function getChecklist(taskId: string) {
+export async function getChecklist(taskId: string): Promise<ChecklistItem[]> {
   return apiRequest<ChecklistItem[]>(`/api/tasks/${taskId}/checklist`);
 }
 
 export async function addChecklistItem(
   taskId: string,
   title: string
-) {
-  return apiRequest(`/api/tasks/${taskId}/checklist`, {
+): Promise<ChecklistItem> {
+  return apiRequest<ChecklistItem>(`/api/tasks/${taskId}/checklist`, {
     method: "POST",
     body: JSON.stringify({ title }),
   });
@@ -415,8 +415,8 @@ export async function updateChecklistItem(
     title?: string;
     completed?: boolean;
   }
-) {
-  return apiRequest(`/api/tasks/checklist/${itemId}`, {
+): Promise<ChecklistItem> {
+  return apiRequest<ChecklistItem>(`/api/tasks/checklist/${itemId}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -437,8 +437,8 @@ export type FocusSession = {
 export async function startFocusSession(
   taskId: string,
   durationMinutes = 25
-) {
-  return apiRequest("/api/focus-sessions", {
+): Promise<FocusSession> {
+  return apiRequest<FocusSession>("/api/focus-sessions", {
     method: "POST",
     body: JSON.stringify({
       taskId,
@@ -450,8 +450,8 @@ export async function startFocusSession(
 export async function completeFocusSession(
   id: string,
   breakType?: BreakType
-) {
-  return apiRequest(`/api/focus-sessions/${id}/complete`, {
+): Promise<FocusSession> {
+  return apiRequest<FocusSession>(`/api/focus-sessions/${id}/complete`, {
     method: "PUT",
     body: JSON.stringify({ breakType }),
   });
@@ -538,6 +538,7 @@ export type TeacherNote = {
   id: string;
   studentId: string;
   teacherId: string;
+  teacherName: string | null;
   message: string;
   read: boolean;
   createdAt: string;
@@ -550,6 +551,32 @@ export async function getNotes() {
 export async function markNoteRead(id: string) {
   return apiRequest(`/api/notes/${id}/read`, {
     method: "PUT",
+  });
+}
+
+export async function sendStudentNote(
+  studentId: string,
+  message: string
+): Promise<{ message: string; note: TeacherNote }> {
+  return apiRequest<{ message: string; note: TeacherNote }>("/api/notes/student", {
+    method: "POST",
+    body: JSON.stringify({
+      studentId,
+      message,
+    }),
+  });
+}
+
+export async function sendClassNote(
+  className: string,
+  message: string
+): Promise<{ message: string; count: number }> {
+  return apiRequest<{ message: string; count: number }>("/api/notes/class", {
+    method: "POST",
+    body: JSON.stringify({
+      className,
+      message,
+    }),
   });
 }
 

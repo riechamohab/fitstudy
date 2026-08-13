@@ -1,53 +1,83 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { ProgressIcon } from "../../components/ui/icons";
+import {
+  getTeacherStudents,
+  sendClassNote,
+  sendStudentNote,
+  type StudentProgress,
+} from "../../lib/api";
 
 export const Route = createFileRoute("/docent/feedback")({
   component: TeacherFeedbackPage,
 });
 
 function TeacherFeedbackPage() {
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<StudentProgress[]>([]);
   const [selectedType, setSelectedType] = useState<"STUDENT" | "CLASS">("STUDENT");
   const [recipient, setRecipient] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isLoadingStudents, setIsLoadingStudents] = useState(true);
   const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Haal studenten en klassen op voor de dropdowns
-    fetch("/api/teacher/students", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => setStudents(data));
+    async function loadStudents() {
+      try {
+        setIsLoadingStudents(true);
+        setError("");
+
+        const data = await getTeacherStudents();
+        setStudents(data);
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Kon studenten niet laden."
+        );
+      } finally {
+        setIsLoadingStudents(false);
+      }
+    }
+
+    loadStudents();
   }, []);
 
-  // Unieke klassen uit de studentenlijst
-  const classes = Array.from(new Set(students.map((s) => s.className).filter(Boolean)));
+  const classes = Array.from(
+    new Set(students.map((student) => student.className).filter(Boolean))
+  ) as string[];
 
-  async function handleSend(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSend(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (!recipient || !message.trim()) {
+      setError("Selecteer een ontvanger en vul een bericht in.");
+      return;
+    }
+
     setLoading(true);
     setSuccess(null);
+    setError("");
 
     try {
-      const endpoint = selectedType === "STUDENT" ? "/api/teacher/notes" : "/api/teacher/announce";
-      const body = selectedType === "STUDENT" 
-        ? { studentId: recipient, message } 
-        : { className: recipient, title: "Mededeling", message, type: "GENERAL" };
+      if (selectedType === "STUDENT") {
+        await sendStudentNote(recipient, message.trim());
+        setSuccess("Persoonlijke notitie is verstuurd naar de student.");
+      } else {
+        await sendClassNote(recipient, message.trim());
+        setSuccess("Klasmededeling is verstuurd naar de geselecteerde klas.");
+      }
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Verzenden mislukt");
-      
-      setSuccess(selectedType === "STUDENT" ? "Persoonlijke notitie verstuurd." : "Mededeling verstuurd naar de klas.");
+      setRecipient("");
       setMessage("");
-    } catch (err) {
-      alert("Er is iets misgegaan bij het versturen.");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Er is iets misgegaan bij het versturen."
+      );
     } finally {
       setLoading(false);
     }
@@ -56,69 +86,121 @@ function TeacherFeedbackPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <div className="text-green-600"><ProgressIcon /></div>
+        <div className="text-green-600">
+          <ProgressIcon />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Feedback & Mededelingen</h1>
-          <p className="text-gray-500 text-sm">Stuur persoonlijke voortgangsfeedback of algemene klasberichten.</p>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Feedback & Mededelingen
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Stuur persoonlijke voortgangsfeedback of algemene klasberichten.
+          </p>
         </div>
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border">
-        {success && <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm border">{success}</div>}
-        
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSend}>
-          {/* Type Selectie */}
           <div className="flex gap-4 mb-6">
             <button
               type="button"
-              onClick={() => { setSelectedType("STUDENT"); setRecipient(""); }}
-              className={`flex-1 py-2 rounded-lg font-medium ${selectedType === "STUDENT" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600"}`}
+              onClick={() => {
+                setSelectedType("STUDENT");
+                setRecipient("");
+                setSuccess(null);
+                setError("");
+              }}
+              className={`flex-1 py-2 rounded-lg font-medium ${
+                selectedType === "STUDENT"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-100 text-gray-600"
+              }`}
             >
               Persoonlijke Notitie
             </button>
+
             <button
               type="button"
-              onClick={() => { setSelectedType("CLASS"); setRecipient(""); }}
-              className={`flex-1 py-2 rounded-lg font-medium ${selectedType === "CLASS" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600"}`}
+              onClick={() => {
+                setSelectedType("CLASS");
+                setRecipient("");
+                setSuccess(null);
+                setError("");
+              }}
+              className={`flex-1 py-2 rounded-lg font-medium ${
+                selectedType === "CLASS"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-100 text-gray-600"
+              }`}
             >
               Klas Mededeling
             </button>
           </div>
 
-          {/* Ontvanger Selectie */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {selectedType === "STUDENT" ? "Selecteer Student" : "Selecteer Klas"}
             </label>
+
             <select
               value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
+              onChange={(event) => setRecipient(event.target.value)}
               className="w-full px-3 py-2 border rounded-lg"
               required
+              disabled={isLoadingStudents}
             >
-              <option value="">-- Kies een optie --</option>
-              {selectedType === "STUDENT" 
-                ? students.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.className})</option>)
-                : classes.map((c) => <option key={c} value={c}>{c}</option>)
-              }
+              <option value="">
+                {isLoadingStudents ? "Laden..." : "-- Kies een optie --"}
+              </option>
+
+              {selectedType === "STUDENT"
+                ? students.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.name}
+                      {student.className ? ` (${student.className})` : ""}
+                    </option>
+                  ))
+                : classes.map((className) => (
+                    <option key={className} value={className}>
+                      {className}
+                    </option>
+                  ))}
             </select>
           </div>
 
-          {/* Bericht */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bericht</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Bericht
+            </label>
+
             <textarea
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(event) => setMessage(event.target.value)}
               className="w-full px-3 py-2 border rounded-lg h-32"
-              placeholder={selectedType === "STUDENT" ? "Feedback over voortgang of welzijn..." : "Bijv: De les van morgen vervalt..."}
+              placeholder={
+                selectedType === "STUDENT"
+                  ? "Feedback over voortgang of welzijn..."
+                  : "Bijv: De les van morgen vervalt..."
+              }
               required
             />
           </div>
 
           <button
             type="submit"
-            disabled={loading || !recipient || !message}
+            disabled={loading || !recipient || !message.trim()}
             className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-lg font-medium transition disabled:opacity-50"
           >
             {loading ? "Versturen..." : "Bericht Versturen"}

@@ -6,7 +6,6 @@ import { notifications, tasks } from "../db/schema.js";
 
 async function checkDeadlines() {
   try {
-    console.log("Checking task deadlines...");
 
     const now = new Date();
 
@@ -113,7 +112,6 @@ async function checkDeadlines() {
       }
     }
 
-    console.log("Deadline check completed.");
   } catch (error) {
     console.error("Deadline check error:", error);
   }
