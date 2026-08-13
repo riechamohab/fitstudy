@@ -61,17 +61,23 @@ export type UserProfile = {
   emailVerified: boolean;
   image: string | null;
   role: "teacher" | "student" | "admin";
+
   studentId: string | null;
   teacherId: string | null;
+
   school: string | null;
   study: string | null;
   phoneNumber: string | null;
+
   studentClass: string | null;
   schoolYear: string | null;
   studyHistory: string | null;
+
+  // Docentgegevens
   subjects: string[] | null;
   mentorClassName: string | null;
   mentorSchoolYear: string | null;
+
   mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;

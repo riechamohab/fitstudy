@@ -18,27 +18,34 @@ router.get("/profile", async (req, res) => {
     }
 
     const users = await db
-      .select({
-        id: authUser.id,
-        name: authUser.name,
-        email: authUser.email,
-        emailVerified: authUser.emailVerified,
-        image: authUser.image,
-        role: authUser.role,
-        mustChangePassword: authUser.mustChangePassword,
-        studentId: authUser.studentId,
-        teacherId: authUser.teacherId,
-        school: authUser.school,
-        study: authUser.study,
-        phoneNumber: authUser.phoneNumber,
-        studentClass: authUser.studentClass,
-        createdAt: authUser.createdAt,
-        updatedAt: authUser.updatedAt,
-      })
-      .from(authUser)
-      .where(eq(authUser.id, currentUser.id))
-      .limit(1);
+    .select({
+      id: authUser.id,
+      name: authUser.name,
+      email: authUser.email,
+      emailVerified: authUser.emailVerified,
+      image: authUser.image,
+      role: authUser.role,
+      mustChangePassword: authUser.mustChangePassword,
 
+      // Studentgegevens
+      studentId: authUser.studentId,
+      school: authUser.school,
+      study: authUser.study,
+      phoneNumber: authUser.phoneNumber,
+      studentClass: authUser.studentClass,
+
+      // Docentgegevens
+      teacherId: authUser.teacherId,
+      subjects: authUser.subjects,
+      mentorClassName: authUser.mentorClassName,
+      mentorSchoolYear: authUser.mentorSchoolYear,
+
+      createdAt: authUser.createdAt,
+      updatedAt: authUser.updatedAt,
+    })
+    .from(authUser)
+    .where(eq(authUser.id, currentUser.id))
+    .limit(1);
 
     const profile = users[0];
 

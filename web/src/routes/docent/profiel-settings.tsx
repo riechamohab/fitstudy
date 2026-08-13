@@ -1,231 +1,491 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { getProfile, getImageUrl, type UserProfile } from "../../lib/api";
+import { useEffect, useRef, useState } from "react";
+
+import {
+  getImageUrl,
+  getProfile,
+  uploadProfilePicture,
+  type UserProfile,
+} from "../../lib/api";
 
 export const Route = createFileRoute("/docent/profiel-settings")({
-  component: DocentProfielSettingsPage,
+  component: ProfileSettingsPage,
 });
 
-// Iconen
-function UserIcon() {
+function CameraIcon() {
   return (
-    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function MailIcon() {
-  return (
-    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <rect width="20" height="16" x="2" y="4" rx="2" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-    </svg>
-  );
-}
-
-function PhoneIcon() {
-  return (
-    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-    </svg>
-  );
-}
-
-function SchoolIcon() {
-  return (
-    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="m4 6 8-4 8 4-8 4z" />
-      <path d="m18 10 4 2v6" />
-      <path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5" />
-    </svg>
-  );
-}
-
-function BookIcon() {
-  return (
-    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <rect width="18" height="18" x="3" y="4" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  );
-}
-
-function UsersIcon() {
-  return (
-    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v10A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-10Z" />
+      <circle cx="12" cy="13" r="3.5" />
     </svg>
   );
 }
 
 function LockIcon() {
   return (
-    <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    <svg
+      className="h-3.5 w-3.5 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
     </svg>
   );
 }
 
-// Uitgebreide interface voor docent-specifieke TS-ondersteuning
-type DocentProfile = UserProfile & {
-  subject?: string;
-  school?: string;
-  schoolYear?: string;
-  assignedClasses?: string[];
-  phone?: string;
-};
-
-function DocentProfielSettingsPage() {
-  const [profile, setProfile] = useState<DocentProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getProfile()
-      .then((data) => setProfile(data as DocentProfile))
-      .catch(() => setProfile(null))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const imageUrl = getImageUrl(profile?.image);
-  const firstName = profile?.name?.split(" ")[0] ?? "";
-
-  const assignedClassesText = Array.isArray(profile?.assignedClasses) && profile.assignedClasses.length > 0
-    ? profile.assignedClasses.join(", ")
-    : "B4";
-
+function UserIcon() {
   return (
-    <main className="mx-auto max-w-3xl p-6 sm:p-10">
-      {/* HEADER */}
-      <div className="mb-6 flex items-center gap-2">
-        <UserIcon />
-        <h1 className="text-xl font-bold text-slate-900">Mijn profiel</h1>
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m4 6 8 6 8-6" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M6 3h3l1.5 5-2 1.5a12 12 0 0 0 6 6l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2Z" />
+    </svg>
+  );
+}
+
+function IdCardIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="12" r="2" />
+      <path d="M14 10h4M14 14h4" />
+    </svg>
+  );
+}
+
+function SchoolIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="m2 9 10-5 10 5-10 5-10-5Z" />
+      <path d="M6 11v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
+    </svg>
+  );
+}
+
+function BookIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z" />
+      <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 8.5a3 3 0 1 1 3.5 3M19 20a5.5 5.5 0 0 0-3-4.9" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect x="3" y="4.5" width="18" height="16.5" rx="2" />
+      <path d="M16 2.5v4M8 2.5v4M3 9.5h18" />
+    </svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-slate-500"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </svg>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  locked,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  locked?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between py-3">
+      <div className="flex items-center gap-2 text-sm text-slate-500">
+        {icon}
+        <span>{label}</span>
       </div>
 
-      {/* CARD CONTAINER */}
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        {/* PROFIELFOTO SECTIE */}
-        <div className="flex flex-col items-center justify-center border-b border-slate-100 py-8">
-          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-2xl font-bold text-indigo-700">
-            {imageUrl ? (
-              <img src={imageUrl} alt="Profiel" className="h-full w-full object-cover" />
-            ) : (
-              firstName ? firstName[0].toUpperCase() : "D"
-            )}
-          </div>
-        </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium text-slate-900">
+          {value || "—"}
+        </span>
 
-        {/* DETAILS CONTAINER */}
-        <div className="p-6 sm:p-8 space-y-8">
-          {loading ? (
-            <p className="text-center text-sm text-slate-400">Profielgegevens laden...</p>
+        {locked && <LockIcon />}
+      </div>
+    </div>
+  );
+}
+
+function ProfileSettingsPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const profileData = await getProfile();
+        setProfile(profileData);
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Kon profiel niet laden"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadProfile();
+  }, []);
+
+  async function handleImageSelect(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    setImageError("");
+    setIsUploadingImage(true);
+
+    try {
+      const updated = await uploadProfilePicture(file);
+      setProfile(updated);
+    } catch (error) {
+      setImageError(
+        error instanceof Error
+          ? error.message
+          : "Kon foto niet uploaden"
+      );
+    } finally {
+      setIsUploadingImage(false);
+      event.target.value = "";
+    }
+  }
+
+  const firstName = profile?.name?.split(" ")[0] ?? "";
+  const imageUrl = getImageUrl(profile?.image);
+
+  const subjects = profile?.subjects ?? [];
+
+  const isMentor =
+    Boolean(profile?.mentorClassName) &&
+    profile?.mentorClassName !== "";
+
+  return (
+    <main className="p-8">
+      <div className="mx-auto max-w-xl">
+        <h1 className="mb-4 flex items-center gap-2 text-2xl font-bold text-slate-900">
+          <UserIcon />
+          Mijn profiel
+        </h1>
+
+        <div className="rounded-2xl bg-white shadow-xl">
+          {isLoading ? (
+            <p className="p-7 text-sm text-slate-500">
+              Laden...
+            </p>
           ) : (
             <>
-              {/* PERSOONLIJKE GEGEVENS */}
-              <div>
-                <h2 className="mb-4 text-base font-semibold text-slate-900">Persoonlijke gegevens</h2>
-                <div className="space-y-4">
-                  {/* Naam */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <UserIcon />
-                      <span className="text-sm text-slate-600">Naam</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{profile?.name || "—"}</span>
-                      <LockIcon />
-                    </div>
+              {/* Profielfoto */}
+              <div className="flex flex-col items-center gap-3 border-b border-slate-100 p-7">
+                <div className="relative">
+                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-3xl font-semibold text-blue-700">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt="Profiel"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      firstName
+                        ? firstName[0].toUpperCase()
+                        : ""
+                    )}
                   </div>
 
-                  {/* School e-mailadres */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <MailIcon />
-                      <span className="text-sm text-slate-600">School e-mailadres</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{profile?.email || "—"}</span>
-                      <LockIcon />
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      fileInputRef.current?.click()
+                    }
+                    disabled={isUploadingImage}
+                    className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+                    aria-label="Wijzig profielfoto"
+                  >
+                    <CameraIcon />
+                  </button>
 
-                  {/* Telefoonnummer */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <PhoneIcon />
-                      <span className="text-sm text-slate-600">Telefoonnummer</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{profile?.phone || "—"}</span>
-                      <LockIcon />
-                    </div>
-                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    fileInputRef.current?.click()
+                  }
+                  disabled={isUploadingImage}
+                  className="text-sm font-medium text-blue-600 hover:underline disabled:opacity-60"
+                >
+                  {isUploadingImage
+                    ? "Uploaden..."
+                    : "Wijzig foto"}
+                </button>
+
+                {imageError && (
+                  <p className="text-xs text-red-600">
+                    {imageError}
+                  </p>
+                )}
+              </div>
+
+              {/* Persoonlijke gegevens */}
+              <div className="border-b border-slate-100 p-7">
+                <p className="mb-1 text-sm font-semibold text-slate-900">
+                  Persoonlijke gegevens
+                </p>
+
+                <div className="divide-y divide-slate-100">
+                  <InfoRow
+                    icon={<UserIcon />}
+                    label="Naam"
+                    value={profile?.name ?? ""}
+                    locked
+                  />
+
+                  <InfoRow
+                    icon={<MailIcon />}
+                    label="School e-mailadres"
+                    value={profile?.email ?? ""}
+                    locked
+                  />
+
+                  <InfoRow
+                    icon={<PhoneIcon />}
+                    label="Telefoonnummer"
+                    value={profile?.phoneNumber ?? ""}
+                    locked
+                  />
+
+                  <InfoRow
+                    icon={<IdCardIcon />}
+                    label="Docentnummer"
+                    value={profile?.teacherId ?? ""}
+                    locked
+                  />
                 </div>
               </div>
 
-              {/* DOCENT- & SCHOOLGEGEVENS */}
-              <div>
-                <h2 className="mb-4 text-base font-semibold text-slate-900">Docent- & Schoolgegevens</h2>
-                <div className="space-y-4">
-                  {/* School */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <SchoolIcon />
-                      <span className="text-sm text-slate-600">School</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{profile?.school || "—"}</span>
-                      <LockIcon />
-                    </div>
-                  </div>
+              {/* Schoolgegevens */}
+              <div className="border-b border-slate-100 p-7">
+                <p className="mb-1 text-sm font-semibold text-slate-900">
+                  Schoolgegevens
+                </p>
 
-                  {/* Vak / Expertise */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <BookIcon />
-                      <span className="text-sm text-slate-600">Vak / Expertise</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{profile?.subject || "—"}</span>
-                      <LockIcon />
-                    </div>
-                  </div>
+                <div className="divide-y divide-slate-100">
+                  <InfoRow
+                    icon={<SchoolIcon />}
+                    label="School"
+                    value={profile?.school ?? ""}
+                    locked
+                  />
+                </div>
+              </div>
 
-                  {/* Huidig schooljaar */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <CalendarIcon />
-                      <span className="text-sm text-slate-600">Huidig schooljaar</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{profile?.schoolYear || "2025-2026"}</span>
-                      <LockIcon />
-                    </div>
-                  </div>
+              {/* Vakken */}
+              <div className="border-b border-slate-100 p-7">
+                <div className="mb-3 flex items-center gap-2">
+                  <BookIcon />
 
-                  {/* Toegewezen klassen */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <UsersIcon />
-                      <span className="text-sm text-slate-600">Toegewezen klassen</span>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Vakken
+                  </p>
+                </div>
+
+                {subjects.length === 0 ? (
+                  <p className="text-sm text-slate-400">
+                    Geen vakken toegewezen.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {subjects.map((subject) => (
+                      <div
+                        key={subject}
+                        className="rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600"
+                      >
+                        {subject}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Mentor */}
+              <div className="border-b border-slate-100 p-7">
+                <div className="mb-3 flex items-center gap-2">
+                  <UsersIcon />
+
+                  <p className="text-sm font-semibold text-slate-900">
+                    Mentor
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-blue-50 px-4 py-3">
+                  {isMentor ? (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-blue-600">
+                          Mentorklas
+                        </p>
+
+                        <p className="mt-1 text-sm font-semibold text-blue-700">
+                          {profile?.mentorClassName}
+                        </p>
+                      </div>
+
+                      {profile?.mentorSchoolYear && (
+                        <div className="flex items-center gap-2 text-sm text-blue-600">
+                          <CalendarIcon />
+
+                          <span>
+                            {profile.mentorSchoolYear}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{assignedClassesText}</span>
-                      <LockIcon />
-                    </div>
+                  ) : (
+                    <p className="text-sm font-medium text-blue-600">
+                      —
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Foutmelding */}
+              <div className="p-7">
+                {error && (
+                  <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    {error}
+                  </p>
+                )}
+
+                <div className="flex gap-2 rounded-lg bg-slate-50 p-4">
+                  <InfoIcon />
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Gegevens onjuist?
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Indien er fouten staan in de gegevens die
+                      hierboven zijn ingevoerd, neem dan contact
+                      op met de administratie van de school om
+                      deze gegevens te laten wijzigen.
+                    </p>
                   </div>
                 </div>
               </div>
