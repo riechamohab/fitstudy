@@ -9,7 +9,7 @@ import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
 
-function canSendTeacherNote(currentUser: { role?: string }) {
+function canSendTeacherNote(currentUser: { role?: string | null }) {
   return currentUser.role === "teacher" || currentUser.role === "admin";
 }
 

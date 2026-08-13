@@ -88,8 +88,8 @@ router.post("/users", requireAdmin, async (req, res) => {
 
     const newUser = await auth.api.signUpEmail({
       body: {
-        name,
-        email,
+        name: name.trim(),
+        email: email.trim(),
         password,
       },
     });
@@ -158,11 +158,12 @@ router.post("/users", requireAdmin, async (req, res) => {
         ...updateValues,
       },
     });
-  } catch (error) {
+    } catch (error) {
     console.error("Create user error:", error);
 
     res.status(500).json({
       error: "Could not create user",
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 });

@@ -44,9 +44,9 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: "string",
-        required: true,
+        required: false,
         defaultValue: "student",
-        input: false, // can't be set by the client — only via admin/db
+        input: false,
       },
       studentId: {
         type: "string",

@@ -13,6 +13,9 @@ export const user = pgTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   role: text("role").default("student").notNull(),
+  banned: boolean("banned").default(false).notNull(),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
   studentId: text("student_id").unique(), // Aangepast naar .unique() tegen duplicaten
   teacherId: text("teacher_id"),
   school: text("school"),
