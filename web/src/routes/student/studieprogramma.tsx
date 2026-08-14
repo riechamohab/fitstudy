@@ -1,13 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-
 import {
   getClassSchedule,
-  getCourses,
-  toggleLessonItem,
+  getStudentStudyProgram,
   type ClassScheduleResponse,
-  type Course,
-  type Lesson,
+  type TeacherProgram,
 } from "../../lib/api";
 
 export const Route = createFileRoute("/student/studieprogramma")({
@@ -41,17 +38,28 @@ const TIME_BLOCKS: TimeBlock[] = [
   { id: 9, label: "Blok 9", start: "11:46", end: "12:30", locked: false },
 ];
 
+type ChapterGroup = {
+  key: string;
+  subject: string;
+  period: string;
+  chapter: string;
+  items: TeacherProgram[];
+};
+
 function getSchoolYearLabel(date: Date) {
   const year = date.getFullYear();
   const month = date.getMonth();
   const startYear = month >= 8 ? year : year - 1;
+
   return `${startYear}-${startYear + 1}`;
 }
 
 function ChevronDownIcon({ open }: { open: boolean }) {
   return (
     <svg
-      className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+      className={`h-4 w-4 shrink-0 transition-transform ${
+        open ? "rotate-180" : ""
+      }`}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -59,176 +67,6 @@ function ChevronDownIcon({ open }: { open: boolean }) {
     >
       <path d="m6 9 6 6 6-6" />
     </svg>
-  );
-}
-
-function DonutChart({
-  percent,
-  size = 64,
-  strokeWidth = 8,
-}: {
-  percent: number;
-  size?: number;
-  strokeWidth?: number;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - percent / 100);
-  const color = percent === 100 ? "#16a34a" : "#2563eb";
-
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2e8f0" strokeWidth={strokeWidth} />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: "stroke-dashoffset 0.4s ease" }}
-      />
-      <text
-        x="50%"
-        y="50%"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize={size / 4.2}
-        fontWeight="bold"
-        fill="#0f172a"
-      >
-        {percent}%
-      </text>
-    </svg>
-  );
-}
-
-function lessonAverage(lessons: Lesson[]) {
-  if (lessons.length === 0) return 0;
-  return Math.round(lessons.reduce((sum, l) => sum + l.progressPercent, 0) / lessons.length);
-}
-
-function LessonDetail({
-  lesson,
-  onToggleItem,
-}: {
-  lesson: Lesson;
-  onToggleItem: (itemId: string, completed: boolean) => void;
-}) {
-  return (
-    <div className="flex items-start gap-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-      <DonutChart percent={lesson.progressPercent} />
-
-      <div className="flex-1">
-        {lesson.items.length === 0 ? (
-          <p className="text-sm text-slate-400">
-            Je docent heeft nog geen onderdelen toegevoegd voor deze les.
-          </p>
-        ) : (
-          <div className="space-y-1.5">
-            {lesson.items.map((item) => (
-              <label
-                key={item.id}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white"
-              >
-                <input
-                  type="checkbox"
-                  checked={item.completed}
-                  onChange={(event) => onToggleItem(item.id, event.target.checked)}
-                  className="h-4 w-4 accent-blue-600"
-                />
-                <span className={item.completed ? "text-slate-400 line-through" : "text-slate-700"}>
-                  {item.title}
-                </span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function CourseDetail({
-  course,
-  expandedLessonIds,
-  onToggleLesson,
-  onToggleItem,
-}: {
-  course: Course;
-  expandedLessonIds: Set<string>;
-  onToggleLesson: (lessonId: string) => void;
-  onToggleItem: (itemId: string, completed: boolean) => void;
-}) {
-  const allLessons = [...course.chapters.flatMap((ch) => ch.lessons), ...course.lessons];
-
-  if (allLessons.length === 0) {
-    return (
-      <p className="text-sm text-slate-400">
-        Je docent heeft nog geen hoofdstukken of lessen toegevoegd.
-      </p>
-    );
-  }
-
-  function LessonRow({ lesson }: { lesson: Lesson }) {
-    const isOpen = expandedLessonIds.has(lesson.id);
-    return (
-      <div className="rounded-lg border border-slate-200">
-        <button
-          type="button"
-          onClick={() => onToggleLesson(lesson.id)}
-          className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left"
-        >
-          <span className="text-sm font-medium text-slate-800">{lesson.title}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500">{lesson.progressPercent}%</span>
-            <ChevronDownIcon open={isOpen} />
-          </div>
-        </button>
-
-        {isOpen && (
-          <div className="border-t border-slate-100 p-3">
-            <LessonDetail lesson={lesson} onToggleItem={onToggleItem} />
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-5">
-      {course.chapters.map((chapter) => (
-        <div key={chapter.id}>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {chapter.title}
-          </p>
-          <div className="space-y-2">
-            {chapter.lessons.map((lesson) => (
-              <LessonRow key={lesson.id} lesson={lesson} />
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {course.lessons.length > 0 && (
-        <div>
-          {course.chapters.length > 0 && (
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Overig
-            </p>
-          )}
-          <div className="space-y-2">
-            {course.lessons.map((lesson) => (
-              <LessonRow key={lesson.id} lesson={lesson} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -241,6 +79,7 @@ function ScheduleGrid({ schedule }: { schedule: ClassScheduleResponse }) {
             <th className="w-28 border-b border-slate-200 p-2 text-left font-medium text-slate-500">
               Tijdsblok
             </th>
+
             {DAYS.map((day) => (
               <th
                 key={day.value}
@@ -251,6 +90,7 @@ function ScheduleGrid({ schedule }: { schedule: ClassScheduleResponse }) {
             ))}
           </tr>
         </thead>
+
         <tbody>
           {TIME_BLOCKS.map((block) => {
             if (block.locked) {
@@ -273,23 +113,39 @@ function ScheduleGrid({ schedule }: { schedule: ClassScheduleResponse }) {
                   <br />
                   {block.start} - {block.end}
                 </td>
+
                 {DAYS.map((day) => {
                   const entry = schedule.entries.find((e) => {
-                    if (e.day.toLowerCase() !== day.value) return false;
+                    if (e.day.toLowerCase() !== day.value) {
+                      return false;
+                    }
+
                     const entryStart = e.startTime.trim().substring(0, 5);
+
                     return entryStart === block.start;
                   });
 
                   return (
-                    <td key={`${day.value}-${block.id}`} className="border-b border-slate-100 p-2">
+                    <td
+                      key={`${day.value}-${block.id}`}
+                      className="border-b border-slate-100 p-2"
+                    >
                       {entry ? (
                         <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
-                          <p className="font-semibold text-slate-900">{entry.subject}</p>
+                          <p className="font-semibold text-slate-900">
+                            {entry.subject}
+                          </p>
+
                           {entry.teacherName && (
-                            <p className="mt-0.5 text-xs text-slate-500">{entry.teacherName}</p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {entry.teacherName}
+                            </p>
                           )}
+
                           {entry.location && (
-                            <p className="mt-0.5 text-xs text-slate-400">{entry.location}</p>
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              {entry.location}
+                            </p>
                           )}
                         </div>
                       ) : (
@@ -308,26 +164,41 @@ function ScheduleGrid({ schedule }: { schedule: ClassScheduleResponse }) {
 }
 
 function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [schedule, setSchedule] = useState<ClassScheduleResponse | null>(null);
+  const [programs, setPrograms] = useState<TeacherProgram[]>([]);
+  const [programClassName, setProgramClassName] = useState<string | null>(null);
+
+  const [schedule, setSchedule] =
+    useState<ClassScheduleResponse | null>(null);
+
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
-  const [expandedLessonIds, setExpandedLessonIds] = useState<Set<string>>(new Set());
+  const [expandedSubject, setExpandedSubject] =
+    useState<string | null>(null);
+
+  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(
+    new Set()
+  );
 
   async function loadData() {
     setIsLoading(true);
     setError("");
+
     try {
-      const [coursesData, scheduleData] = await Promise.all([
-        getCourses(),
+      const [programData, scheduleData] = await Promise.all([
+        getStudentStudyProgram(),
         getClassSchedule(),
       ]);
-      setCourses(coursesData.filter((c) => c.scope === "class"));
+
+      setPrograms(programData.programs);
+      setProgramClassName(programData.className);
       setSchedule(scheduleData);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Kon gegevens niet laden");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Kon gegevens niet laden"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -337,133 +208,255 @@ function CoursesPage() {
     loadData();
   }, []);
 
-  function toggleCourse(courseId: string) {
-    setExpandedCourseId((prev) => (prev === courseId ? null : courseId));
+  function toggleSubject(subject: string) {
+    setExpandedSubject((previous) =>
+      previous === subject ? null : subject
+    );
   }
 
-  function toggleLessonOpen(lessonId: string) {
-    setExpandedLessonIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(lessonId)) next.delete(lessonId);
-      else next.add(lessonId);
+  function toggleChapter(key: string) {
+    setExpandedChapters((previous) => {
+      const next = new Set(previous);
+
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+
       return next;
     });
   }
 
-  async function handleToggleItem(itemId: string, completed: boolean) {
-    setCourses((prev) =>
-      prev.map((course) => ({
-        ...course,
-        chapters: course.chapters.map((chapter) => ({
-          ...chapter,
-          lessons: chapter.lessons.map((lesson) => updateLessonItem(lesson, itemId, completed)),
-        })),
-        lessons: course.lessons.map((lesson) => updateLessonItem(lesson, itemId, completed)),
-      }))
-    );
+  function groupByChapter(items: TeacherProgram[]): ChapterGroup[] {
+    const groups = new Map<string, ChapterGroup>();
 
-    try {
-      await toggleLessonItem(itemId, completed);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Kon onderdeel niet bijwerken");
-      loadData();
+    for (const item of items) {
+      const key = `${item.subject}__${item.period}__${item.chapter}`;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          subject: item.subject,
+          period: item.period,
+          chapter: item.chapter,
+          items: [],
+        });
+      }
+
+      groups.get(key)!.items.push(item);
     }
+
+    return Array.from(groups.values()).sort((a, b) =>
+      a.chapter.localeCompare(b.chapter, "nl", {
+        numeric: true,
+      })
+    );
   }
 
-  function updateLessonItem(lesson: Lesson, itemId: string, completed: boolean): Lesson {
-    if (!lesson.items.some((i) => i.id === itemId)) return lesson;
-    const items = lesson.items.map((i) => (i.id === itemId ? { ...i, completed } : i));
-    const checkedCount = items.filter((i) => i.completed).length;
-    const progressPercent = Math.round((checkedCount / items.length) * 100);
-    const status =
-      checkedCount === 0 ? "NOT_STARTED" : checkedCount === items.length ? "COMPLETED" : "IN_PROGRESS";
-    return { ...lesson, items, progressPercent, status };
-  }
+  const programsBySubject = programs.reduce<Record<string, TeacherProgram[]>>(
+    (result, item) => {
+      if (!result[item.subject]) {
+        result[item.subject] = [];
+      }
+
+      result[item.subject].push(item);
+
+      return result;
+    },
+    {}
+  );
+
+  const subjects = Object.keys(programsBySubject).sort();
 
   const schoolYear = getSchoolYearLabel(new Date());
+
   const hasScheduleEntries = (schedule?.entries.length ?? 0) > 0;
+
+  const displayedClassName =
+    schedule?.className ?? programClassName;
 
   return (
     <main className="p-8">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-8">
+
+        {/* LESROOSTER */}
+
+        <div className="mb-10">
           <h1 className="text-2xl font-bold text-slate-900">
-            Lesrooster{schedule?.className ? ` klas ${schedule.className}` : ""} (schooljaar{" "}
-            {schoolYear})
+            Lesrooster
+            {displayedClassName
+              ? ` klas ${displayedClassName}`
+              : ""}{" "}
+            (schooljaar {schoolYear})
           </h1>
 
           {isLoading ? (
-            <p className="mt-3 text-sm text-slate-500">Lesrooster laden...</p>
-          ) : !schedule?.className ? (
+            <p className="mt-3 text-sm text-slate-500">
+              Lesrooster laden...
+            </p>
+          ) : !displayedClassName ? (
             <p className="mt-3 text-sm text-slate-400">
               Er is nog geen klas aan je account gekoppeld.
             </p>
           ) : !hasScheduleEntries ? (
             <p className="mt-3 text-sm text-slate-400">
-              De administratie heeft nog geen lesrooster geplaatst voor jouw klas.
+              De administratie heeft nog geen lesrooster geplaatst voor
+              jouw klas.
             </p>
-          ) : (
+          ) : schedule ? (
             <ScheduleGrid schedule={schedule} />
-          )}
+          ) : null}
         </div>
 
+        {/* STUDIEPROGRAMMA */}
+
         <div>
-          <h2 className="mb-1 text-2xl font-bold text-slate-900">Studieprogramma</h2>
-          <p className="mb-4 text-sm text-slate-500">
-            Klik op een vak om de hoofdstukken, lessen en je voortgang te zien.
+          <h2 className="mb-1 text-2xl font-bold text-slate-900">
+            Studieprogramma
+          </h2>
+
+          <p className="mb-5 text-sm text-slate-500">
+            Klik op een vak om de hoofdstukken, lessen en onderdelen te
+            bekijken.
           </p>
 
           {error && (
-            <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
+            <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </p>
           )}
 
           {isLoading ? (
-            <p className="text-sm text-slate-500">Studieprogramma laden...</p>
-          ) : courses.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              Studieprogramma laden...
+            </p>
+          ) : !programClassName ? (
+            <p className="text-sm text-slate-400">
+              Er is nog geen klas aan je account gekoppeld.
+            </p>
+          ) : programs.length === 0 ? (
             <p className="text-sm text-slate-400">
               Je docent heeft nog geen studieprogramma geplaatst.
             </p>
           ) : (
             <div className="space-y-3">
-              {courses.map((course) => {
-                const isOpen = expandedCourseId === course.id;
-                const allLessons = [
-                  ...course.chapters.flatMap((ch) => ch.lessons),
-                  ...course.lessons,
-                ];
+              {subjects.map((subject) => {
+                const isSubjectOpen =
+                  expandedSubject === subject;
+
+                const subjectPrograms =
+                  programsBySubject[subject];
+
+                const chapterGroups =
+                  groupByChapter(subjectPrograms);
 
                 return (
-                  <div key={course.id} className="rounded-xl border border-slate-200 bg-white">
+                  <div
+                    key={subject}
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                  >
+                    {/* VAK */}
+
                     <button
                       type="button"
-                      onClick={() => toggleCourse(course.id)}
-                      className="flex w-full items-center justify-between gap-3 p-5 text-left"
+                      onClick={() => toggleSubject(subject)}
+                      className="flex w-full items-center justify-between gap-3 p-5 text-left transition hover:bg-slate-50"
                     >
                       <div>
-                        <h3 className="text-lg font-bold text-slate-900">{course.title}</h3>
-                        {course.description && (
-                          <p className="mt-0.5 text-sm text-slate-500">{course.description}</p>
-                        )}
+                        <h3 className="text-lg font-bold text-slate-900">
+                          {subject}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-slate-500">
+                          {chapterGroups.length}{" "}
+                          {chapterGroups.length === 1
+                            ? "hoofdstuk"
+                            : "hoofdstukken"}
+                        </p>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        {isOpen && allLessons.length > 0 && (
-                          <span className="text-sm font-semibold text-slate-500">
-                            {lessonAverage(allLessons)}% totaal
-                          </span>
-                        )}
-                        <ChevronDownIcon open={isOpen} />
-                      </div>
+                      <ChevronDownIcon open={isSubjectOpen} />
                     </button>
 
-                    {isOpen && (
+                    {/* HOOFDSTUKKEN */}
+
+                    {isSubjectOpen && (
                       <div className="border-t border-slate-100 p-5">
-                        <CourseDetail
-                          course={course}
-                          expandedLessonIds={expandedLessonIds}
-                          onToggleLesson={toggleLessonOpen}
-                          onToggleItem={handleToggleItem}
-                        />
+                        <div className="space-y-3">
+                          {chapterGroups.map((group) => {
+                            const chapterKey = group.key;
+
+                            const isChapterOpen =
+                              expandedChapters.has(chapterKey);
+
+                            return (
+                              <div
+                                key={chapterKey}
+                                className="overflow-hidden rounded-lg border border-slate-200"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleChapter(chapterKey)
+                                  }
+                                  className="flex w-full items-center justify-between gap-3 bg-slate-50 px-4 py-3 text-left hover:bg-slate-100"
+                                >
+                                  <div>
+                                    <p className="font-semibold text-slate-900">
+                                      {group.chapter}
+                                    </p>
+
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                      {group.period} ·{" "}
+                                      {group.items.length}{" "}
+                                      {group.items.length === 1
+                                        ? "les"
+                                        : "lessen"}
+                                    </p>
+                                  </div>
+
+                                  <ChevronDownIcon
+                                    open={isChapterOpen}
+                                  />
+                                </button>
+
+                                {/* LESSEN */}
+
+                                {isChapterOpen && (
+                                  <div className="divide-y divide-slate-100">
+                                    {group.items.map((item) => (
+                                      <div
+                                        key={item.id}
+                                        className="p-4"
+                                      >
+                                        <p className="font-medium text-slate-800">
+                                          {item.lesson}
+                                        </p>
+
+                                        {item.topics ? (
+                                          <div className="mt-2 rounded-lg bg-blue-50 px-3 py-2">
+                                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-500">
+                                              Onderdelen
+                                            </p>
+
+                                            <p className="text-sm text-slate-700">
+                                              {item.topics}
+                                            </p>
+                                          </div>
+                                        ) : (
+                                          <p className="mt-1 text-sm text-slate-400">
+                                            Geen extra onderdelen toegevoegd.
+                                          </p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>

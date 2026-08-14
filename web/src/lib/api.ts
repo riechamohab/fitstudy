@@ -223,6 +223,11 @@ export type Schedule = {
   createdBy: string;
 };
 
+export type ClassScheduleResponse = {
+  className: string | null;
+  entries: Schedule[];
+};
+
 export type PlannerDay = {
   date: string;
   dayName: string;
@@ -248,7 +253,9 @@ export async function getPlanner(
 }
 
 export async function getClassSchedule() {
-  return apiRequest("/api/calendar/schedule");
+  return apiRequest<ClassScheduleResponse>(
+    "/api/calendar/schedule"
+  );
 }
 
 export async function getCalendar() {
@@ -1246,6 +1253,17 @@ export type TeacherProgram = {
   topics: string | null;
   createdAt: string;
 };
+
+export type StudentStudyProgramResponse = {
+  className: string | null;
+  programs: TeacherProgram[];
+};
+
+export async function getStudentStudyProgram() {
+  return apiRequest<StudentStudyProgramResponse>(
+    "/api/courses/study-program"
+  );
+}
 
 export async function getTeacherPrograms() {
   return apiRequest<TeacherProgram[]>("/api/teacher/programs");

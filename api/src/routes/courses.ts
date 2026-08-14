@@ -10,6 +10,7 @@ import {
   lessonProgress,
   lessonItems,
   lessonItemProgress,
+  teacherPrograms,
   LESSON_STATUSES,
 } from "../db/schema.js";
 import { requireUser } from "../lib/auth-session.js";
@@ -144,6 +145,49 @@ router.get("/", async (req, res) => {
   } catch (error) {
     console.error("Get courses error:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/courses/study-program
+// Haalt het vakprogramma op dat hoort bij de klas van de ingelogde student
+router.get("/study-program", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+
+    if (!currentUser) {
+      return;
+    }
+
+    if (currentUser.role !== "student") {
+      return res.status(403).json({
+        error: "Alleen studenten kunnen het studieprogramma bekijken.",
+      });
+    }
+
+    const studentClass = currentUser.studentClass;
+
+    if (!studentClass) {
+      return res.json({
+        className: null,
+        programs: [],
+      });
+    }
+
+    const programs = await db
+      .select()
+      .from(teacherPrograms)
+      .where(eq(teacherPrograms.className, studentClass));
+
+    res.json({
+      className: studentClass,
+      programs,
+    });
+  } catch (error) {
+    console.error("Get student study program error:", error);
+
+    res.status(500).json({
+      error: "Internal server error",
+    });
   }
 });
 
