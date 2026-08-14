@@ -975,4 +975,160 @@ router.get("/tasks", checkTeacherRole, async (req: any, res) => {
   }
 });
 
+// GET /api/teacher/mentor-welbeing
+router.get("/mentor-welbeing", checkTeacherRole, async (req: any, res) => {
+  try {
+    const teacherId = req.currentUser.id;
+
+    const teacherRows = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, teacherId));
+
+    const teacher = teacherRows[0];
+
+    if (!teacher) {
+      return res.status(404).json({ error: "Docent niet gevonden." });
+    }
+
+    const className = teacher.mentorClassName;
+
+    if (!className) {
+      return res.json({
+        isMentor: false,
+        message: "U bent momenteel niet ingesteld als mentor van een klas.",
+        students: [],
+      });
+    }
+
+    const classStudents = await db
+      .select()
+      .from(user)
+      .where(and(eq(user.role, "student"), eq(user.studentClass, className)));
+
+    const allStressEntries = await db
+      .select()
+      .from(stressLevels)
+      .orderBy(desc(stressLevels.createdAt));
+
+    const allExercises = await db
+      .select()
+      .from(exercises)
+      .orderBy(desc(exercises.createdAt));
+
+    const students = classStudents.map((student) => {
+      const studentStressEntries = allStressEntries.filter(
+        (entry) => entry.userId === student.id
+      );
+
+      const studentExercises = allExercises.filter(
+        (exercise) => exercise.userId === student.id
+      );
+
+      const latestEntries = studentStressEntries.slice(0, 5);
+
+      const entriesCount = studentStressEntries.length;
+
+      const avgStress =
+        entriesCount > 0
+          ? studentStressEntries.reduce((sum, entry) => sum + entry.level, 0) /
+            entriesCount
+          : 0;
+
+      const avgFocus =
+        entriesCount > 0
+          ? studentStressEntries.reduce((sum, entry) => sum + entry.focus, 0) /
+            entriesCount
+          : 0;
+
+      const sleepEntries = studentStressEntries.filter(
+        (entry) => entry.sleepHours !== null
+      );
+
+      const avgSleep =
+        sleepEntries.length > 0
+          ? sleepEntries.reduce(
+              (sum, entry) => sum + (entry.sleepHours ?? 0),
+              0
+            ) / sleepEntries.length
+          : null;
+
+      const latestEntry = studentStressEntries[0] ?? null;
+
+      let status: "healthy" | "at_risk" | "critical" | "unknown" = "unknown";
+
+      if (entriesCount === 0) {
+        status = "unknown";
+      } else if (avgStress >= 8 || (avgSleep !== null && avgSleep < 5)) {
+        status = "critical";
+      } else if (avgStress >= 6 || (avgSleep !== null && avgSleep < 7)) {
+        status = "at_risk";
+      } else {
+        status = "healthy";
+      }
+
+      const completedExercises = studentExercises.filter(
+        (exercise) => exercise.completed === true
+      );
+
+      const totalMinutes = Math.floor(
+        completedExercises.reduce(
+          (sum, exercise) => sum + exercise.duration,
+          0
+        ) / 60
+      );
+
+      return {
+        student: {
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          className: student.studentClass,
+        },
+        wellbeingStatus: {
+          status,
+          avgStress: entriesCount > 0 ? Number(avgStress.toFixed(1)) : null,
+          avgFocus: entriesCount > 0 ? Number(avgFocus.toFixed(1)) : null,
+          avgSleep: avgSleep !== null ? Number(avgSleep.toFixed(1)) : null,
+          entries: entriesCount,
+          latestEntry,
+        },
+        exerciseStats: {
+          total: studentExercises.length,
+          completed: completedExercises.length,
+          totalMinutes,
+        },
+        latestEntries,
+      };
+    });
+
+    const statusOrder = {
+      critical: 1,
+      at_risk: 2,
+      healthy: 3,
+      unknown: 4,
+    };
+
+    students.sort((a, b) => {
+      const aStatus = a.wellbeingStatus.status;
+      const bStatus = b.wellbeingStatus.status;
+
+      if (statusOrder[aStatus] !== statusOrder[bStatus]) {
+        return statusOrder[aStatus] - statusOrder[bStatus];
+      }
+
+      return a.student.name.localeCompare(b.student.name);
+    });
+
+    res.json({
+      isMentor: true,
+      className,
+      students,
+    });
+  } catch (error) {
+    console.error("Get mentor wellbeing error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
