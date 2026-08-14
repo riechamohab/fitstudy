@@ -62,6 +62,8 @@ app.use("/api/users", usersRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/mededelingen", mededelingenRouter);
 
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 app.use("/api/teacher", teacherRouter);
 
 app.get("/test-api", (_req, res) => {
