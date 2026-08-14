@@ -1,10 +1,19 @@
 import { Router } from "express";
 import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-
 import { db } from "../db/index.js";
-import { notifications, progress, tasks, taskChecklistItems, TASK_STATUSES, courses, lessons } from "../db/schema.js";
+import {
+  notifications,
+  progress,
+  tasks,
+  taskChecklistItems,
+  TASK_STATUSES,
+  courses,
+  lessons,
+  teacherPrograms,
+} from "../db/schema.js";
 import { requireUser } from "../lib/auth-session.js";
+
 
 const router = Router();
 
@@ -85,75 +94,146 @@ router.post("/", async (req, res) => {
 
     const userId = currentUser.id;
 
-    const { courseId, lessonIds, deadline, priority = "MEDIUM" } = req.body;
+    const {
+      courseId,
+      programId,
+      lessonIds,
+      deadline,
+      priority = "MEDIUM",
+    } = req.body;
 
-    if (!courseId || typeof courseId !== "string") {
-      return res.status(400).json({ error: "courseId is required" });
+    if (!courseId && !programId) {
+      return res.status(400).json({
+        error: "courseId of programId is verplicht",
+      });
     }
 
-    const courseRows = await db.select().from(courses).where(eq(courses.id, courseId)).limit(1);
-    const course = courseRows[0];
+    let resolvedCourseId: string | null = null;
+    let title = "";
+    let description: string | null = null;
 
-    if (!course) {
-      return res.status(404).json({ error: "Course not found" });
-    }
 
-    const studentClass = (currentUser as { studentClass?: string | null }).studentClass;
-    const canAccessCourse =
-      course.creatorId === userId ||
-      (course.scope === "class" && studentClass && course.className === studentClass);
-
-    if (!canAccessCourse) {
-      return res.status(403).json({ error: "Access denied" });
-    }
-
-    let selectedLessons: { id: string; title: string }[] = [];
-
-    if (Array.isArray(lessonIds) && lessonIds.length > 0) {
-      const courseLessons = await db
+    if (programId) {
+      const programRows = await db
         .select()
-        .from(lessons)
-        .where(eq(lessons.courseId, courseId));
+        .from(teacherPrograms)
+        .where(eq(teacherPrograms.id, programId))
+        .limit(1);
 
-      selectedLessons = courseLessons.filter((l) => lessonIds.includes(l.id));
+      const program = programRows[0];
+
+      if (!program) {
+        return res.status(404).json({
+          error: "Onderdeel van studieprogramma niet gevonden",
+        });
+      }
+
+      const studentClass = (
+        currentUser as { studentClass?: string | null }
+      ).studentClass;
+
+      if (!studentClass || program.className !== studentClass) {
+        return res.status(403).json({
+          error: "Geen toegang tot dit studieprogramma",
+        });
+      }
+
+      title = `${program.subject}: ${program.lesson}`;
+
+      description = [
+        program.chapter,
+        program.period,
+        program.topics,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+
+      resolvedCourseId = null;
     }
 
-    const title =
-      selectedLessons.length > 0
-        ? `${course.title}: ${selectedLessons.map((l) => l.title).join(", ")}`
-        : course.title;
+    if (courseId && !programId) {
+      const courseRows = await db
+        .select()
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .limit(1);
+
+      const course = courseRows[0];
+
+      if (!course) {
+        return res.status(404).json({
+          error: "Course not found",
+        });
+      }
+
+      const studentClass = (
+        currentUser as { studentClass?: string | null }
+      ).studentClass;
+
+      const canAccessCourse =
+        course.creatorId === userId ||
+        (course.scope === "class" &&
+          studentClass &&
+          course.className === studentClass);
+
+      if (!canAccessCourse) {
+        return res.status(403).json({
+          error: "Access denied",
+        });
+      }
+
+      let selectedLessons: {
+        id: string;
+        title: string;
+      }[] = [];
+
+      if (Array.isArray(lessonIds) && lessonIds.length > 0) {
+        const courseLessons = await db
+          .select()
+          .from(lessons)
+          .where(eq(lessons.courseId, courseId));
+
+        selectedLessons = courseLessons.filter((lesson) =>
+          lessonIds.includes(lesson.id)
+        );
+      }
+
+      title =
+        selectedLessons.length > 0
+          ? `${course.title}: ${selectedLessons
+              .map((lesson) => lesson.title)
+              .join(", ")}`
+          : course.title;
+
+      resolvedCourseId = courseId;
+    }
 
     const newTask = {
       id: nanoid(),
       userId,
-      courseId,
+      courseId: resolvedCourseId,
       title,
-      description: null,
+      description,
       deadline: deadline ? new Date(deadline) : null,
       priority,
       status: "ONGOING" as const,
     };
 
-    const insertedTasks = await db.insert(tasks).values(newTask).returning();
-    const task = insertedTasks[0];
+    const insertedTasks = await db
+      .insert(tasks)
+      .values(newTask)
+      .returning();
 
-    if (selectedLessons.length > 0) {
-      await db.insert(taskChecklistItems).values(
-        selectedLessons.map((lesson, index) => ({
-          id: nanoid(),
-          taskId: task.id,
-          title: lesson.title,
-          order: index,
-        }))
-      );
-    }
+    const task = insertedTasks[0];
 
     if (deadline) {
       await db.insert(notifications).values({
         id: nanoid(),
         userId,
-        title: "New Task Deadline",
-        message: `Task "${title}" has a deadline on ${new Date(deadline).toLocaleDateString()}`,
+        title: "Nieuwe taakdeadline",
+        message: `Taak "${title}" heeft een deadline op ${new Date(
+          deadline
+        ).toLocaleDateString("nl-NL")}`,
         type: "DEADLINE",
       });
     }
@@ -161,7 +241,10 @@ router.post("/", async (req, res) => {
     res.status(201).json(task);
   } catch (error) {
     console.error("Create task error:", error);
-    res.status(500).json({ error: "Internal server error" });
+
+    res.status(500).json({
+      error: "Internal server error",
+    });
   }
 });
 
