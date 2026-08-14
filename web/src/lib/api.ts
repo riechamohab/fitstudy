@@ -179,7 +179,8 @@ export async function getTasks() {
 }
 
 export type CreateTaskInput = {
-  courseId: string;
+  courseId?: string;
+  programId?: string;
   lessonIds?: string[];
   deadline?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH";

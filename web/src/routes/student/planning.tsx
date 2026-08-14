@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 
 import {
   createTask,
-  getCourses,
   getPlanner,
+  getStudentStudyProgram,
   updateTask,
-  type Course,
   type PlannerDay,
   type PlannerResponse,
   type Task,
+  type TeacherProgram,
 } from "../../lib/api";
 
 export const Route = createFileRoute("/student/planning")({
@@ -121,7 +121,7 @@ function WeekDayCell({
         {day.tasks.length > 0 && (
           <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-medium text-yellow-700">
             {day.tasks.length}{" "}
-            {day.tasks.length === 1 ? "opdracht" : "opdrachten"}
+            {day.tasks.length === 1 ? "taak" : "taken"}
           </span>
         )}
         {completedCount > 0 && (
@@ -300,7 +300,7 @@ function MonthCell({
           }`}
           >
             {day.tasks.length}{" "}
-            {day.tasks.length === 1 ? "opdracht" : "opdrachten"}
+            {day.tasks.length === 1 ? "taak" : "taken"}
           </span>
         )}
 
@@ -352,9 +352,9 @@ function PlannerPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [showAddTask, setShowAddTask] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState("");
-  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
+  const [programs, setPrograms] = useState<TeacherProgram[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedProgramId, setSelectedProgramId] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
   const [newPriority, setNewPriority] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
   const [isSaving, setIsSaving] = useState(false);
@@ -380,16 +380,17 @@ function PlannerPage() {
   }, [view, referenceDate]);
 
   useEffect(() => {
-    async function loadCourses() {
-      try {
-        const data = await getCourses();
-        setCourses(data);
-      } catch {
-        // non-fatal — the add-task form will just show "geen vakken" if this fails
-      }
+  async function loadPrograms() {
+    try {
+      const data = await getStudentStudyProgram();
+      setPrograms(data.programs);
+    } catch {
+      // Niet fataal: planner zelf kan nog steeds geladen worden.
     }
-    loadCourses();
-  }, []);
+  }
+
+  loadPrograms();
+}, []);
 
   function goToPrevious() {
     const next = new Date(referenceDate);
@@ -422,41 +423,64 @@ function PlannerPage() {
     }
   }
 
-  function toggleLesson(lessonId: string) {
-    setSelectedLessonIds((prev) =>
-      prev.includes(lessonId) ? prev.filter((id) => id !== lessonId) : [...prev, lessonId]
+
+  async function handleAddTask(
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  if (!selectedProgramId) {
+    return;
+  }
+
+  setIsSaving(true);
+  setError("");
+
+  try {
+    await createTask({
+      programId: selectedProgramId,
+      deadline: newDeadline || undefined,
+      priority: newPriority,
+    });
+
+    setSelectedSubject("");
+    setSelectedProgramId("");
+    setNewDeadline("");
+    setNewPriority("MEDIUM");
+    setShowAddTask(false);
+
+    await loadPlanner();
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Kon taak niet aanmaken"
     );
+  } finally {
+    setIsSaving(false);
   }
+}
 
-  async function handleAddTask(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+const subjects = Array.from(
+  new Set(programs.map((program) => program.subject))
+).sort();
 
-    if (!selectedCourseId) return;
+const programsForSelectedSubject = programs.filter(
+  (program) => program.subject === selectedSubject
+);
 
-    setIsSaving(true);
-    setError("");
-
-    try {
-      await createTask({
-        courseId: selectedCourseId,
-        lessonIds: selectedLessonIds.length > 0 ? selectedLessonIds : undefined,
-        deadline: newDeadline || undefined,
-        priority: newPriority,
-      });
-      setSelectedCourseId("");
-      setSelectedLessonIds([]);
-      setNewDeadline("");
-      setNewPriority("MEDIUM");
-      setShowAddTask(false);
-      await loadPlanner();
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Kon taak niet aanmaken"
-      );
-    } finally {
-      setIsSaving(false);
+const programsByChapter =
+  programsForSelectedSubject.reduce<
+    Record<string, TeacherProgram[]>
+  >((result, program) => {
+    if (!result[program.chapter]) {
+      result[program.chapter] = [];
     }
-  }
+
+    result[program.chapter].push(program);
+
+    return result;
+  }, {});
 
   const headerLabel = (() => {
     if (!planner) return "";
@@ -550,147 +574,135 @@ function PlannerPage() {
         </div>
 
         {showAddTask && (
-          <form
-            onSubmit={handleAddTask}
-            className="mb-6 space-y-4 rounded-xl border border-slate-200 bg-white p-4"
-          >
+        <form
+          onSubmit={handleAddTask}
+          className="mb-6 space-y-4 rounded-xl border border-slate-200 bg-white p-4"
+        >
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-600">
+              Vak
+            </label>
+
+            {subjects.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                Geen vakken gevonden bij Studieprogramma.
+              </p>
+            ) : (
+              <select
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                value={selectedSubject}
+                onChange={(event) => {
+                  setSelectedSubject(event.target.value);
+                  setSelectedProgramId("");
+                }}
+                required
+              >
+                <option value="" disabled>
+                  Kies een vak
+                </option>
+
+                {subjects.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {selectedSubject && (
+            <div>
+              <label className="mb-2 block text-xs font-semibold text-slate-600">
+                Les uit studieprogramma
+              </label>
+
+              <div className="space-y-3">
+                {Object.entries(programsByChapter).map(
+                  ([chapter, chapterPrograms]) => (
+                    <div key={chapter}>
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                        {chapter}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {chapterPrograms.map((program) => {
+                          const isSelected =
+                            selectedProgramId === program.id;
+
+                          return (
+                            <button
+                              key={program.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedProgramId(program.id)
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                                isSelected
+                                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+                              }`}
+                            >
+                              {program.lesson}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-end gap-3">
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-600">
-                Vak
+                Deadline
               </label>
-              {courses.length === 0 ? (
-                <p className="text-sm text-slate-400">
-                  Geen vakken gevonden bij Studieprogramma.
-                </p>
-              ) : (
-                <select
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                  value={selectedCourseId}
-                  onChange={(event) => {
-                    setSelectedCourseId(event.target.value);
-                    setSelectedLessonIds([]);
-                  }}
-                  required
-                >
-                  <option value="" disabled>
-                    Kies een vak
-                  </option>
-                  {courses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.title}
-                      {course.scope === "class" ? ` (${course.className})` : " (persoonlijk)"}
-                    </option>
-                  ))}
-                </select>
-              )}
+
+              <input
+                type="datetime-local"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                value={newDeadline}
+                onChange={(event) =>
+                  setNewDeadline(event.target.value)
+                }
+                required
+              />
             </div>
 
-            {selectedCourseId && (
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  Lessen (optioneel)
-                </label>
-                {(() => {
-                  const selectedCourse = courses.find((c) => c.id === selectedCourseId);
-                  const hasAnyLessons =
-                    selectedCourse &&
-                    (selectedCourse.chapters.some((ch) => ch.lessons.length > 0) ||
-                      selectedCourse.lessons.length > 0);
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                Prioriteit
+              </label>
 
-                  if (!selectedCourse || !hasAnyLessons) {
-                    return (
-                      <p className="text-sm text-slate-400">
-                        Dit vak heeft nog geen lessen.
-                      </p>
-                    );
-                  }
-
-                  function LessonChip({ id, title }: { id: string; title: string }) {
-                    const isChecked = selectedLessonIds.includes(id);
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => toggleLesson(id)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                          isChecked
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-slate-200 text-slate-600 hover:border-slate-300"
-                        }`}
-                      >
-                        {title}
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <div className="space-y-3">
-                      {selectedCourse.chapters
-                        .filter((chapter) => chapter.lessons.length > 0)
-                        .map((chapter) => (
-                          <div key={chapter.id}>
-                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                              {chapter.title}
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {chapter.lessons.map((lesson) => (
-                                <LessonChip key={lesson.id} id={lesson.id} title={lesson.title} />
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-
-                      {selectedCourse.lessons.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {selectedCourse.lessons.map((lesson) => (
-                            <LessonChip key={lesson.id} id={lesson.id} title={lesson.title} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-end gap-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  Deadline
-                </label>
-                <input
-                  type="datetime-local"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                  value={newDeadline}
-                  onChange={(event) => setNewDeadline(event.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  Prioriteit
-                </label>
-                <select
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                  value={newPriority}
-                  onChange={(event) =>
-                    setNewPriority(event.target.value as "LOW" | "MEDIUM" | "HIGH")
-                  }
-                >
-                  <option value="LOW">Laag</option>
-                  <option value="MEDIUM">Gemiddeld</option>
-                  <option value="HIGH">Hoog</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSaving || !selectedCourseId}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              <select
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                value={newPriority}
+                onChange={(event) =>
+                  setNewPriority(
+                    event.target.value as
+                      | "LOW"
+                      | "MEDIUM"
+                      | "HIGH"
+                  )
+                }
               >
-                {isSaving ? "Toevoegen..." : "Toevoegen"}
-              </button>
+                <option value="LOW">Laag</option>
+                <option value="MEDIUM">Gemiddeld</option>
+                <option value="HIGH">Hoog</option>
+              </select>
             </div>
-          </form>
+
+            <button
+              type="submit"
+              disabled={isSaving || !selectedProgramId}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isSaving ? "Toevoegen..." : "Toevoegen"}
+            </button>
+          </div>
+        </form>
         )}
 
         {error && (
