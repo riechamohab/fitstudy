@@ -164,7 +164,7 @@ function TeacherWellbeingPage() {
     return (
       <div className="p-6 max-w-6xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <div className="text-green-600">
+          <div className="text-blue-600">
             <ProgressIcon />
           </div>
           <div>
@@ -194,7 +194,7 @@ function TeacherWellbeingPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="text-green-600">
+          <div className="text-blue-600">
             <ProgressIcon />
           </div>
           <div>
