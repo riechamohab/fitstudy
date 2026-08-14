@@ -67,6 +67,20 @@ function ProgressPage() {
 
   const changePercent = monthly?.grades.changePercent ?? null;
 
+
+  function formatMonthNl(month: string) {
+  const date = new Date(`${month} 1`);
+
+  if (Number.isNaN(date.getTime())) {
+    return month;
+  }
+
+    return date.toLocaleDateString("nl-NL", {
+      month: "long",
+      year: "numeric",
+    });
+  }
+
   return (
     <main className="p-8">
       <div className="mx-auto max-w-4xl">
@@ -74,7 +88,7 @@ function ProgressPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Voortgang</h1>
             <p className="text-sm text-slate-500">
-              {monthly ? monthly.month : "This month"} at a glance.
+              {monthly ? formatMonthNl(monthly.month) : "Deze maand"} in één overzicht.
             </p>
           </div>
 
@@ -143,10 +157,10 @@ function ProgressPage() {
                       <p className="text-3xl font-bold text-slate-900">
                         {monthly?.grades.thisMonthAvg?.toFixed(1)}
                       </p>
-                      <p className="text-xs text-slate-500">average this month</p>
+                      <p className="text-xs text-slate-500">gemiddelde deze maand</p>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-400">No grades this month yet.</p>
+                    <p className="text-sm text-slate-400">Nog geen cijfers deze maand.</p>
                   )}
 
                   {monthly?.grades.overallAvg !== null && (
@@ -154,7 +168,7 @@ function ProgressPage() {
                       <p className="text-3xl font-bold text-slate-900">
                         {monthly?.grades.overallAvg?.toFixed(1)}
                       </p>
-                      <p className="text-xs text-slate-500">overall average</p>
+                      <p className="text-xs text-slate-500">algemeen gemiddelde</p>
                     </div>
                   )}
 

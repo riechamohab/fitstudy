@@ -159,7 +159,7 @@ function StreakBadge({ count, status }: { count: number; status: StreakStatus })
 
         <text
           x="36"
-          y="56"
+          y="48"
           textAnchor="middle"
           fontSize="22"
           fontWeight="bold"

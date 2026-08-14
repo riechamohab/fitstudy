@@ -57,7 +57,7 @@ function StatusBadge({ status }: { status: WellbeingStatus | null }) {
   );
 }
 
-// --- Text-to-speech helper (browser-native, geen backend nodig) ---
+// --- Text-to-speech helper (browser-native) ---
 function speak(text: string) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
@@ -72,6 +72,7 @@ function stopSpeaking() {
     window.speechSynthesis.cancel();
   }
 }
+
 
 function isToday(dateString: string) {
   const date = new Date(dateString);
@@ -95,6 +96,40 @@ const EYE_SPEECH: Record<string, string> = {
   "Kijk naar links": "Kijk naar links",
   "Focus in de verte": "Focus in de verte",
 };
+
+const EXERCISE_TRANSLATIONS: Record<
+  string,
+  { label: string; description: string }
+> = {
+  "Breathing Exercise": {
+    label: "Ademhalingsoefening",
+    description: "Diep ademhalen om te ontspannen",
+  },
+  Stretching: {
+    label: "Strekken",
+    description: "Korte stretchroutine",
+  },
+  Meditation: {
+    label: "Meditatie",
+    description: "Mindfulness-meditatie",
+  },
+  "Eye Rest": {
+    label: "Oogrust",
+    description: "Geef je ogen rust van schermtijd",
+  },
+  "Quick Walk": {
+    label: "Korte wandeling",
+    description: "Korte wandeling om op te frissen",
+  },
+};
+
+function getExerciseLabel(type: string) {
+  return EXERCISE_TRANSLATIONS[type]?.label ?? type;
+}
+
+function getExerciseDescription(type: string, description: string) {
+  return EXERCISE_TRANSLATIONS[type]?.description ?? description;
+}
 
 function RelaxationTab() {
   const [types, setTypes] = useState<ExerciseType[]>([]);
@@ -287,7 +322,7 @@ function RelaxationTab() {
       <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 p-8 text-center text-white shadow-xl flex flex-col items-center justify-between min-h-[420px]">
         <div className="w-full flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-widest text-indigo-400">
-            {active.exercise.type}
+            {getExerciseLabel(active.exercise.type)}
           </span>
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold tabular-nums text-indigo-200">
             {formatClock(active.secondsLeft)}
@@ -350,7 +385,7 @@ function RelaxationTab() {
     <div>
       {done && (
         <p className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-          "{done}" voltooid. Goed bezig!
+          "{getExerciseLabel(done)}" voltooid. Goed bezig!
         </p>
       )}
       {error && (
@@ -364,8 +399,12 @@ function RelaxationTab() {
             onClick={() => handleStart(exerciseType)}
             className="rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300 hover:bg-blue-50/40"
           >
-            <p className="font-semibold text-slate-900">{exerciseType.type}</p>
-            <p className="mt-1 text-sm text-slate-500">{exerciseType.description}</p>
+            <p className="font-semibold text-slate-900">
+              {getExerciseLabel(exerciseType.type)}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {getExerciseDescription(exerciseType.type, exerciseType.description)}
+            </p>
             <p className="mt-2 text-xs font-medium text-blue-600">
               {Math.round(exerciseType.duration / 60)} min
             </p>

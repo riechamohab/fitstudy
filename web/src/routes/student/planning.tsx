@@ -72,6 +72,20 @@ function ChevronRightIcon() {
   );
 }
 
+function translateDayName(dayName: string) {
+  const days: Record<string, string> = {
+    Sunday: "Zondag",
+    Monday: "Maandag",
+    Tuesday: "Dinsdag",
+    Wednesday: "Woensdag",
+    Thursday: "Donderdag",
+    Friday: "Vrijdag",
+    Saturday: "Zaterdag",
+  };
+
+  return days[dayName] ?? dayName;
+}
+
 function WeekDayCell({
   day,
   onSelect,
@@ -95,7 +109,7 @@ function WeekDayCell({
       }`}
     >
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-        {day.dayName}
+        {translateDayName(day.dayName)}
       </p>
       <p className="mb-2 text-lg font-bold text-slate-900">{dateObj.getDate()}</p>
 
@@ -155,7 +169,7 @@ function DayDetailList({
               <p className="font-semibold text-slate-800">{entry.subject}</p>
               <p className="text-slate-500">
                 {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
-                {entry.room ? ` · ${entry.room}` : ""}
+                {entry.location ? ` · ${entry.location}` : ""}
               </p>
             </div>
           ))}
@@ -474,7 +488,7 @@ function PlannerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Planner</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Planning</h1>
             <p className="text-sm text-slate-500 capitalize">{headerLabel}</p>
           </div>
 
@@ -547,7 +561,7 @@ function PlannerPage() {
               </label>
               {courses.length === 0 ? (
                 <p className="text-sm text-slate-400">
-                  Geen vakken gevonden. Voeg eerst een vak toe bij Vakken.
+                  Geen vakken gevonden bij Studieprogramma.
                 </p>
               ) : (
                 <select

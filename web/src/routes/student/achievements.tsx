@@ -31,7 +31,7 @@ function AchievementsPage() {
   return (
     <main className="p-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="text-2xl font-bold text-slate-900">Achievements</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Mijlpalen</h1>
         <p className="mb-6 text-sm text-slate-500">
           {isLoading ? "Laden..." : `${unlockedCount} van ${achievements.length} badges behaald`}
         </p>

@@ -682,8 +682,8 @@ export type Exercise = {
 export async function startExercise(
   type: string,
   duration: number
-) {
-  return apiRequest("/api/exercises/start", {
+): Promise<Exercise> {
+  return apiRequest<Exercise>("/api/exercises/start", {
     method: "POST",
     body: JSON.stringify({
       type,
@@ -1288,8 +1288,8 @@ export async function submitQuizResponse(
     question: string;
     answer: string;
   }[]
-) {
-  return apiRequest("/api/wellbeing-quiz", {
+): Promise<QuizResponse> {
+  return apiRequest<QuizResponse>("/api/wellbeing-quiz", {
     method: "POST",
     body: JSON.stringify({ answers }),
   });
