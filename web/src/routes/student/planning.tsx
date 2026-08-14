@@ -96,7 +96,6 @@ function WeekDayCell({
   const dateObj = new Date(day.date + "T00:00:00");
   const isToday = toDateKey(new Date()) === day.date;
   const completedCount = day.tasks.filter((t) => t.status === "COMPLETED").length;
-  const ongoingCount = day.tasks.filter((t) => t.status === "ONGOING").length;
   const canceledCount = day.tasks.filter((t) => t.status === "CANCELED").length;
   const incompleteCount = day.tasks.filter((t) => t.status === "INCOMPLETE").length;
 
@@ -119,9 +118,10 @@ function WeekDayCell({
             {day.classSchedule.length} les{day.classSchedule.length > 1 ? "sen" : ""}
           </span>
         )}
-        {ongoingCount > 0 && (
+        {day.tasks.length > 0 && (
           <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-medium text-yellow-700">
-            {ongoingCount} {ongoingCount > 1 ? "taken" : "taak"}
+            {day.tasks.length}{" "}
+            {day.tasks.length === 1 ? "opdracht" : "opdrachten"}
           </span>
         )}
         {completedCount > 0 && (
@@ -257,7 +257,6 @@ function MonthCell({
   const dateObj = new Date(day.date + "T00:00:00");
   const isToday = toDateKey(new Date()) === day.date;
   const completedCount = day.tasks.filter((t) => t.status === "COMPLETED").length;
-  const ongoingCount = day.tasks.filter((t) => t.status === "ONGOING").length;
   const canceledCount = day.tasks.filter((t) => t.status === "CANCELED").length;
   const incompleteCount = day.tasks.filter((t) => t.status === "INCOMPLETE").length;
 
@@ -292,16 +291,16 @@ function MonthCell({
             {day.classSchedule.length > 1 ? "sen" : ""}
           </span>
         )}
-
-        {ongoingCount > 0 && (
-          <span
-            className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-              day.isCurrentMonth
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-yellow-50 text-yellow-200"
-            }`}
+        
+        {day.tasks.length > 0 && (
+          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+            day.isCurrentMonth
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-yellow-50 text-yellow-200"
+          }`}
           >
-            {ongoingCount} {ongoingCount > 1 ? "taken" : "taak"}
+            {day.tasks.length}{" "}
+            {day.tasks.length === 1 ? "opdracht" : "opdrachten"}
           </span>
         )}
 
