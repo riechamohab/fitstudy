@@ -136,20 +136,13 @@ router.post("/change-password", async (req, res) => {
   try {
     const currentUser = await requireUser(req, res);
 
-
     if (!currentUser) {
       return;
     }
 
-
     const { currentPassword, newPassword } = req.body;
 
-
-    console.log(
-      "CHANGE PASSWORD BODY:",
-      req.body
-    );
-
+    console.log("CHANGE PASSWORD BODY:", req.body);
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
@@ -157,20 +150,18 @@ router.post("/change-password", async (req, res) => {
       });
     }
 
-
-
+    // 1. Wachtwoord wijzigen
     await auth.api.changePassword({
       body: {
         currentPassword,
         newPassword,
       },
-      headers: new Headers(
-        req.headers as HeadersInit
-      ),
+      headers: new Headers(req.headers as HeadersInit),
     });
 
+    console.log("Password succesvol gewijzigd in Better Auth");
 
-
+    // 2. OTP/verplichte wachtwoordwijziging uitschakelen
     await db
       .update(authUser)
       .set({
@@ -179,24 +170,21 @@ router.post("/change-password", async (req, res) => {
       })
       .where(eq(authUser.id, currentUser.id));
 
+    console.log("mustChangePassword succesvol bijgewerkt");
 
-
-    res.json({
+    return res.json({
       success: true,
       message: "Password changed successfully",
     });
 
-
-
   } catch (error) {
-    console.error(
-      "Change password error:",
-      error
-    );
+    console.error("========== CHANGE PASSWORD ERROR ==========");
+    console.error(error);
+    console.error("===========================================");
 
-
-    res.status(500).json({
+    return res.status(500).json({
       error: "Failed to change password",
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
