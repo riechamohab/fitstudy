@@ -167,3 +167,161 @@ Docenten kunnen studenten begeleiden en informatie bekijken die nodig is voor be
 Administrators hebben meer rechten en kunnen gebruikers, roosters en algemene mededelingen beheren.
 
 Hierdoor blijft de toegang tot gegevens overzichtelijk en veilig verdeeld per rol.
+
+## Eerste administrator aanmaken
+
+FitStudy beschikt alleen over een **inlogscherm**. Er is geen openbare registratiepagina waarmee een gebruiker zelf een account kan aanmaken.
+
+Student- en docentaccounts worden later door een administrator binnen FitStudy beheerd. Om het systeem voor de eerste keer te kunnen gebruiken, moet daarom eerst één **administratoraccount** via de terminal worden aangemaakt.
+
+### Voorbereiding
+
+Controleer voordat het administratoraccount wordt aangemaakt of:
+
+- de dependencies van de API zijn geïnstalleerd;
+- het `.env`-bestand aanwezig is in de map `api`;
+- de verbinding met de Neon PostgreSQL-database correct is ingesteld;
+- de database-migraties zijn uitgevoerd.
+
+### Stap 1: Open de API-map
+
+Open een terminal in de hoofdmap van FitStudy en ga naar de API-map:
+
+```bash
+cd api
+```
+
+### Stap 2: Administratoraccount aanmaken
+
+Voer vervolgens het volgende commando uit:
+
+```bash
+pnpm exec tsx scripts/create-auth-admin.ts
+```
+
+Dit script maakt via Better Auth een gebruikersaccount aan.
+
+In de huidige demo-configuratie worden de volgende gegevens gebruikt:
+
+```text
+Naam: Admin
+E-mail: admin@fitstudy.com
+Wachtwoord: Admin12345
+```
+
+### Stap 3: Administratorrechten toekennen
+
+Het aangemaakte account moet daarna nog de gebruikersrol **admin** krijgen.
+
+Voer hiervoor het volgende commando uit:
+
+```bash
+pnpm exec tsx scripts/make-admin.ts
+```
+
+Dit script zoekt het account met het e-mailadres:
+
+```text
+admin@fitstudy.com
+```
+
+en wijzigt de gebruikersrol naar:
+
+```text
+admin
+```
+
+De eerste administrator wordt dus in twee stappen aangemaakt:
+
+```text
+create-auth-admin.ts
+        ↓
+Gebruikersaccount + wachtwoord aanmaken
+        ↓
+make-admin.ts
+        ↓
+Gebruikersrol wijzigen naar admin
+        ↓
+Administrator kan inloggen
+```
+
+### Stap 4: FitStudy starten
+
+Start daarna de backend vanuit de map `api`:
+
+```bash
+pnpm dev
+```
+
+Open vervolgens een nieuwe terminal, ga vanuit de hoofdmap van FitStudy naar de map `web` en start de frontend:
+
+```bash
+cd web
+pnpm dev
+```
+
+Open daarna FitStudy in de browser en ga naar het inlogscherm.
+
+### Stap 5: Inloggen als administrator
+
+Log in met:
+
+```text
+E-mail: admin@fitstudy.com
+Wachtwoord: Admin12345
+```
+
+Wanneer de login succesvol is, krijgt het administratoraccount toegang tot het **Admin Dashboard**.
+
+Vanuit het Admin Dashboard kunnen vervolgens andere gebruikers, zoals studenten en docenten, worden beheerd.
+
+### Andere gegevens gebruiken voor de eerste administrator
+
+Wanneer een andere naam, ander e-mailadres of wachtwoord gebruikt moet worden, moeten deze gegevens vóór het uitvoeren van het script worden aangepast.
+
+Open:
+
+```text
+api/scripts/create-auth-admin.ts
+```
+
+Zoek het gedeelte met de accountgegevens:
+
+```ts
+body: {
+  name: "Admin",
+  email: "admin@fitstudy.com",
+  password: "Admin12345",
+}
+```
+
+Pas hier de gewenste naam, het e-mailadres en wachtwoord aan.
+
+Wanneer het e-mailadres wordt gewijzigd, moet hetzelfde e-mailadres ook worden aangepast in:
+
+```text
+api/scripts/make-admin.ts
+```
+
+Zoek daar:
+
+```ts
+.where(eq(user.email, "admin@fitstudy.com"));
+```
+
+en vervang het e-mailadres door hetzelfde e-mailadres dat in `create-auth-admin.ts` is gebruikt.
+
+Voer daarna opnieuw de twee commando's uit:
+
+```bash
+pnpm exec tsx scripts/create-auth-admin.ts
+pnpm exec tsx scripts/make-admin.ts
+```
+
+### Belangrijk
+
+Er moet eerst minimaal één administratoraccount bestaan voordat de volledige gebruikersadministratie van FitStudy kan worden gebruikt.
+
+De eerste administrator wordt daarom via de terminal aangemaakt. Daarna kunnen de gebruikers binnen FitStudy verder via het **Admin Dashboard** worden beheerd.
+
+Gebruik het standaardwachtwoord alleen voor de demo- of testomgeving. Voor daadwerkelijk gebruik van de applicatie moet een veilig wachtwoord worden ingesteld.
