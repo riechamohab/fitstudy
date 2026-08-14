@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Router } from "express";
+import multer from "multer";
+import path from "path";
 
 import { auth } from "../auth.js";
 import { user as authUser } from "../db/auth-schema.js";
@@ -7,6 +9,19 @@ import { db } from "../db/index.js";
 import { requireUser } from "../lib/auth-session.js";
 
 const router = Router();
+
+// Configureer multer voor het opslaan van geüploade bestanden (bijv. in een 'uploads' map)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Zorg dat deze map bestaat in je project
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
 
 
 router.get("/profile", async (req, res) => {
@@ -186,6 +201,60 @@ router.post("/change-password", async (req, res) => {
       error: "Failed to change password",
       details: error instanceof Error ? error.message : String(error),
     });
+  }
+});
+
+
+
+router.get("/enrollment-history", async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    res.json([]);
+  } catch (error) {
+    console.error("Get enrollment history error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+router.post("/profile/picture", upload.any(), async (req, res) => {
+  try {
+    const currentUser = await requireUser(req, res);
+    if (!currentUser) return;
+
+    // Bij upload.any() komt het bestand in req.files[0] te staan in plaats van req.file
+    const files = req.files as Express.Multer.File[];
+    const file = files?.[0];
+
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const imagePath = `/uploads/${file.filename}`;
+
+    // Update de database met het nieuwe afbeeldingspad
+    const updatedUsers = await db
+      .update(authUser)
+      .set({
+        image: imagePath,
+        updatedAt: new Date(),
+      })
+      .where(eq(authUser.id, currentUser.id))
+      .returning();
+
+    const updatedProfile = updatedUsers[0];
+
+    if (!updatedProfile) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(updatedProfile);
+  } catch (error) {
+    console.error("Upload profile picture error:", error);
+    res.status(500).json({ error: "Failed to upload profile picture" });
   }
 });
 
