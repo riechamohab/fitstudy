@@ -86,7 +86,7 @@ function TeacherFeedbackPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <div className="text-green-600">
+        <div className="text-blue-600">
           <ProgressIcon />
         </div>
         <div>
@@ -101,7 +101,7 @@ function TeacherFeedbackPage() {
 
       <div className="bg-white p-6 rounded-xl shadow-sm border">
         {success && (
-          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
+          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm border border-blue-200">
             {success}
           </div>
         )}
@@ -124,7 +124,7 @@ function TeacherFeedbackPage() {
               }}
               className={`flex-1 py-2 rounded-lg font-medium ${
                 selectedType === "STUDENT"
-                  ? "bg-green-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-600"
               }`}
             >
@@ -141,7 +141,7 @@ function TeacherFeedbackPage() {
               }}
               className={`flex-1 py-2 rounded-lg font-medium ${
                 selectedType === "CLASS"
-                  ? "bg-green-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-600"
               }`}
             >

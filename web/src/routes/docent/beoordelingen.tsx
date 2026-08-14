@@ -169,7 +169,7 @@ function TeacherGradesPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-green-600">
+        <div className="text-blue-600">
           <ProgressIcon />
         </div>
         <div>
@@ -329,7 +329,7 @@ function TeacherGradesPage() {
             <button
               type="submit"
               disabled={submitting || filteredStudents.length === 0}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition disabled:opacity-50"
             >
               {submitting ? "Bezig met opslaan..." : "Alle ingevulde cijfers opslaan"}
             </button>

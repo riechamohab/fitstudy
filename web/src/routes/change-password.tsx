@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { changePassword } from "../lib/api";
+import { changePassword, getProfile } from "../lib/api";
 
 export const Route = createFileRoute("/change-password")({
   component: ChangePasswordPage,
@@ -51,13 +51,10 @@ function ChangePasswordPage() {
     }
 
     try {
-      const response = await changePassword(currentPassword, password);
-
+      await changePassword(currentPassword, password);
       console.log("Password succesvol gewijzigd");
-
-      const userRole = (response as any)?.role;
-
-      if (userRole === "docent" || userRole === "teacher") {
+      const profile = await getProfile();
+      if (profile.role === "teacher") {
         await navigate({
           to: "/docent/portaal",
         });
@@ -66,7 +63,6 @@ function ChangePasswordPage() {
           to: "/student/portaal",
         });
       }
-
     } catch (error) {
       console.error("Change password error:", error);
 

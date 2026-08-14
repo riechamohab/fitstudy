@@ -1,31 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
-  getImageUrl,
   getProfile,
-  uploadProfilePicture,
   type UserProfile,
 } from "../../lib/api";
 
 export const Route = createFileRoute("/docent/profiel-settings")({
   component: ProfileSettingsPage,
 });
-
-function CameraIcon() {
-  return (
-    <svg
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v10A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-10Z" />
-      <circle cx="12" cy="13" r="3.5" />
-    </svg>
-  );
-}
 
 function LockIcon() {
   return (
@@ -82,37 +65,6 @@ function PhoneIcon() {
       viewBox="0 0 24 24"
     >
       <path d="M6 3h3l1.5 5-2 1.5a12 12 0 0 0 6 6l1.5-2 5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2Z" />
-    </svg>
-  );
-}
-
-function IdCardIcon() {
-  return (
-    <svg
-      className="h-4 w-4 text-slate-400"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <circle cx="9" cy="12" r="2" />
-      <path d="M14 10h4M14 14h4" />
-    </svg>
-  );
-}
-
-function SchoolIcon() {
-  return (
-    <svg
-      className="h-4 w-4 text-slate-400"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="m2 9 10-5 10 5-10 5-10-5Z" />
-      <path d="M6 11v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
     </svg>
   );
 }
@@ -208,13 +160,9 @@ function InfoRow({
 }
 
 function ProfileSettingsPage() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [imageError, setImageError] = useState("");
 
   useEffect(() => {
     async function loadProfile() {
@@ -234,34 +182,6 @@ function ProfileSettingsPage() {
 
     loadProfile();
   }, []);
-
-  async function handleImageSelect(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    setImageError("");
-    setIsUploadingImage(true);
-
-    try {
-      const updated = await uploadProfilePicture(file);
-      setProfile(updated);
-    } catch (error) {
-      setImageError(
-        error instanceof Error
-          ? error.message
-          : "Kon foto niet uploaden"
-      );
-    } finally {
-      setIsUploadingImage(false);
-      event.target.value = "";
-    }
-  }
-
-  const firstName = profile?.name?.split(" ")[0] ?? "";
-  const imageUrl = getImageUrl(profile?.image);
 
   const subjects = profile?.subjects ?? [];
 
@@ -284,64 +204,6 @@ function ProfileSettingsPage() {
             </p>
           ) : (
             <>
-              {/* Profielfoto */}
-              <div className="flex flex-col items-center gap-3 border-b border-slate-100 p-7">
-                <div className="relative">
-                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-3xl font-semibold text-blue-700">
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt="Profiel"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      firstName
-                        ? firstName[0].toUpperCase()
-                        : ""
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      fileInputRef.current?.click()
-                    }
-                    disabled={isUploadingImage}
-                    className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
-                    aria-label="Wijzig profielfoto"
-                  >
-                    <CameraIcon />
-                  </button>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    fileInputRef.current?.click()
-                  }
-                  disabled={isUploadingImage}
-                  className="text-sm font-medium text-blue-600 hover:underline disabled:opacity-60"
-                >
-                  {isUploadingImage
-                    ? "Uploaden..."
-                    : "Wijzig foto"}
-                </button>
-
-                {imageError && (
-                  <p className="text-xs text-red-600">
-                    {imageError}
-                  </p>
-                )}
-              </div>
-
               {/* Persoonlijke gegevens */}
               <div className="border-b border-slate-100 p-7">
                 <p className="mb-1 text-sm font-semibold text-slate-900">
@@ -367,29 +229,6 @@ function ProfileSettingsPage() {
                     icon={<PhoneIcon />}
                     label="Telefoonnummer"
                     value={profile?.phoneNumber ?? ""}
-                    locked
-                  />
-
-                  <InfoRow
-                    icon={<IdCardIcon />}
-                    label="Docentnummer"
-                    value={profile?.teacherId ?? ""}
-                    locked
-                  />
-                </div>
-              </div>
-
-              {/* Schoolgegevens */}
-              <div className="border-b border-slate-100 p-7">
-                <p className="mb-1 text-sm font-semibold text-slate-900">
-                  Schoolgegevens
-                </p>
-
-                <div className="divide-y divide-slate-100">
-                  <InfoRow
-                    icon={<SchoolIcon />}
-                    label="School"
-                    value={profile?.school ?? ""}
                     locked
                   />
                 </div>
